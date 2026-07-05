@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>イオン式マスター | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+#app{max-width:600px;margin:0 auto;padding:16px 12px}
+.screen{display:none}
+.screen.active{display:block}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8;margin-top:8px}
+.btn-primary{display:block;width:100%;margin-top:14px;background:var(--acc);color:#fff;border:none;padding:14px;border-radius:10px;font-size:17px;font-weight:800;cursor:pointer;transition:opacity .15s;font-family:inherit}
+.btn-primary:hover{opacity:.85}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.progress-bar-wrap{background:#e2ebe9;border-radius:99px;height:6px;margin-bottom:1.2rem}
+.progress-bar-fill{height:6px;border-radius:99px;background:var(--acc);transition:width .3s}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem}
+.q-num{font-size:13px;color:var(--mut)}
+.score-display{font-size:13px;font-weight:600;color:var(--ink)}
+.streak-badge{font-size:11px;background:var(--amber);color:#5c3a06;padding:2px 8px;border-radius:99px;font-weight:700;margin-left:6px}
+.q-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem;margin-bottom:1rem}
+.q-type-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;display:inline-block;margin-bottom:.7rem}
+.type-valence{background:#dbeafe;color:#1d4ed8}
+.type-crystal{background:#d7efe3;color:#1d6b47}
+.q-text{font-size:1.05rem;font-weight:600;line-height:1.55}
+.choices-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice-btn{background:#fafcfb;border:1.5px solid var(--line);border-radius:10px;padding:14px 8px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .15s;color:var(--ink);font-family:inherit}
+.choice-btn:hover:not(:disabled){border-color:var(--acc);background:#fff}
+.choice-btn.correct{background:#d7efe3;border-color:var(--ok);color:#1d6b47}
+.choice-btn.wrong{background:#fbe3e7;border-color:var(--bad);color:#96354a}
+.choice-btn:disabled{cursor:default}
+.crystal-formula-display{font-size:1.7rem;font-weight:800;text-align:center;min-height:3rem;margin:.9rem 0;color:var(--ink);background:var(--paper);border-radius:10px;padding:.7rem;line-height:2.4}
+.crystal-formula-display sub{font-size:.55em;vertical-align:sub;line-height:0}
+.crystal-formula-display sup{font-size:.55em;vertical-align:super;line-height:0}
+.ion-controls{display:flex;flex-direction:column;gap:10px}
+.ion-row{display:flex;align-items:center;gap:10px;background:#fafcfb;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.ion-label{font-size:.95rem;font-weight:700;color:var(--ink);min-width:90px}
+.ion-label sub{font-size:.6em;vertical-align:sub}
+.ion-label sup{font-size:.6em;vertical-align:super}
+.ion-name-small{font-size:11px;color:var(--mut);flex:1}
+.counter-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:1.1rem;font-weight:700;color:var(--ink);display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0;font-family:inherit}
+.counter-btn:hover{border-color:var(--acc)}
+.counter-num{font-size:1.1rem;font-weight:800;min-width:24px;text-align:center;font-family:var(--mono)}
+.confirm-btn{width:100%;margin-top:1rem;background:var(--acc);color:#fff;border:none;padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit}
+.confirm-btn:hover:not(:disabled){opacity:.85}
+.confirm-btn:disabled{opacity:.35;cursor:default}
+.result-row{margin-top:1rem;padding:10px 14px;border-radius:10px;font-size:.95rem;font-weight:700}
+.result-correct{background:#d7efe3;color:#1d6b47}
+.result-wrong{background:#fbe3e7;color:#96354a}
+.next-btn{width:100%;margin-top:.8rem;background:transparent;border:1.5px solid var(--line);padding:12px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;color:var(--mut);transition:all .15s;font-family:inherit}
+.next-btn:hover{background:#eef4f3;border-color:var(--mut)}
+.result-wrap{padding:.5rem 0}
+.score-hero{text-align:center;padding:2rem 1rem;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:1.2rem}
+.score-big{font-size:3.2rem;font-weight:800;letter-spacing:-2px;font-family:var(--mono);color:var(--acc)}
+.score-label{font-size:.85rem;color:var(--mut);margin-top:2px}
+.rank-info{margin-top:.9rem;font-size:.9rem;color:var(--mut);line-height:1.8}
+.rank-pct{font-size:1.5rem;font-weight:800;color:var(--ink)}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.2rem}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.9rem;text-align:center}
+.stat-num{font-size:1.4rem;font-weight:800;font-family:var(--mono)}
+.stat-lbl{font-size:10px;color:var(--mut);margin-top:3px}
+.mistakes-section{margin-bottom:1.2rem}
+.mistakes-title{font-size:.9rem;font-weight:700;color:var(--mut);margin-bottom:8px}
+.mistake-item{background:#fbe3e7;border-radius:10px;padding:10px 14px;margin-bottom:7px}
+.mistake-item sub{font-size:.6em;vertical-align:sub}
+.mistake-q{font-size:.82rem;color:#96354a;margin-bottom:3px}
+.mistake-ans{font-size:.95rem;font-weight:700;color:#7c2c3e}
+.mistake-ans sub{font-size:.6em;vertical-align:sub}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">イオン式マスター</div>
+  <span class="chip">イオン・組成式</span>
+</header>
+<div id="app">
+  <div id="start-screen" class="screen active">
+    <div class="panel">
+      <h1>イオン式マスター 〜価数と組成式〜</h1>
+      <p class="desc">イオンの価数を見きわめ、陽イオンと陰イオンを電気的に中性になるよう組み合わせて組成式を完成させよう。</p>
+      <ul class="rules">
+        <li>全15問(価数の4択 8問+組成式の組み立て 7問)</li>
+        <li>正解100点+連続正解ボーナス+速答ボーナス</li>
+        <li>組成式は<b>もっとも簡単な整数比</b>で答える</li>
+        <li>多原子イオンが2個以上のときは ( ) がつく</li>
+      </ul>
+      <button class="btn-primary" onclick="startGame()">スタート</button>
+    </div>
+  </div>
+
+  <div id="question-screen" class="screen">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar"></div></div>
+    <div class="q-meta">
+      <span class="q-num" id="q-num">問題 1 / 15</span>
+      <span class="score-display" id="score-display">スコア: 0</span>
+    </div>
+    <div class="q-card">
+      <span class="q-type-badge" id="q-type-badge"></span>
+      <div class="q-text" id="q-text"></div>
+    </div>
+    <div id="q-body"></div>
+  </div>
+
+  <div id="result-screen" class="screen">
+    <div class="result-wrap">
+      <div class="score-hero">
+        <div class="score-big" id="final-score">0</div>
+        <div class="score-label">最終スコア</div>
+        <div class="rank-info" id="rank-info"></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-correct">0</div><div class="stat-lbl">正解数</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-lbl">最大連続正解</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-time">0s</div><div class="stat-lbl">平均解答時間</div></div>
+      </div>
+      <div class="mistakes-section" id="mistakes-section"></div>
+      <div style="margin-top:1rem;">
+        <button class="btn-primary" onclick="resetGame()">もう一度挑戦</button>
+        <a class="ghost" href="index.html">一覧へ戻る</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== デモデータによる上位%計算 =====
+// 実際の生徒の得点分布を想定したデモデータ（150件）
+const DEMO_SCORES = (function(){
+  const base = [
+    100,150,180,200,220,250,260,280,300,310,
+    320,340,350,360,380,390,400,410,420,430,
+    440,450,460,470,480,490,500,510,520,530,
+    540,550,560,570,580,590,600,610,620,630,
+    640,650,660,670,680,690,700,710,720,730,
+    740,750,760,770,780,790,800,810,820,830,
+    840,850,860,870,880,890,900,910,920,930,
+    940,950,960,970,980,990,1000,1010,1020,1030,
+    1040,1050,1060,1070,1080,1090,1100,1110,1120,1130,
+    1140,1150,1160,1170,1180,1190,1200,1210,1220,1230,
+    1240,1250,1260,1270,1280,1290,1300,1310,1320,1330,
+    1340,1350,1360,1380,1400,1420,1440,1460,1480,1500,
+    1520,1540,1560,1580,1600,1620,1640,1660,1700,1750,
+    1800,1850,1900,1950,2000,2050,2100,2150,2200,2300,
+    2350,2400,2450,2500,2550,2600,2650,2700,2750,2800
+  ];
+  return base;
+})();
+
+function calcRank(score) {
+  const all = DEMO_SCORES;
+  const total = all.length;
+  const below = all.filter(s => s < score).length;
+  const topPct = Math.max(1, Math.round(((total - below) / total) * 100));
+  const sorted = [...all].sort((a, b) => b - a);
+  const top10score = sorted[Math.floor(total * 0.1)];
+  return { topPct, top10score };
+}
+
+const IONS = [
+  {name:'水素イオン', formula:'H', charge:1, type:'cation'},
+  {name:'リチウムイオン', formula:'Li', charge:1, type:'cation'},
+  {name:'ナトリウムイオン', formula:'Na', charge:1, type:'cation'},
+  {name:'カリウムイオン', formula:'K', charge:1, type:'cation'},
+  {name:'銀イオン', formula:'Ag', charge:1, type:'cation'},
+  {name:'銅(I)イオン', formula:'Cu', charge:1, type:'cation'},
+  {name:'アンモニウムイオン', formula:'NH4', charge:1, type:'cation'},
+  {name:'オキソニウムイオン', formula:'H3O', charge:1, type:'cation'},
+  {name:'マグネシウムイオン', formula:'Mg', charge:2, type:'cation'},
+  {name:'カルシウムイオン', formula:'Ca', charge:2, type:'cation'},
+  {name:'バリウムイオン', formula:'Ba', charge:2, type:'cation'},
+  {name:'亜鉛イオン', formula:'Zn', charge:2, type:'cation'},
+  {name:'鉄(II)イオン', formula:'Fe', charge:2, type:'cation'},
+  {name:'銅(II)イオン', formula:'Cu', charge:2, type:'cation'},
+  {name:'アルミニウムイオン', formula:'Al', charge:3, type:'cation'},
+  {name:'鉄(III)イオン', formula:'Fe', charge:3, type:'cation'},
+  {name:'フッ化物イオン', formula:'F', charge:1, type:'anion'},
+  {name:'塩化物イオン', formula:'Cl', charge:1, type:'anion'},
+  {name:'臭化物イオン', formula:'Br', charge:1, type:'anion'},
+  {name:'ヨウ化物イオン', formula:'I', charge:1, type:'anion'},
+  {name:'水酸化物イオン', formula:'OH', charge:1, type:'anion'},
+  {name:'硝酸イオン', formula:'NO3', charge:1, type:'anion'},
+  {name:'酸化物イオン', formula:'O', charge:2, type:'anion'},
+  {name:'硫化物イオン', formula:'S', charge:2, type:'anion'},
+  {name:'炭酸イオン', formula:'CO3', charge:2, type:'anion'},
+  {name:'硫酸イオン', formula:'SO4', charge:2, type:'anion'},
+  {name:'クロム酸イオン', formula:'CrO4', charge:2, type:'anion'},
+  {name:'二クロム酸イオン', formula:'Cr2O7', charge:2, type:'anion'},
+  {name:'リン酸イオン', formula:'PO4', charge:3, type:'anion'},
+];
+
+const CRYSTALS = [
+  {name:'塩化ナトリウム', cation:{formula:'Na',charge:1,display:'Na<sup>+</sup>',name:'ナトリウムイオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:1},
+  {name:'塩化カリウム', cation:{formula:'K',charge:1,display:'K<sup>+</sup>',name:'カリウムイオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:1},
+  {name:'塩化カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:2},
+  {name:'塩化マグネシウム', cation:{formula:'Mg',charge:2,display:'Mg<sup>2+</sup>',name:'マグネシウムイオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:2},
+  {name:'塩化アルミニウム', cation:{formula:'Al',charge:3,display:'Al<sup>3+</sup>',name:'アルミニウムイオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:3},
+  {name:'塩化銅(II)', cation:{formula:'Cu',charge:2,display:'Cu<sup>2+</sup>',name:'銅(II)イオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:2},
+  {name:'塩化鉄(II)', cation:{formula:'Fe',charge:2,display:'Fe<sup>2+</sup>',name:'鉄(II)イオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:2},
+  {name:'塩化鉄(III)', cation:{formula:'Fe',charge:3,display:'Fe<sup>3+</sup>',name:'鉄(III)イオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:3},
+  {name:'塩化銀', cation:{formula:'Ag',charge:1,display:'Ag<sup>+</sup>',name:'銀イオン'}, anion:{formula:'Cl',charge:1,display:'Cl<sup>&#8722;</sup>',name:'塩化物イオン'}, cn:1, an:1},
+  {name:'硫酸ナトリウム', cation:{formula:'Na',charge:1,display:'Na<sup>+</sup>',name:'ナトリウムイオン'}, anion:{formula:'SO4',charge:2,display:'SO<sub>4</sub><sup>2&#8722;</sup>',name:'硫酸イオン'}, cn:2, an:1},
+  {name:'硫酸カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'SO4',charge:2,display:'SO<sub>4</sub><sup>2&#8722;</sup>',name:'硫酸イオン'}, cn:1, an:1},
+  {name:'硫酸マグネシウム', cation:{formula:'Mg',charge:2,display:'Mg<sup>2+</sup>',name:'マグネシウムイオン'}, anion:{formula:'SO4',charge:2,display:'SO<sub>4</sub><sup>2&#8722;</sup>',name:'硫酸イオン'}, cn:1, an:1},
+  {name:'硫酸アルミニウム', cation:{formula:'Al',charge:3,display:'Al<sup>3+</sup>',name:'アルミニウムイオン'}, anion:{formula:'SO4',charge:2,display:'SO<sub>4</sub><sup>2&#8722;</sup>',name:'硫酸イオン'}, cn:2, an:3},
+  {name:'硫酸銅(II)', cation:{formula:'Cu',charge:2,display:'Cu<sup>2+</sup>',name:'銅(II)イオン'}, anion:{formula:'SO4',charge:2,display:'SO<sub>4</sub><sup>2&#8722;</sup>',name:'硫酸イオン'}, cn:1, an:1},
+  {name:'水酸化ナトリウム', cation:{formula:'Na',charge:1,display:'Na<sup>+</sup>',name:'ナトリウムイオン'}, anion:{formula:'OH',charge:1,display:'OH<sup>&#8722;</sup>',name:'水酸化物イオン'}, cn:1, an:1},
+  {name:'水酸化カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'OH',charge:1,display:'OH<sup>&#8722;</sup>',name:'水酸化物イオン'}, cn:1, an:2},
+  {name:'水酸化マグネシウム', cation:{formula:'Mg',charge:2,display:'Mg<sup>2+</sup>',name:'マグネシウムイオン'}, anion:{formula:'OH',charge:1,display:'OH<sup>&#8722;</sup>',name:'水酸化物イオン'}, cn:1, an:2},
+  {name:'水酸化アルミニウム', cation:{formula:'Al',charge:3,display:'Al<sup>3+</sup>',name:'アルミニウムイオン'}, anion:{formula:'OH',charge:1,display:'OH<sup>&#8722;</sup>',name:'水酸化物イオン'}, cn:1, an:3},
+  {name:'炭酸ナトリウム', cation:{formula:'Na',charge:1,display:'Na<sup>+</sup>',name:'ナトリウムイオン'}, anion:{formula:'CO3',charge:2,display:'CO<sub>3</sub><sup>2&#8722;</sup>',name:'炭酸イオン'}, cn:2, an:1},
+  {name:'炭酸カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'CO3',charge:2,display:'CO<sub>3</sub><sup>2&#8722;</sup>',name:'炭酸イオン'}, cn:1, an:1},
+  {name:'硝酸ナトリウム', cation:{formula:'Na',charge:1,display:'Na<sup>+</sup>',name:'ナトリウムイオン'}, anion:{formula:'NO3',charge:1,display:'NO<sub>3</sub><sup>&#8722;</sup>',name:'硝酸イオン'}, cn:1, an:1},
+  {name:'硝酸カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'NO3',charge:1,display:'NO<sub>3</sub><sup>&#8722;</sup>',name:'硝酸イオン'}, cn:1, an:2},
+  {name:'硝酸銀', cation:{formula:'Ag',charge:1,display:'Ag<sup>+</sup>',name:'銀イオン'}, anion:{formula:'NO3',charge:1,display:'NO<sub>3</sub><sup>&#8722;</sup>',name:'硝酸イオン'}, cn:1, an:1},
+  {name:'リン酸カルシウム', cation:{formula:'Ca',charge:2,display:'Ca<sup>2+</sup>',name:'カルシウムイオン'}, anion:{formula:'PO4',charge:3,display:'PO<sub>4</sub><sup>3&#8722;</sup>',name:'リン酸イオン'}, cn:3, an:2},
+];
+
+function toHtmlFormula(plain) { return plain.replace(/(\d+)/g,'<sub>$1</sub>'); }
+function fmtCharge(c, type) { const s=type==='cation'?'+':'&#8722;'; return c===1?s:`${c}${s}`; }
+function ionChoiceHTML(ion,charge,type){ return `${toHtmlFormula(ion.formula)}<sup>${fmtCharge(charge,type)}</sup>`; }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function isPolyatomic(formula){ return (formula.match(/[A-Z]/g)||[]).length >= 2; }
+
+function buildCrystalHTML(q,c,a){
+  if(c===0&&a===0) return '?';
+  const cf=q.crystal.cation.formula, af=q.crystal.anion.formula;
+  const needBracketC=c>1&&isPolyatomic(cf);
+  const needBracketA=a>1&&isPolyatomic(af);
+  let h='';
+  if(c>0){ const ch=toHtmlFormula(cf); h+=needBracketC?`(${ch})<sub>${c}</sub>`:ch+(c>1?`<sub>${c}</sub>`:''); }
+  if(a>0){ const ah=toHtmlFormula(af); h+=needBracketA?`(${ah})<sub>${a}</sub>`:ah+(a>1?`<sub>${a}</sub>`:''); }
+  return h;
+}
+
+function valenceQuestion(ion){
+  const correct=ionChoiceHTML(ion,ion.charge,ion.type);
+  const other=[1,2,3].filter(c=>c!==ion.charge);
+  const ws=ion.type==='cation'?'anion':'cation';
+  const decoys=[...shuffle(other).slice(0,2).map(c=>ionChoiceHTML(ion,c,ion.type)),ionChoiceHTML(ion,ion.charge,ws)];
+  return{type:'valence',text:`${ion.name}を表す正しい化学式は？`,correct,options:shuffle([correct,...decoys.slice(0,3)])};
+}
+function crystalQuestion(crystal){
+  return{type:'crystal',text:`${crystal.name}の組成式を作れ。`,crystal,cn:crystal.cn,an:crystal.an};
+}
+function buildQuestions(){
+  return shuffle([...shuffle(IONS).slice(0,8).map(valenceQuestion),...shuffle(CRYSTALS).slice(0,7).map(crystalQuestion)]);
+}
+
+let questions=[],qIdx=0,score=0,streak=0,maxStreak=0;
+let correctCount=0,mistakes=[],times=[],qStartTime=0,answered=false;
+let cCnt=0,aCnt=0;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function startGame(){
+  questions=buildQuestions();qIdx=0;score=0;streak=0;maxStreak=0;
+  correctCount=0;mistakes=[];times=[];answered=false;
+  showScreen('question-screen');renderQuestion();
+}
+function resetGame(){ showScreen('start-screen'); }
+
+function renderQuestion(){
+  answered=false;
+  const q=questions[qIdx];
+  document.getElementById('progress-bar').style.width=`${(qIdx/questions.length)*100}%`;
+  document.getElementById('q-num').textContent=`問題 ${qIdx+1} / ${questions.length}`;
+  document.getElementById('score-display').innerHTML=`スコア: ${score}${streak>=2?`<span class="streak-badge">${streak}連続!</span>`:''}`;
+  const badge=document.getElementById('q-type-badge');
+  if(q.type==='valence'){badge.textContent='価数問題';badge.className='q-type-badge type-valence';}
+  else{badge.textContent='組成式の作成';badge.className='q-type-badge type-crystal';}
+  document.getElementById('q-text').innerHTML=q.text;
+  if(q.type==='valence') renderValence(q); else renderCrystal(q);
+  qStartTime=Date.now();
+}
+
+function renderValence(q){
+  document.getElementById('q-body').innerHTML=
+    `<div class="choices-grid">${q.options.map(opt=>`<button class="choice-btn" data-val="${encodeURIComponent(opt)}" onclick="answerValence(this)">${opt}</button>`).join('')}</div>
+    <div id="result-msg"></div>
+    <button class="next-btn" id="next-btn" style="display:none" onclick="nextQuestion()">次の問題 &rarr;</button>`;
+}
+
+function answerValence(btn){
+  if(answered) return;
+  answered=true;
+  const chosen=decodeURIComponent(btn.dataset.val);
+  const elapsed=(Date.now()-qStartTime)/1000;
+  times.push(elapsed);
+  const q=questions[qIdx];
+  const isCorrect=chosen===q.correct;
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled=true;
+    if(decodeURIComponent(b.dataset.val)===q.correct) b.classList.add('correct');
+    else if(b===btn&&!isCorrect) b.classList.add('wrong');
+  });
+  const msg=document.getElementById('result-msg');
+  if(isCorrect){
+    streak++;maxStreak=Math.max(maxStreak,streak);
+    const pts=100+streak*10+Math.max(0,Math.round(10-elapsed));
+    score+=pts;correctCount++;
+    msg.innerHTML=`<div class="result-row result-correct">正解！ +${pts}点</div>`;
+  } else {
+    streak=0;
+    mistakes.push({q:q.text,correct:q.correct});
+    msg.innerHTML=`<div class="result-row result-wrong">不正解</div>`;
+  }
+  document.getElementById('score-display').innerHTML=`スコア: ${score}${streak>=2?`<span class="streak-badge">${streak}連続!</span>`:''}`;
+  document.getElementById('next-btn').style.display='block';
+}
+
+function renderCrystal(q){
+  cCnt=0;aCnt=0;
+  document.getElementById('q-body').innerHTML=`
+    <div class="crystal-formula-display" id="crystal-formula">?</div>
+    <div class="ion-controls">
+      <div class="ion-row">
+        <span class="ion-label">${q.crystal.cation.display}</span>
+        <span class="ion-name-small">${q.crystal.cation.name}</span>
+        <button class="counter-btn" onclick="adjustCount('c',-1)">&#8722;</button>
+        <span class="counter-num" id="c-cnt">0</span>
+        <button class="counter-btn" onclick="adjustCount('c',1)">+</button>
+      </div>
+      <div class="ion-row">
+        <span class="ion-label">${q.crystal.anion.display}</span>
+        <span class="ion-name-small">${q.crystal.anion.name}</span>
+        <button class="counter-btn" onclick="adjustCount('a',-1)">&#8722;</button>
+        <span class="counter-num" id="a-cnt">0</span>
+        <button class="counter-btn" onclick="adjustCount('a',1)">+</button>
+      </div>
+    </div>
+    <button class="confirm-btn" id="confirm-btn" onclick="answerCrystal()">決定</button>
+    <div id="result-msg"></div>
+    <button class="next-btn" id="next-btn" style="display:none" onclick="nextQuestion()">次の問題 &rarr;</button>`;
+}
+
+function adjustCount(which,delta){
+  if(answered) return;
+  if(which==='c'){cCnt=Math.max(0,Math.min(6,cCnt+delta));document.getElementById('c-cnt').textContent=cCnt;}
+  else{aCnt=Math.max(0,Math.min(6,aCnt+delta));document.getElementById('a-cnt').textContent=aCnt;}
+  document.getElementById('crystal-formula').innerHTML=buildCrystalHTML(questions[qIdx],cCnt,aCnt);
+}
+
+function answerCrystal(){
+  if(answered) return;
+  answered=true;
+  const elapsed=(Date.now()-qStartTime)/1000;
+  times.push(elapsed);
+  const q=questions[qIdx];
+  const isCorrect=cCnt===q.cn&&aCnt===q.an;
+  document.getElementById('confirm-btn').disabled=true;
+  const msg=document.getElementById('result-msg');
+  if(isCorrect){
+    streak++;maxStreak=Math.max(maxStreak,streak);
+    const pts=100+streak*10+Math.max(0,Math.round(10-elapsed));
+    score+=pts;correctCount++;
+    msg.innerHTML=`<div class="result-row result-correct">正解！ +${pts}点</div>`;
+  } else {
+    streak=0;
+    mistakes.push({q:q.text,correctHTML:buildCrystalHTML(q,q.cn,q.an)});
+    msg.innerHTML=`<div class="result-row result-wrong">不正解</div>`;
+  }
+  document.getElementById('score-display').innerHTML=`スコア: ${score}`;
+  document.getElementById('next-btn').style.display='block';
+}
+
+function nextQuestion(){
+  qIdx++;
+  if(qIdx>=questions.length){showResults();return;}
+  renderQuestion();
+}
+
+function showResults(){
+  showScreen('result-screen');
+  const avgTime=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('stat-correct').textContent=`${correctCount}/15`;
+  document.getElementById('stat-streak').textContent=maxStreak;
+  document.getElementById('stat-time').textContent=`${avgTime}s`;
+  document.getElementById('rank-info').innerHTML='';
+  const { topPct, top10score } = calcRank(score);
+  let rankText = `<span class="rank-pct">上位 ${topPct}%</span> の成績`;
+  if(score < top10score){
+    rankText += `<br><small>上位10%まであと <strong>${top10score - score}</strong> 点</small>`;
+  } else {
+    rankText += `<br><small>上位10%達成！</small>`;
+  }
+  document.getElementById('rank-info').innerHTML = rankText;
+  const ms=document.getElementById('mistakes-section');
+  if(mistakes.length===0){
+    ms.innerHTML='<div style="text-align:center;color:#888;padding:1rem;">全問正解！素晴らしい！</div>';
+  } else {
+    ms.innerHTML=`<div class="mistakes-title">間違えた問題 (${mistakes.length}問)</div>`
+      +mistakes.map(m=>`<div class="mistake-item"><div class="mistake-q">${m.q}</div><div class="mistake-ans">正答: ${m.correctHTML||m.correct}</div></div>`).join('');
+  }
+}
+</script>
+</body>
+</html>
