@@ -69,7 +69,8 @@ sub,sup{font-size:.62em}
     <li>制限時間は90秒。分子が大きいほど高得点(共有結合1本につき50点)</li>
     <li>電子式のルール:まず4方向に1個ずつ、5個目からは対にして置く</li>
     <li>不対電子どうしでしか結合できない。O原子2個なら二重結合(O<sub>2</sub>)ができる</li>
-    <li>作れる分子の例:H<sub>2</sub>, O<sub>2</sub>, N<sub>2</sub>, Cl<sub>2</sub>, F<sub>2</sub>, HCl, HF, H<sub>2</sub>O, NH<sub>3</sub>, CH<sub>4</sub>, CO<sub>2</sub></li>
+    <li>不対電子をすべて使い切ると分子は完成してフィールドから消える。どんどん原子をつなげて色々な分子を作ろう</li>
+    <li>作れる分子の例:H<sub>2</sub>, O<sub>2</sub>, N<sub>2</sub>, HCl, H<sub>2</sub>O, NH<sub>3</sub>, CH<sub>4</sub>, CO<sub>2</sub>, H<sub>2</sub>O<sub>2</sub>, C<sub>2</sub>H<sub>6</sub> など</li>
   </ul>
   <button class="primary" onclick="startGame()">スタート</button>
 </section>
@@ -120,27 +121,22 @@ const EL={
  Cl:{v:7,u:1,c:'#2e7d54',r:23},
 };
 const SPAWN=['H','H','H','H','H','O','O','O','C','C','N','N','Cl','Cl','F'];
-const DB={ // 完成できる分子 {組成: 表示式}
- 'H2':'H<sub>2</sub>','O2':'O<sub>2</sub>','N2':'N<sub>2</sub>','F2':'F<sub>2</sub>','Cl2':'Cl<sub>2</sub>',
- 'HF':'HF','ClH':'HCl','HO':'—','H2O':'H<sub>2</sub>O','H3N':'NH<sub>3</sub>','H2N':'—','HN':'—',
- 'CH4':'CH<sub>4</sub>','CH3':'—','CH2':'—','CH':'—','CO2':'CO<sub>2</sub>','CO':'—',
-};
-// 完成形のみ(中間体は '—')
+const DOT_DIRS=[[0,-1],[1,0],[0,1],[-1,0]]; // 上・右・下・左
 function compKey(comp){return Object.keys(comp).sort().map(k=>k+(comp[k]>1?comp[k]:'')).join('')}
-function isSubset(comp){ // どれかの完成分子の部分集合か
-  for(const key in DB){
-    const target=parseKey(key);
-    let ok=true;
-    for(const el in comp){ if(!(el in target)||comp[el]>target[el]){ok=false;break;} }
-    if(ok)return true;
-  }
-  return false;
+// 分子式の元素の並び順(炭素→水素→その他アルファベット順、Hill方式)
+function formulaOrder(comp){
+  const order=[];
+  if(comp.C)order.push('C');
+  if(comp.H)order.push('H');
+  Object.keys(comp).filter(e=>e!=='C'&&e!=='H').sort().forEach(e=>order.push(e));
+  return order;
 }
-function parseKey(key){
-  const out={};const re=/([A-Z][a-z]?)(\d*)/g;let m;
-  while((m=re.exec(key))!==null){if(!m[1])break;out[m[1]]=m[2]?parseInt(m[2]):1;}
-  return out;
+function formulaSegs(comp){ // [{t,sub}] 形式の分子式(下付き数字を分離)
+  const segs=[];
+  formulaOrder(comp).forEach(e=>{segs.push({t:e,sub:false});if(comp[e]>1)segs.push({t:String(comp[e]),sub:true});});
+  return segs;
 }
+function formulaHTML(comp){return formulaSegs(comp).map(s=>s.sub?'<sub>'+s.t+'</sub>':s.t).join('')}
 
 let clusters=[],score=0,made=0,tLeft=0,timer=null,raf=null,running=false,madeList={};
 let cv,ctx,W,H,DPR;
@@ -168,11 +164,11 @@ function finish(){
   running=false;clearInterval(timer);cancelAnimationFrame(raf);
   $('play').classList.add('hidden');$('end').classList.remove('hidden');
   $('fscore').textContent=score;
-  const parts=Object.keys(madeList).map(k=>DB[k]+' ×'+madeList[k]);
+  const parts=Object.keys(madeList).map(k=>madeList[k].label+' ×'+madeList[k].n);
   $('flist').innerHTML=parts.length?('作った分子: '+parts.join('、')):'次は分子完成をめざそう！';
 }
 function upd(){$('score').textContent=score;$('count').textContent=made;
-  $('made').innerHTML=Object.keys(madeList).map(k=>'<span>'+DB[k]+' ×'+madeList[k]+'</span>').join('');}
+  $('made').innerHTML=Object.keys(madeList).map(k=>'<span>'+madeList[k].label+' ×'+madeList[k].n+'</span>').join('');}
 function msg(t,color){$('msg').textContent=t;$('msg').style.color=color||'var(--mut)';}
 
 function spawn(){
@@ -227,12 +223,14 @@ function draw(){
       ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(a.el,p.x,p.y);
     });
-    // 不対電子(クラスター全体でまとめて上側に)
+    // 不対電子(各原子の四方(上・右・下・左)に展開して表示)
     if(!c.needsLewis&&c.unpaired>0){
-      const p0=atomPos(c,0);
+      const n=c.atoms.length;
       for(let k=0;k<c.unpaired;k++){
+        const ai=k%n,d=DOT_DIRS[Math.floor(k/n)%4];
+        const p=atomPos(c,ai),rad=EL[c.atoms[ai].el].r;
         ctx.beginPath();
-        ctx.arc(c.x-((c.unpaired-1)*10)/2+k*10, p0.y-EL[c.atoms[0].el].r-11,3.4,0,7);
+        ctx.arc(p.x+d[0]*(rad+10),p.y+d[1]*(rad+10),3.4,0,7);
         ctx.fillStyle='#d4566a';ctx.fill();
       }
     }
@@ -241,12 +239,20 @@ function draw(){
       ctx.fillText('タップ',c.x,c.y+EL[c.atoms[0].el].r+12);
     }
   }
-  // 得点フロート
+  // 得点フロート(分子式は下付き数字つきで描画)
   floats=floats.filter(f=>f.life>0);
   for(const f of floats){
     ctx.globalAlpha=Math.min(1,f.life/30);
-    ctx.fillStyle='#2e9e6b';ctx.font='800 18px sans-serif';ctx.textAlign='center';
-    ctx.fillText(f.t,f.x,f.y);f.y-=0.7;f.life--;
+    ctx.fillStyle='#2e9e6b';ctx.textAlign='left';ctx.textBaseline='middle';
+    const parts=f.segs.concat([{t:' +'+f.pts,sub:false}]);
+    const widths=parts.map(s=>{ctx.font='800 '+(s.sub?12:18)+'px sans-serif';return ctx.measureText(s.t).width;});
+    let x=f.x-widths.reduce((a,b)=>a+b,0)/2;
+    parts.forEach((s,i)=>{
+      ctx.font='800 '+(s.sub?12:18)+'px sans-serif';
+      ctx.fillText(s.t,x,s.sub?f.y+5:f.y);
+      x+=widths[i];
+    });
+    f.y-=0.7;f.life--;
     ctx.globalAlpha=1;
   }
 }
@@ -303,7 +309,6 @@ function tryMerge(a,b){
   if(a.unpaired<1||b.unpaired<1){msg('不対電子がない原子は結合できない！','var(--bad)');nudge(a,b);return;}
   const comp={...a.comp};
   for(const el in b.comp)comp[el]=(comp[el]||0)+b.comp[el];
-  if(!isSubset(comp)){msg('その組み合わせの分子は作れない…','var(--bad)');nudge(a,b);return;}
   const order=Math.min(a.unpaired,b.unpaired,3); // 結合次数
   const merged={
     atoms:a.atoms.concat(b.atoms),comp,
@@ -312,14 +317,15 @@ function tryMerge(a,b){
     x:(a.x+b.x)/2,y:(a.y+b.y)/2,
     vx:(a.vx+b.vx)/2,vy:(a.vy+b.vy)/2};
   clusters=clusters.filter(c=>c!==a&&c!==b);
-  const key=compKey(comp);
-  if(DB[key]&&DB[key]!=='—'&&merged.unpaired===0){
-    // 分子完成！
+  if(merged.unpaired===0){
+    // 不対電子を使い切った → 分子完成、フィールドから消える
     const bonds=merged.atoms.reduce((s,at)=>s+EL[at.el].u,0)/2;
     const pts=bonds*50;
     score+=pts;made++;
-    madeList[key]=(madeList[key]||0)+1;
-    floats.push({t:DB[key].replace(/<[^>]+>/g,'')+' +'+pts,x:merged.x,y:merged.y,life:70});
+    const key=compKey(comp);
+    if(!madeList[key])madeList[key]={label:formulaHTML(comp),n:0};
+    madeList[key].n++;
+    floats.push({segs:formulaSegs(comp),pts,x:merged.x,y:merged.y,life:70});
     msg('分子完成！ +'+pts+'点','var(--ok)');
     upd();
   }else{
