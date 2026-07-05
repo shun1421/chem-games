@@ -38,7 +38,8 @@ main{max-width:940px;margin:0 auto;padding:14px 12px}
 .sweeprow .lbl{font-size:12.5px;color:var(--mut);font-weight:700}
 .sweeprow button{padding:8px 13px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);font-family:inherit}
 .sweeprow button.on{border-color:var(--amber);background:var(--amber);color:#fff}
-.sweeprow .play{margin-left:auto;border-color:var(--acc);color:var(--acc);padding:8px 18px}
+.sweeprow .spd{padding:8px 10px;font-size:12px}
+.sweeprow .play{border-color:var(--acc);color:var(--acc);padding:8px 14px}
 .sweeprow .play.running{background:var(--acc);color:#fff}
 #status{font-size:13.5px;color:var(--ink);background:#eef4fa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.7;margin-top:4px}
 #status b{color:var(--acc)}
@@ -98,8 +99,9 @@ let gasMode='ideal';   // 'ideal' | 'real'
 let holdMode='V';      // 'V':体積固定(P従属) | 'P':圧力固定(V従属)
 let sweepVar='T';
 let vals={n:1.0,T:300,V:25,P:1.0e5};
-let condensed=false, Z=1, sweeping=false, sweepT0=0;
-const SWEEP_SEC=7;
+let condensed=false, Z=1;
+let sweeping=false, sweepT0=0, sweepFrom=0, sweepTo=0, sweepDur=7, sweepDirCur=1, sweepSpeed=1;
+const SWEEP_SEC=7; // 全範囲を「ふつう」で掃引する基準秒数
 
 // ==== 物理 ====
 function pIdeal(V,T,n){return n*R*T/V;}
@@ -199,11 +201,26 @@ function buildControls(){
     b.onclick=()=>setSweep(k);
     s.appendChild(b);
   }
-  const play=document.createElement('button');
-  play.id='playBtn';play.className='play';
-  play.textContent='▶ 変化を再生';
-  play.onclick=toggleSweep;
-  s.appendChild(play);
+  const lb2=document.createElement('span');
+  lb2.className='lbl';lb2.style.marginLeft='6px';lb2.textContent='速さ:';
+  s.appendChild(lb2);
+  [[0.5,'おそい'],[1,'ふつう'],[2,'はやい']].forEach(([v,t])=>{
+    const b=document.createElement('button');
+    b.className='spd'+(sweepSpeed===v?' on':'');
+    b.dataset.s=v;b.textContent=t;
+    b.onclick=()=>setSpeed(v);
+    s.appendChild(b);
+  });
+  const grp=document.createElement('div');
+  grp.style.cssText='margin-left:auto;display:flex;gap:8px';
+  const down=document.createElement('button');
+  down.id='playDown';down.className='play';down.textContent='◀ 減少';
+  down.onclick=()=>startSweepDir(-1);
+  const up=document.createElement('button');
+  up.id='playUp';up.className='play';up.textContent='▶ 増加';
+  up.onclick=()=>startSweepDir(1);
+  grp.appendChild(down);grp.appendChild(up);
+  s.appendChild(grp);
   updateReadouts();
 }
 
@@ -248,26 +265,36 @@ function lawText(){
   return law+extra;
 }
 
-// ==== スイープ ====
-function toggleSweep(){
-  if(sweeping){stopSweep();return;}
-  sweeping=true;sweepT0=performance.now();
+// ==== スイープ(現在値から増加/減少どちらにも再生できる) ====
+function startSweepDir(dir){ // dir: +1=増加 / -1=減少
+  if(sweeping&&dir===sweepDirCur){stopSweep();return;} // 同じボタンで停止
+  stopSweep();
   const m=VARS[sweepVar];
-  vals[sweepVar]=m.min;
-  $('playBtn').textContent='■ 停止';
-  $('playBtn').classList.add('running');
+  sweepFrom=vals[sweepVar];
+  sweepTo=dir>0?m.max:m.min;
+  if(Math.abs(sweepTo-sweepFrom)<(m.max-m.min)*1e-6)sweepFrom=dir>0?m.min:m.max; // すでに端なら反対端から
+  sweepDur=Math.max(0.3,SWEEP_SEC/sweepSpeed*Math.abs(sweepTo-sweepFrom)/(m.max-m.min));
+  sweepT0=performance.now();
+  sweeping=true;sweepDirCur=dir;
+  const b=$(dir>0?'playUp':'playDown');
+  if(b){b.classList.add('running');b.textContent='■ 停止';}
 }
 function stopSweep(){
   if(!sweeping)return;
   sweeping=false;
-  const b=$('playBtn');
-  if(b){b.textContent='▶ 変化を再生';b.classList.remove('running');}
+  const u=$('playUp'),d=$('playDown');
+  if(u){u.classList.remove('running');u.textContent='▶ 増加';}
+  if(d){d.classList.remove('running');d.textContent='◀ 減少';}
+}
+function setSpeed(sp){
+  sweepSpeed=sp;
+  document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',parseFloat(b.dataset.s)===sp));
+  if(sweeping){const dir=sweepDirCur;stopSweep();startSweepDir(dir);} // 再生中なら新しい速さで継続
 }
 function sweepStep(now){
-  const t=(now-sweepT0)/(SWEEP_SEC*1000);
-  const m=VARS[sweepVar];
-  if(t>=1){vals[sweepVar]=m.max;stopSweep();}
-  else vals[sweepVar]=m.min+(m.max-m.min)*t;
+  const t=(now-sweepT0)/(sweepDur*1000);
+  if(t>=1){vals[sweepVar]=sweepTo;stopSweep();}
+  else vals[sweepVar]=sweepFrom+(sweepTo-sweepFrom)*t;
   recompute();updateReadouts();graphDirty=true;
 }
 
