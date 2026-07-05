@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>結晶格子ラボ | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--rose:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:900px;margin:0 auto;padding:14px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+#structs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+#structs button, .tgl{padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink)}
+#structs button.on{border-color:var(--acc);background:var(--acc);color:#fff}
+.tgl.on{border-color:var(--amber);background:var(--amber);color:#fff}
+#stage{width:100%;height:430px;border:2px solid var(--line);border-radius:12px;background:#10222b;touch-action:none;display:block}
+#bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+#status{font-size:13.5px;color:var(--ink);background:#eef6f5;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px;line-height:1.7;margin-top:4px}
+#status b{color:var(--acc)}
+#info{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.ibox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--mut)}
+.ibox b{display:block;font-size:15px;color:var(--ink);font-family:var(--mono);margin-top:2px}
+.note{font-size:12px;color:var(--mut);margin-top:10px;line-height:1.7}
+sub,sup{font-size:.62em}
+@media(max-width:600px){#stage{height:340px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">結晶格子ラボ</div>
+  <span class="chip">教材 | 化学結合・固体</span>
+</header>
+<main>
+<div class="panel">
+  <div id="structs"></div>
+  <canvas id="stage"></canvas>
+  <div id="bar">
+    <button class="tgl" id="tModel" onclick="toggleModel()">接触モデル ⇔ 小粒子モデル</button>
+    <button class="tgl" id="tRadius" onclick="toggleRadius()">原子半径モード(4粒子を選択)</button>
+    <button class="tgl" onclick="resetSel()">選択を解除</button>
+    <button class="tgl" onclick="resetView()">視点リセット</button>
+  </div>
+  <div id="status">粒子をタップすると、<b>となり合う粒子(最近接粒子)</b>がオレンジ色に光ります。配位数を自分の目で数えてみよう。<br>ドラッグで回転 / ホイール(ピンチ)で拡大縮小</div>
+  <div id="info"></div>
+  <div class="note">※ 太い黄色の枠が<b>単位格子</b>。単位格子の外側にも構造が続いていることを、うすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。</div>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const SQ2=Math.SQRT2, SQ3=Math.sqrt(3);
+
+function genSC(){const pts=[];for(let x=0;x<=2;x++)for(let y=0;y<=2;y++)for(let z=0;z<=2;z++)pts.push({p:[x,y,z],t:0});return pts;}
+function genBCC(){const pts=genSC();for(let x=0;x<2;x++)for(let y=0;y<2;y++)for(let z=0;z<2;z++)pts.push({p:[x+.5,y+.5,z+.5],t:0});return pts;}
+function genFCC(){const pts=genSC();
+  for(let x=0;x<2;x++)for(let y=0;y<2;y++)for(let z=0;z<=2;z++)pts.push({p:[x+.5,y+.5,z],t:0});
+  for(let x=0;x<2;x++)for(let y=0;y<=2;y++)for(let z=0;z<2;z++)pts.push({p:[x+.5,y,z+.5],t:0});
+  for(let x=0;x<=2;x++)for(let y=0;y<2;y++)for(let z=0;z<2;z++)pts.push({p:[x,y+.5,z+.5],t:0});
+  return pts;}
+function genNaCl(){const pts=[];
+  for(let x=0;x<=4;x++)for(let y=0;y<=4;y++)for(let z=0;z<=4;z++){
+    pts.push({p:[x/2,y/2,z/2],t:(x+y+z)%2});} // t0=Na(小) t1=Cl(大)
+  return pts;}
+
+const ST={
+ sc:{name:'単純立方格子',gen:genSC,rTouch:[.5],rSmall:[.11],col:['#7fa8bd'],
+   n:'1個',coord:6,fill:'52%',rel:'2r = a',nd:1,
+   ex:'立方体の頂点だけに粒子。となりの粒子とは辺にそって接する。例:ポロニウム'},
+ bcc:{name:'体心立方格子',gen:genBCC,rTouch:[SQ3/4],rSmall:[.11],col:['#7fa8bd'],
+   n:'2個',coord:8,fill:'68%',rel:'4r = √3 a(体対角線)',nd:SQ3/2,
+   ex:'中心の粒子は8個の頂点粒子と接する。例:Na, K, Fe'},
+ fcc:{name:'面心立方格子',gen:genFCC,rTouch:[SQ2/4],rSmall:[.11],col:['#7fa8bd'],
+   n:'4個',coord:12,fill:'74%',rel:'4r = √2 a(面対角線)',nd:SQ2/2,
+   ex:'面の中心の粒子が、面対角線にそって接する。最密構造。例:Cu, Ag, Al'},
+ nacl:{name:'塩化ナトリウム型',gen:genNaCl,rTouch:[.19,.31],rSmall:[.09,.13],col:['#9db4d8','#5aa06b'],
+   n:'Na⁺4個+Cl⁻4個',coord:6,fill:'—',rel:'2(r₊ + r₋) = a',nd:.5,
+   ex:'Na⁺(青)とCl⁻(緑)が交互に並ぶ。どちらのイオンも反対符号のイオン6個に囲まれる(配位数6)。'},
+};
+
+let key='fcc',pts=[],touchMode=true,radiusMode=false;
+let selected=-1,neighbors=[],picked=[];
+let yaw=.65,pitch=.42,zoom=1,dirty=true;
+let cv,ctx,W,H,DPR,downP=null,moved=0,pinchD=0;
+
+function setStruct(k){
+  key=k;pts=ST[k].gen();
+  selected=-1;neighbors=[];picked=[];
+  [...$('structs').children].forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  info();dirty=true;
+  status(ST[k].ex+'<br>粒子をタップして配位数を数えてみよう。');
+}
+function info(){
+  const s=ST[key];
+  $('info').innerHTML=
+   '<div class="ibox">単位格子内の粒子数<b>'+s.n+'</b></div>'+
+   '<div class="ibox">配位数<b>'+s.coord+'</b></div>'+
+   '<div class="ibox">充填率<b>'+s.fill+'</b></div>'+
+   '<div class="ibox">半径と格子定数の関係<b>'+s.rel+'</b></div>';
+}
+function status(t){$('status').innerHTML=t;}
+function toggleModel(){touchMode=!touchMode;$('tModel').classList.toggle('on',!touchMode);dirty=true;}
+function toggleRadius(){
+  radiusMode=!radiusMode;$('tRadius').classList.toggle('on',radiusMode);
+  resetSel();
+  status(radiusMode
+   ?'<b>原子半径モード</b>:粒子を4つ選ぶと、その4点を頂点とした図形と各辺の長さ(aの何倍か)を表示します。<br>例:面心立方格子なら「頂点2つ+面心2つ」を選んで面対角線を見つけよう。'
+   :'粒子をタップすると最近接粒子がオレンジ色に光ります。');
+}
+function resetSel(){selected=-1;neighbors=[];picked=[];dirty=true;}
+function resetView(){yaw=.65;pitch=.42;zoom=1;dirty=true;}
+
+// ==== 3D ====
+function rot(p,c){
+  const x0=(p[0]-c)*1,y0=(p[1]-c),z0=(p[2]-c);
+  const cy=Math.cos(yaw),sy=Math.sin(yaw);
+  const x=x0*cy+z0*sy, z=-x0*sy+z0*cy;
+  const cp=Math.cos(pitch),sp=Math.sin(pitch);
+  const y2=y0*cp-z*sp, z2=y0*sp+z*cp;
+  return [x,y2,z2];
+}
+function proj(p){
+  const f=7,s=118*zoom;
+  const k=f/(f-p[2]);
+  return {x:W/2+p[0]*s*k,y:H/2-p[1]*s*k,k,s};
+}
+function inCell(p){return p.every(v=>v>-1e-6&&v<1+1e-6);}
+
+let screenPts=[];
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const s=ST[key];
+  const c=1; // 領域中心 (0..2)
+  const rp=pts.map(a=>rot(a.p,c));
+  const pp=rp.map(proj);
+  screenPts=pp;
+  // 単位格子の枠(奥側を先に)
+  const corners=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
+  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  const cp=corners.map(q=>proj(rot(q,c)));
+  ctx.strokeStyle='rgba(232,161,61,.35)';ctx.lineWidth=2;
+  for(const e of edges){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
+  // 粒子(奥→手前)
+  const ord=pts.map((_,i)=>i).sort((a,b)=>rp[a][2]-rp[b][2]);
+  for(const i of ord){
+    const a=pts[i],p=pp[i];
+    const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
+    const r=rBase*p.s*p.k/1;
+    const inside=inCell(a.p);
+    let col=s.col[a.t];
+    if(i===selected)col='#d4566a';
+    else if(neighbors.includes(i))col='#e8a13d';
+    const pi=picked.indexOf(i);
+    if(pi>=0)col='#d4566a';
+    ctx.globalAlpha=inside?1:.22;
+    const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.1,p.x,p.y,r);
+    g.addColorStop(0,'#fff');g.addColorStop(.3,col);g.addColorStop(1,shade(col));
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle=g;ctx.fill();
+    if(pi>=0){ // 選択番号バッジ
+      ctx.globalAlpha=1;
+      ctx.fillStyle='#fff';ctx.font='800 '+Math.max(11,r*.8)+'px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(String(pi+1),p.x,p.y);
+    }
+    ctx.globalAlpha=1;
+  }
+  // 単位格子の枠(手前に重ね描き)
+  ctx.strokeStyle='rgba(232,161,61,.95)';ctx.lineWidth=2.5;
+  for(const e of edges){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
+  // 原子半径モード:4点選択で図形
+  if(radiusMode&&picked.length===4){
+    ctx.strokeStyle='#7de3d0';ctx.lineWidth=2;
+    ctx.fillStyle='#7de3d0';ctx.font='700 12.5px sans-serif';ctx.textAlign='center';
+    for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
+      const A=pts[picked[i]].p,B=pts[picked[j]].p;
+      const d=Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2]);
+      const P=pp[picked[i]],Q=pp[picked[j]];
+      ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(Q.x,Q.y);ctx.stroke();
+      ctx.save();
+      ctx.fillStyle='#0f1b21';
+      const mx=(P.x+Q.x)/2,my=(P.y+Q.y)/2;
+      const label=fmtLen(d);
+      const w=ctx.measureText(label).width+8;
+      ctx.fillRect(mx-w/2,my-9,w,17);
+      ctx.fillStyle='#7de3d0';
+      ctx.fillText(label,mx,my+4);
+      ctx.restore();
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px sans-serif';ctx.textAlign='left';
+  ctx.fillText(s.name+'(黄色の枠が単位格子)',10,H-12);
+}
+function fmtLen(d){
+  const table=[[.5,'a/2'],[1,'a'],[SQ2/2,'(√2/2)a'],[SQ3/2,'(√3/2)a'],[SQ2,'√2 a'],[SQ3,'√3 a'],
+   [SQ2/4*2,'(√2/2)a'],[1.5,'1.5a'],[Math.sqrt(5)/2,'(√5/2)a'],[Math.sqrt(6)/2,'(√6/2)a'],[2,'2a']];
+  for(const t of table)if(Math.abs(d-t[0])<.01)return t[1];
+  return d.toFixed(2)+'a';
+}
+function shade(hex){
+  const n=parseInt(hex.slice(1),16);
+  return 'rgb('+((n>>16)*.4)+','+(((n>>8)&255)*.4)+','+((n&255)*.4)+')';
+}
+
+// ==== 近接判定 ====
+function selectAtom(i){
+  const s=ST[key];
+  if(radiusMode){
+    const pi=picked.indexOf(i);
+    if(pi>=0)picked.splice(pi,1);
+    else{if(picked.length>=4)picked.shift();picked.push(i);}
+    if(picked.length===4)status('<b>4点を結んだ図形</b>を表示中。辺の長さから、粒子が接する方向を見つけて r と a の関係式を立てよう。('+s.rel+')');
+    else status('選択中: '+picked.length+' / 4 個');
+    dirty=true;return;
+  }
+  selected=i;neighbors=[];
+  const A=pts[i];
+  let dmin=1e9;
+  pts.forEach((B,j)=>{
+    if(j===i)return;
+    if(key==='nacl'&&B.t===A.t)return; // NaClは反対符号のイオンが最近接
+    const d=Math.hypot(A.p[0]-B.p[0],A.p[1]-B.p[1],A.p[2]-B.p[2]);
+    if(d<dmin-1e-6){dmin=d;neighbors=[j];}
+    else if(Math.abs(d-dmin)<1e-6)neighbors.push(j);
+  });
+  const name=key==='nacl'?(A.t===0?'Na⁺':'Cl⁻'):'この粒子';
+  status('<b>'+name+'</b>の最近接粒子(距離 '+fmtLen(dmin)+')をオレンジ色で表示。画面内で数えられた数: <b>'+neighbors.length+'個</b> / 理論値(結晶全体では): <b>'+ST[key].coord+'個</b><br>端の粒子は結晶が続けばもっと囲まれる。中央付近の粒子で数えてみよう。');
+  dirty=true;
+}
+
+// ==== 入力 ====
+function evP(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+  return {x:t.clientX-r.left,y:t.clientY-r.top};}
+function pdown(e){
+  if(e.touches&&e.touches.length===2){
+    pinchD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    downP=null;e.preventDefault();return;
+  }
+  downP=evP(e);moved=0;e.preventDefault();
+}
+function pmove(e){
+  if(e.touches&&e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    zoom=Math.max(.5,Math.min(2.6,zoom*d/pinchD));pinchD=d;dirty=true;e.preventDefault();return;
+  }
+  if(!downP)return;
+  const p=evP(e);
+  const dx=p.x-downP.x,dy=p.y-downP.y;
+  moved+=Math.abs(dx)+Math.abs(dy);
+  yaw+=dx*0.009;pitch+=dy*0.007;
+  pitch=Math.max(-1.5,Math.min(1.5,pitch));
+  downP=p;dirty=true;
+  if(e.cancelable)e.preventDefault();
+}
+function pup(e){
+  if(!downP){return;}
+  if(moved<6){ // タップ → 粒子選択(手前優先)
+    const p=evP(e);
+    const s=ST[key];
+    let best=-1,bz=-1e9;
+    pts.forEach((a,i)=>{
+      const sp=screenPts[i];if(!sp)return;
+      const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
+      const r=Math.max(12,rBase*sp.s*sp.k);
+      if((p.x-sp.x)**2+(p.y-sp.y)**2<r*r){
+        const z=rot(a.p,1)[2];
+        if(z>bz){bz=z;best=i;}
+      }
+    });
+    if(best>=0)selectAtom(best);
+  }
+  downP=null;
+}
+function wheel(e){zoom=Math.max(.5,Math.min(2.6,zoom*(e.deltaY<0?1.1:0.9)));dirty=true;e.preventDefault();}
+
+window.addEventListener('load',()=>{
+  cv=$('stage');DPR=window.devicePixelRatio||1;
+  const r=cv.getBoundingClientRect();W=r.width;H=r.height;
+  cv.width=W*DPR;cv.height=H*DPR;
+  ctx=cv.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
+  const sd=$('structs');
+  for(const k in ST){
+    const b=document.createElement('button');
+    b.dataset.k=k;b.textContent=ST[k].name;
+    b.onclick=()=>setStruct(k);
+    sd.appendChild(b);
+  }
+  cv.addEventListener('mousedown',pdown);
+  window.addEventListener('mousemove',pmove);
+  window.addEventListener('mouseup',pup);
+  cv.addEventListener('touchstart',pdown,{passive:false});
+  cv.addEventListener('touchmove',pmove,{passive:false});
+  cv.addEventListener('touchend',pup);
+  cv.addEventListener('wheel',wheel,{passive:false});
+  setStruct('fcc');
+  (function loop(){if(dirty){dirty=false;draw();}requestAnimationFrame(loop);})();
+});
+</script>
+</body>
+</html>

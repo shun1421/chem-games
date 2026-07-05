@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>コロイドマッチ | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#5a9367;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px;white-space:nowrap}
+main{max-width:720px;margin:0 auto;padding:20px 14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px;letter-spacing:.04em}
+.desc{color:var(--mut);margin:.4em 0}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+button.primary:active{transform:translateY(1px)}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut)}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#tbar{height:6px;background:var(--line);border-radius:3px;margin:10px 0}
+#tfill{height:100%;width:100%;background:var(--acc);border-radius:3px;transition:width .1s linear}
+#qtext{min-height:86px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;margin:8px 0;line-height:1.5}
+#choices{display:grid;gap:10px}
+#choices button{padding:14px 6px;font-size:16px;font-weight:700;background:#fff;border:2px solid var(--line);border-radius:10px;cursor:pointer;color:var(--ink)}
+#choices button.correct{border-color:var(--ok);background:#e9f7f0}
+#choices button.wrong{border-color:var(--bad);background:#fbeef0}
+#fb{min-height:44px;margin-top:12px;font-size:14px;color:var(--mut);text-align:center;line-height:1.6}
+#fb .good{color:var(--ok);font-weight:800}
+#fb .bad{color:var(--bad);font-weight:800}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+@media(max-width:480px){#qtext{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">コロイドマッチ</div>
+  <span class="chip">溶液</span>
+</header>
+<main>
+  <section id="start" class="panel">
+    <h1>コロイドマッチ</h1>
+    <p class="desc">コロイドの現象・用語を高速マッチング。用語と現象を結びつけよう。</p>
+    <ul class="rules"><li>制限時間は60秒</li><li>チンダル・ブラウン・電気泳動・透析・凝析・塩析…混同しがちな用語を整理</li></ul>
+    <button class="primary" onclick="startGame()">スタート</button>
+  </section>
+  <section id="play" class="panel hidden">
+    <div class="hud">
+      <div>のこり<b id="time"></b>秒</div>
+      <div>スコア<b id="score">0</b></div>
+      <div>連続<b id="combo">0</b></div>
+    </div>
+    <div id="tbar"><div id="tfill"></div></div>
+    <div id="qtext"></div>
+    <div id="choices"></div>
+    <div id="fb"></div>
+  </section>
+  <section id="end" class="panel hidden">
+    <h1>タイムアップ！</h1>
+    <p class="result">スコア <b id="fscore"></b><br>正答 <span id="facc"></span></p>
+    <button class="primary" onclick="startGame()">もう一度</button>
+    <a class="ghost" href="index.html">一覧へ戻る</a>
+  </section>
+</main>
+<script>
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function fmt(x){return (Math.round(x*1000)/1000).toString()}
+function finalize(q,list,correct,ex){
+  const arr=list.map((s,i)=>({s:s,c:i===correct}));shuffle(arr);
+  return {q:q,choices:arr.map(o=>o.s),a:arr.findIndex(o=>o.c),ex:ex};
+}
+function qnum(q,ans,wrongs,unit,ex){
+  let vals=[ans];
+  for(const w of wrongs){if(vals.every(v=>Math.abs(v-w)>1e-9))vals.push(w);if(vals.length>=4)break;}
+  while(vals.length<4)vals.push(ans*(vals.length+5));
+  return finalize(q,vals.map(v=>fmt(v)+" "+unit),0,ex);
+}
+function staticGame(list){let pool=[];return{next(){if(!pool.length)pool=shuffle(list.slice());return pool.pop();}}}
+
+const DB=[
+{q:'コロイド溶液に横から強い光を当てると、光の通り道が明るく見える現象は？',a:'チンダル現象',w:['ブラウン運動','電気泳動','透析'],ex:'コロイド粒子が光を散乱するため。'},
+{q:'限外顕微鏡で見える、コロイド粒子の不規則な運動は？',a:'ブラウン運動',w:['チンダル現象','凝析','電気泳動'],ex:'熱運動する水分子が粒子に衝突して起こる。'},
+{q:'コロイド溶液に直流電圧をかけると、粒子が一方の電極へ移動する現象は？',a:'電気泳動',w:['塩析','透析','チンダル現象'],ex:'コロイド粒子が帯電しているため。'},
+{q:'半透膜を使って、コロイド粒子と小さな分子・イオンを分ける操作は？',a:'透析',w:['ろ過','蒸留','電気泳動'],ex:'コロイド粒子は半透膜を通れない。人工透析にも応用。'},
+{q:'疎水コロイドに<b>少量</b>の電解質を加えると沈殿する現象は？',a:'凝析',w:['塩析','透析','ゲル化'],ex:'反対符号のイオンが電荷を打ち消して集まる。価数の大きいイオンほど有効。'},
+{q:'親水コロイドに<b>多量</b>の電解質を加えると沈殿する現象は？',a:'塩析',w:['凝析','電気泳動','チンダル現象'],ex:'水和している水分子がうばわれて沈殿する。'},
+{q:'疎水コロイドを凝析しにくくするために加える親水コロイドを何という？',a:'保護コロイド',w:['会合コロイド','分子コロイド','ゲル'],ex:'例:墨汁のにかわ。'},
+{q:'流動性を失って固まったコロイドを何という？',a:'ゲル',w:['ゾル','エーロゾル','ミセル'],ex:'例:豆腐、ゼリー。流動性があるものはゾル。'},
+{q:'Fe(OH)<sub>3</sub>コロイドの凝析にもっとも有効なイオンは？(正コロイドとする)',a:'PO<sub>4</sub><sup>3−</sup>',w:['Cl<sup>−</sup>','Na<sup>+</sup>','SO<sub>4</sub><sup>2−</sup>…Clと同等'],ex:'反対符号で価数が大きいイオンほど凝析させやすい。'},
+{q:'セッケン水のように、分子が集まってできるコロイドを何という？',a:'会合コロイド(ミセル)',w:['分子コロイド','保護コロイド','ゲル'],ex:'デンプンやタンパク質は1分子で大きい「分子コロイド」。'},
+{q:'空気中に液体や固体の微粒子が分散しているコロイドは？',a:'エーロゾル',w:['ゾル','ゲル','エマルション'],ex:'例:霧、煙。'},
+{q:'牛乳のように、液体中に液体が分散しているコロイドは？',a:'エマルション(乳濁液)',w:['サスペンション','エーロゾル','ゲル'],ex:'固体が分散していればサスペンション(懸濁液)。'},
+];
+const GAME=staticGame(DB.map(d=>finalize(d.q,[d.a].concat(d.w),0,d.ex)));
+
+const LIMIT=60;
+let score=0,combo=0,ok=0,total=0,tLeft=0,timer=null,cur=null,locked=false;
+const $=id=>document.getElementById(id);
+function startGame(){
+  score=0;combo=0;ok=0;total=0;tLeft=LIMIT;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  upd();nextQ();clearInterval(timer);
+  timer=setInterval(()=>{tLeft-=0.1;if(tLeft<=0){tLeft=0;finish();}drawT();},100);drawT();
+}
+function drawT(){$('time').textContent=Math.ceil(tLeft);$('tfill').style.width=(tLeft/LIMIT*100)+'%';}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;}
+function nextQ(){
+  locked=false;$('fb').innerHTML='';cur=GAME.next();
+  $('qtext').innerHTML=cur.q;
+  const c=$('choices');c.innerHTML='';
+  c.style.gridTemplateColumns='repeat(2,1fr)';
+  cur.choices.forEach((ch,i)=>{const b=document.createElement('button');b.innerHTML=ch;b.onclick=()=>answer(i,b);c.appendChild(b);});
+}
+function answer(i,btn){
+  if(locked)return;locked=true;total++;
+  const bs=$('choices').children;bs[cur.a].classList.add('correct');
+  if(i===cur.a){ok++;combo++;score+=100+Math.min(combo,10)*10;
+    $('fb').innerHTML='<span class="good">正解！</span> '+(cur.ex||'');setTimeout(nextQ,750);}
+  else{btn.classList.add('wrong');combo=0;
+    $('fb').innerHTML='<span class="bad">おしい！</span> '+(cur.ex||'');setTimeout(nextQ,1700);}
+  upd();
+}
+function finish(){clearInterval(timer);$('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;$('facc').textContent=ok+' 問 / '+total+' 問';}
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分子ビルダー | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:860px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:8px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#field{width:100%;height:440px;border:2px solid var(--line);border-radius:12px;background:
+linear-gradient(#eef4f3 1px,transparent 1px),linear-gradient(90deg,#eef4f3 1px,transparent 1px);
+background-size:28px 28px;background-color:#f9fcfb;touch-action:none;display:block}
+#made{margin-top:10px;font-size:14px;color:var(--mut);min-height:24px}
+#made span{display:inline-block;border:1px solid var(--ok);color:var(--ok);border-radius:999px;padding:1px 10px;margin:2px;font-weight:700}
+#msg{min-height:22px;font-size:14px;text-align:center;color:var(--mut);margin-top:6px;font-weight:700}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+/* 電子式モーダル */
+#modal{position:fixed;inset:0;background:rgba(27,42,51,.55);display:flex;align-items:center;justify-content:center;z-index:10}
+#mbox{background:#fff;border-radius:16px;padding:22px;width:320px;text-align:center}
+#mbox h2{margin:0 0 4px;font-size:18px}
+#mbox .sub{color:var(--mut);font-size:13px;margin-bottom:8px}
+#lewis{position:relative;width:180px;height:180px;margin:6px auto}
+#lewis .sym{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:44px;font-weight:800}
+.slot{position:absolute;width:26px;height:26px;border:2px dashed #b9c8c5;border-radius:50%;cursor:pointer;transform:translate(-50%,-50%)}
+.slot.on{border-style:solid;border-color:var(--ink);background:radial-gradient(circle at center,var(--ink) 0 6px,transparent 7px)}
+#mbox .row{display:flex;gap:8px;margin-top:10px}
+#mbox button{flex:1;padding:11px;border-radius:9px;border:0;font-weight:800;font-size:15px;cursor:pointer}
+#bOK{background:var(--acc);color:#fff}
+#bNG{background:#e7edec;color:var(--mut)}
+#hint{font-size:12px;color:var(--bad);min-height:16px;margin-top:6px}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">分子ビルダー</div>
+  <span class="chip">化学結合</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>分子ビルダー 〜電子式から分子づくり〜</h1>
+  <p class="desc">画面にあらわれる元素記号をタップして、正しい電子式を完成させよう。
+  電子式ができた原子は不対電子(赤い点)をもって漂いはじめる。
+  原子をドラッグしてくっつけ、不対電子を使い切った分子を完成させるとポイント！</p>
+  <ul class="rules">
+    <li>制限時間は90秒。分子が大きいほど高得点(共有結合1本につき50点)</li>
+    <li>電子式のルール:まず4方向に1個ずつ、5個目からは対にして置く</li>
+    <li>不対電子どうしでしか結合できない。O原子2個なら二重結合(O<sub>2</sub>)ができる</li>
+    <li>作れる分子の例:H<sub>2</sub>, O<sub>2</sub>, N<sub>2</sub>, Cl<sub>2</sub>, F<sub>2</sub>, HCl, HF, H<sub>2</sub>O, NH<sub>3</sub>, CH<sub>4</sub>, CO<sub>2</sub></li>
+  </ul>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>のこり<b id="time"></b>秒</div>
+    <div>スコア<b id="score">0</b></div>
+    <div>作った分子<b id="count">0</b></div>
+  </div>
+  <canvas id="field"></canvas>
+  <div id="msg"></div>
+  <div id="made"></div>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>タイムアップ！</h1>
+  <p class="result">スコア <b id="fscore"></b><br><span id="flist"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<div id="modal" class="hidden">
+  <div id="mbox">
+    <h2 id="mtitle"></h2>
+    <div class="sub">最外殻電子を配置しよう(点をタップ)</div>
+    <div id="lewis"></div>
+    <div id="hint"></div>
+    <div class="row">
+      <button id="bNG" onclick="closeModal()">やめる</button>
+      <button id="bOK" onclick="checkLewis()">完成！</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+
+const EL={
+ H:{v:1,u:1,c:'#8fa3ad',r:17},
+ C:{v:4,u:4,c:'#3d4a52',r:22},
+ N:{v:5,u:3,c:'#3e77b6',r:21},
+ O:{v:6,u:2,c:'#d4566a',r:21},
+ F:{v:7,u:1,c:'#5a9367',r:19},
+ Cl:{v:7,u:1,c:'#2e7d54',r:23},
+};
+const SPAWN=['H','H','H','H','H','O','O','O','C','C','N','N','Cl','Cl','F'];
+const DB={ // 完成できる分子 {組成: 表示式}
+ 'H2':'H<sub>2</sub>','O2':'O<sub>2</sub>','N2':'N<sub>2</sub>','F2':'F<sub>2</sub>','Cl2':'Cl<sub>2</sub>',
+ 'HF':'HF','ClH':'HCl','HO':'—','H2O':'H<sub>2</sub>O','H3N':'NH<sub>3</sub>','H2N':'—','HN':'—',
+ 'CH4':'CH<sub>4</sub>','CH3':'—','CH2':'—','CH':'—','CO2':'CO<sub>2</sub>','CO':'—',
+};
+// 完成形のみ(中間体は '—')
+function compKey(comp){return Object.keys(comp).sort().map(k=>k+(comp[k]>1?comp[k]:'')).join('')}
+function isSubset(comp){ // どれかの完成分子の部分集合か
+  for(const key in DB){
+    const target=parseKey(key);
+    let ok=true;
+    for(const el in comp){ if(!(el in target)||comp[el]>target[el]){ok=false;break;} }
+    if(ok)return true;
+  }
+  return false;
+}
+function parseKey(key){
+  const out={};const re=/([A-Z][a-z]?)(\d*)/g;let m;
+  while((m=re.exec(key))!==null){if(!m[1])break;out[m[1]]=m[2]?parseInt(m[2]):1;}
+  return out;
+}
+
+let clusters=[],score=0,made=0,tLeft=0,timer=null,raf=null,running=false,madeList={};
+let cv,ctx,W,H,DPR;
+let drag=null,downPos=null,spawnT=0,current=null,fails=0;
+let floats=[]; // 得点表示
+
+function startGame(){
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  cv=$('field');
+  DPR=window.devicePixelRatio||1;
+  const rect=cv.getBoundingClientRect();
+  W=rect.width;H=440;
+  cv.width=W*DPR;cv.height=H*DPR;
+  ctx=cv.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
+  clusters=[];score=0;made=0;tLeft=90;madeList={};floats=[];spawnT=0;
+  for(let i=0;i<6;i++)spawn();
+  upd();
+  clearInterval(timer);
+  timer=setInterval(()=>{tLeft-=0.1;if(tLeft<=0){tLeft=0;finish();}$('time').textContent=Math.ceil(tLeft);},100);
+  running=true;
+  cancelAnimationFrame(raf);loop();
+  msg('元素記号をタップして電子式をつくろう');
+}
+function finish(){
+  running=false;clearInterval(timer);cancelAnimationFrame(raf);
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;
+  const parts=Object.keys(madeList).map(k=>DB[k]+' ×'+madeList[k]);
+  $('flist').innerHTML=parts.length?('作った分子: '+parts.join('、')):'次は分子完成をめざそう！';
+}
+function upd(){$('score').textContent=score;$('count').textContent=made;
+  $('made').innerHTML=Object.keys(madeList).map(k=>'<span>'+DB[k]+' ×'+madeList[k]+'</span>').join('');}
+function msg(t,color){$('msg').textContent=t;$('msg').style.color=color||'var(--mut)';}
+
+function spawn(){
+  const el=pick(SPAWN);
+  const c={atoms:[{el}],comp:{[el]:1},unpaired:0,needsLewis:true,
+    x:40+Math.random()*(W-80),y:40+Math.random()*(H-80),
+    vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5};
+  clusters.push(c);
+}
+function totalAtoms(){return clusters.reduce((s,c)=>s+c.atoms.length,0)}
+
+function loop(){
+  if(!running)return;
+  spawnT+=1;
+  if(spawnT>150&&totalAtoms()<10){spawn();spawnT=0;}
+  // 移動
+  for(const c of clusters){
+    if(c===drag)continue;
+    c.x+=c.vx;c.y+=c.vy;
+    const m=c.atoms.length*16+14;
+    if(c.x<m){c.x=m;c.vx*=-1}if(c.x>W-m){c.x=W-m;c.vx*=-1}
+    if(c.y<30){c.y=30;c.vy*=-1}if(c.y>H-30){c.y=H-30;c.vy*=-1}
+    c.vx+= (Math.random()-.5)*0.03;c.vy+=(Math.random()-.5)*0.03;
+    c.vx=Math.max(-0.7,Math.min(0.7,c.vx));c.vy=Math.max(-0.7,Math.min(0.7,c.vy));
+  }
+  draw();
+  raf=requestAnimationFrame(loop);
+}
+
+function atomPos(c,i){ // クラスター内i番目の原子座標
+  const n=c.atoms.length;
+  const x0=c.x-(n-1)*17;
+  return {x:x0+i*34,y:c.y};
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  for(const c of clusters){
+    // 結合線
+    if(c.atoms.length>1){
+      ctx.strokeStyle='#7d939c';ctx.lineWidth=5;
+      ctx.beginPath();
+      const p0=atomPos(c,0),p1=atomPos(c,c.atoms.length-1);
+      ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();
+    }
+    c.atoms.forEach((a,i)=>{
+      const p=atomPos(c,i),e=EL[a.el];
+      ctx.beginPath();ctx.arc(p.x,p.y,e.r,0,7);
+      ctx.fillStyle=c.needsLewis?'#dfe7e6':e.c;ctx.fill();
+      ctx.lineWidth=2;ctx.strokeStyle=c.needsLewis?'#b4c3c0':'rgba(0,0,0,.15)';ctx.stroke();
+      ctx.fillStyle=c.needsLewis?'#7c8f97':'#fff';
+      ctx.font='800 '+(a.el.length>1?14:16)+'px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(a.el,p.x,p.y);
+    });
+    // 不対電子(クラスター全体でまとめて上側に)
+    if(!c.needsLewis&&c.unpaired>0){
+      const p0=atomPos(c,0);
+      for(let k=0;k<c.unpaired;k++){
+        ctx.beginPath();
+        ctx.arc(c.x-((c.unpaired-1)*10)/2+k*10, p0.y-EL[c.atoms[0].el].r-11,3.4,0,7);
+        ctx.fillStyle='#d4566a';ctx.fill();
+      }
+    }
+    if(c.needsLewis){
+      ctx.fillStyle='#94a7ad';ctx.font='11px sans-serif';
+      ctx.fillText('タップ',c.x,c.y+EL[c.atoms[0].el].r+12);
+    }
+  }
+  // 得点フロート
+  floats=floats.filter(f=>f.life>0);
+  for(const f of floats){
+    ctx.globalAlpha=Math.min(1,f.life/30);
+    ctx.fillStyle='#2e9e6b';ctx.font='800 18px sans-serif';ctx.textAlign='center';
+    ctx.fillText(f.t,f.x,f.y);f.y-=0.7;f.life--;
+    ctx.globalAlpha=1;
+  }
+}
+
+// ==== 入力 ====
+function evPos(e){
+  const r=cv.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return {x:t.clientX-r.left,y:t.clientY-r.top};
+}
+function hit(p){
+  for(let i=clusters.length-1;i>=0;i--){
+    const c=clusters[i];
+    for(let j=0;j<c.atoms.length;j++){
+      const q=atomPos(c,j),e=EL[c.atoms[j].el];
+      if((p.x-q.x)**2+(p.y-q.y)**2<(e.r+8)**2)return c;
+    }
+  }
+  return null;
+}
+function down(e){
+  if(!running)return;
+  const p=evPos(e);const c=hit(p);
+  downPos=p;
+  if(c&&!c.needsLewis){drag=c;drag.ox=p.x-c.x;drag.oy=p.y-c.y;}
+  else if(c){drag=null;drag_pending=c;}
+  e.preventDefault();
+}
+let drag_pending=null;
+function move(e){
+  if(!running)return;
+  const p=evPos(e);
+  if(drag){drag.x=p.x-drag.ox;drag.y=p.y-drag.oy;e.preventDefault();}
+}
+function up(e){
+  if(!running)return;
+  const p=downPos?{...downPos}:null;
+  if(drag_pending&&p){openModal(drag_pending);drag_pending=null;drag=null;return;}
+  if(drag){
+    // 重なり判定
+    const target=clusters.find(c=>c!==drag&&!c.needsLewis&&overlap(drag,c));
+    if(target)tryMerge(drag,target);
+    drag=null;
+  }
+}
+function overlap(a,b){
+  for(let i=0;i<a.atoms.length;i++)for(let j=0;j<b.atoms.length;j++){
+    const p=atomPos(a,i),q=atomPos(b,j);
+    if((p.x-q.x)**2+(p.y-q.y)**2<(EL[a.atoms[i].el].r+EL[b.atoms[j].el].r+6)**2)return true;
+  }
+  return false;
+}
+function tryMerge(a,b){
+  if(a.unpaired<1||b.unpaired<1){msg('不対電子がない原子は結合できない！','var(--bad)');nudge(a,b);return;}
+  const comp={...a.comp};
+  for(const el in b.comp)comp[el]=(comp[el]||0)+b.comp[el];
+  if(!isSubset(comp)){msg('その組み合わせの分子は作れない…','var(--bad)');nudge(a,b);return;}
+  const order=Math.min(a.unpaired,b.unpaired,3); // 結合次数
+  const merged={
+    atoms:a.atoms.concat(b.atoms),comp,
+    unpaired:a.unpaired+b.unpaired-2*order,
+    needsLewis:false,
+    x:(a.x+b.x)/2,y:(a.y+b.y)/2,
+    vx:(a.vx+b.vx)/2,vy:(a.vy+b.vy)/2};
+  clusters=clusters.filter(c=>c!==a&&c!==b);
+  const key=compKey(comp);
+  if(DB[key]&&DB[key]!=='—'&&merged.unpaired===0){
+    // 分子完成！
+    const bonds=merged.atoms.reduce((s,at)=>s+EL[at.el].u,0)/2;
+    const pts=bonds*50;
+    score+=pts;made++;
+    madeList[key]=(madeList[key]||0)+1;
+    floats.push({t:DB[key].replace(/<[^>]+>/g,'')+' +'+pts,x:merged.x,y:merged.y,life:70});
+    msg('分子完成！ +'+pts+'点','var(--ok)');
+    upd();
+  }else{
+    clusters.push(merged);
+    msg(order>1?('多重結合(結合次数'+order+')で連結！'):'連結！のこり不対電子を使い切ろう');
+  }
+}
+function nudge(a,b){a.vx=-1;b.vx=1;}
+
+// ==== 電子式モーダル ====
+const SLOTS=[ // [x%, y%] 上2・右2・下2・左2
+ [38,14],[62,14],[86,38],[86,62],[62,86],[38,86],[14,62],[14,38]
+];
+const SIDE=[0,0,1,1,2,2,3,3];
+let slotState=[];
+function openModal(c){
+  current=c;fails=0;
+  $('mtitle').innerHTML=c.atoms[0].el+' の電子式(最外殻電子 '+EL[c.atoms[0].el].v+' 個)';
+  $('hint').textContent='';
+  const box=$('lewis');box.innerHTML='<div class="sym">'+c.atoms[0].el+'</div>';
+  slotState=new Array(8).fill(false);
+  SLOTS.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='slot';d.style.left=s[0]+'%';d.style.top=s[1]+'%';
+    d.onclick=()=>{slotState[i]=!slotState[i];d.classList.toggle('on',slotState[i]);};
+    box.appendChild(d);
+  });
+  $('modal').classList.remove('hidden');
+}
+function closeModal(){$('modal').classList.add('hidden');current=null;}
+function checkLewis(){
+  const v=EL[current.atoms[0].el].v;
+  const total=slotState.filter(Boolean).length;
+  const sides=[0,0,0,0];
+  slotState.forEach((on,i)=>{if(on)sides[SIDE[i]]++;});
+  let ok=false;
+  if(total===v){
+    if(v<=4) ok=sides.every(s=>s<=1);
+    else ok=(sides.filter(s=>s===2).length===v-4)&&sides.every(s=>s>=1);
+  }
+  if(ok){
+    current.needsLewis=false;
+    current.unpaired=EL[current.atoms[0].el].u;
+    score+=10;upd();
+    msg('電子式OK！不対電子 '+current.unpaired+' 個で結合できる','var(--ok)');
+    closeModal();
+  }else{
+    fails++;
+    $('mbox').classList.add('shake');
+    setTimeout(()=>$('mbox').classList.remove('shake'),350);
+    $('hint').textContent=fails>=2
+      ?'ヒント:電子は全部で'+v+'個。まず上下左右に1個ずつ、5個目からペアに。'
+      :'ちがうみたい…電子の数と置き方を確認！';
+  }
+}
+
+// イベント登録
+window.addEventListener('load',()=>{
+  const f=$('field');
+  f.addEventListener('mousedown',down);f.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',up);
+  f.addEventListener('touchstart',down,{passive:false});
+  f.addEventListener('touchmove',move,{passive:false});
+  f.addEventListener('touchend',up);
+});
+</script>
+</body>
+</html>

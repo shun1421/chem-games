@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>電気分解ナビ | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#c2607d;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;--blue:#3e77b6;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:760px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:8px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#pname{text-align:center;font-size:19px;font-weight:800;margin:4px 0 10px}
+/* セル(電解槽)ビュー */
+#cell{border:2px solid var(--line);border-radius:12px;padding:12px;background:linear-gradient(#fdfefe 32%,#e7f2f6 32%)}
+#electrodes{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}
+.elec{flex:1;text-align:center}
+.elec .lab{font-size:13px;font-weight:800;margin-bottom:6px}
+.elec.anode .lab{color:var(--bad)}
+.elec.cathode .lab{color:var(--blue)}
+#solution{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:8px 4px 4px;min-height:64px}
+.sp{position:relative;display:inline-flex;align-items:center;justify-content:center;
+ min-width:58px;height:58px;padding:0 8px;border-radius:50%;border:2.5px solid var(--ink);
+ background:#fff;font-weight:800;font-size:16px;cursor:pointer;user-select:none}
+.sp.elecchip{border-color:#6b7f8c;background:#eef2f4;border-radius:12px;height:52px}
+.sp.x{opacity:.45}
+.sp.x::after{content:'✕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ font-size:40px;color:var(--bad);font-weight:900}
+.sp.pickA{border-color:var(--bad);box-shadow:0 0 0 3px rgba(212,86,106,.3)}
+.sp.pickC{border-color:var(--blue);box-shadow:0 0 0 3px rgba(62,119,182,.3)}
+#step{margin-top:12px;font-size:15px;font-weight:800;line-height:1.6}
+#step .n{display:inline-block;background:var(--acc);color:#fff;border-radius:6px;padding:1px 8px;margin-right:6px;font-family:var(--mono)}
+#fb{min-height:40px;margin-top:8px;font-size:14px;color:var(--mut);line-height:1.7}
+#fb .good{color:var(--ok);font-weight:800}
+#fb .bad{color:var(--bad);font-weight:800}
+#confirm,#nextb{display:none;margin-top:10px;padding:12px;width:100%;font-size:15px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+#eqs{display:none;margin-top:10px}
+.eqgroup{margin-bottom:10px}
+.eqgroup .glab{font-size:13px;font-weight:800;margin-bottom:6px}
+.eqgroup.a .glab{color:var(--bad)}
+.eqgroup.c .glab{color:var(--blue)}
+.eq{display:block;width:100%;text-align:left;padding:10px 12px;margin:5px 0;border:2px solid var(--line);
+ border-radius:9px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--mono)}
+.eq.sel{border-color:var(--amber);background:#fdf4e3}
+.eq.correct{border-color:var(--ok);background:#e9f7f0}
+.eq.wrong{border-color:var(--bad);background:#fbeef0}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">電気分解ナビ</div>
+  <span class="chip">酸化還元・電池と電気分解</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>電気分解ナビ</h1>
+  <p class="desc">電気分解の生成物は「手順」で必ず決められる!
+  電解液中のイオン・水・電極を見て、①反応しないものに✕ → ②陽極で反応するもの → ③陰極で反応するもの → ④両極の反応式、の4ステップで攻略しよう。</p>
+  <ul class="rules">
+    <li>全7問。ステップ①100点、②③各50点、④100点(まちがえると減点)</li>
+    <li>✕をつけるのは:<b>イオン化傾向の大きい金属の陽イオン</b>(Li〜Al)、<b>反応しにくい多原子イオン</b>(SO<sub>4</sub><sup>2−</sup>, NO<sub>3</sub><sup>−</sup>)、<b>安定な電極</b>(Pt, C)と<b>陰極側の金属電極</b></li>
+    <li>H<sub>2</sub>O はいつでも反応の候補。✕をつけた物質の代わりに反応する</li>
+  </ul>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="round"></b>/7</div>
+    <div>スコア<b id="score">0</b></div>
+  </div>
+  <div id="pname"></div>
+  <div id="cell">
+    <div id="electrodes">
+      <div class="elec anode"><div class="lab">陽極(+)酸化</div><div id="anodeBox"></div></div>
+      <div class="elec cathode"><div class="lab">陰極(−)還元</div><div id="cathodeBox"></div></div>
+    </div>
+    <div id="solution"></div>
+  </div>
+  <div id="step"></div>
+  <div id="fb"></div>
+  <button id="confirm" onclick="confirmX()">✕をつけ終わった</button>
+  <div id="eqs">
+    <div class="eqgroup a"><div class="glab">陽極の反応式を選ぼう</div><div id="eqA"></div></div>
+    <div class="eqgroup c"><div class="glab">陰極の反応式を選ぼう</div><div id="eqC"></div></div>
+    <button id="judgeEq" class="primary" onclick="judgeEqs()">反応式を判定</button>
+  </div>
+  <button id="nextb" onclick="next()">次の問題へ ›</button>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>電気分解マスター判定</h1>
+  <p class="result">スコア <b id="fscore"></b> / 2100<br><span id="fmsg"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+// 反応式プール
+const EQA={
+ cl:'2Cl⁻ → Cl₂ + 2e⁻',
+ wA:'2H₂O → O₂ + 4H⁺ + 4e⁻',
+ oh:'4OH⁻ → O₂ + 2H₂O + 4e⁻',
+ cu:'Cu → Cu²⁺ + 2e⁻',
+};
+const EQC={
+ cu:'Cu²⁺ + 2e⁻ → Cu',
+ ag:'Ag⁺ + e⁻ → Ag',
+ wC:'2H₂O + 2e⁻ → H₂ + 2OH⁻',
+ h:'2H⁺ + 2e⁻ → H₂',
+ na:'Na⁺ + e⁻ → Na(実際には起こらない)',
+};
+// species: {id, html, where:'sol'|'A'|'C'}
+const PROBLEMS=[
+ {name:'塩化銅(II) CuCl₂ 水溶液(炭素電極)',
+  sp:[{id:'cu2',h:'Cu<sup>2+</sup>'},{id:'cl',h:'Cl<sup>−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'C',w:'A'},{id:'eC',h:'C',w:'C'}],
+  x:['eA','eC'],a:'cl',c:'cu2',
+  eqa:['cl','wA','oh','cu'],ca:'cl', eqc:['cu','wC','h','ag'],cc:'cu',
+  ex:'炭素電極は安定なので✕。陽極はCl⁻が酸化されてCl₂、陰極はイオン化傾向の小さいCu²⁺が還元されてCuが析出。'},
+ {name:'塩化ナトリウム NaCl 水溶液(炭素電極)',
+  sp:[{id:'na',h:'Na<sup>+</sup>'},{id:'cl',h:'Cl<sup>−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'C',w:'A'},{id:'eC',h:'C',w:'C'}],
+  x:['na','eA','eC'],a:'cl',c:'w',
+  eqa:['cl','wA','oh','cu'],ca:'cl', eqc:['wC','h','na','cu'],cc:'wC',
+  ex:'Na⁺はイオン化傾向が大きく還元されない→✕。陰極では代わりにH₂Oが還元されてH₂とOH⁻が生じる(まわりは塩基性に)。'},
+ {name:'希硫酸 H₂SO₄(白金電極)',
+  sp:[{id:'h',h:'H<sup>+</sup>'},{id:'so4',h:'SO<sub>4</sub><sup>2−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'Pt',w:'A'},{id:'eC',h:'Pt',w:'C'}],
+  x:['so4','eA','eC'],a:'w',c:'h',
+  eqa:['wA','cl','oh','cu'],ca:'wA', eqc:['h','wC','ag','cu'],cc:'h',
+  ex:'SO₄²⁻は反応しにくい多原子イオン→✕。陽極ではH₂Oが酸化されてO₂発生。陰極はH⁺が還元されてH₂発生。'},
+ {name:'硫酸銅(II) CuSO₄ 水溶液(白金電極)',
+  sp:[{id:'cu2',h:'Cu<sup>2+</sup>'},{id:'so4',h:'SO<sub>4</sub><sup>2−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'Pt',w:'A'},{id:'eC',h:'Pt',w:'C'}],
+  x:['so4','eA','eC'],a:'w',c:'cu2',
+  eqa:['wA','oh','cl','cu'],ca:'wA', eqc:['cu','wC','h','ag'],cc:'cu',
+  ex:'陽極:SO₄²⁻が✕なのでH₂Oが酸化されO₂発生(液は酸性に)。陰極:Cu²⁺が還元されCu析出。'},
+ {name:'硝酸銀 AgNO₃ 水溶液(白金電極)',
+  sp:[{id:'ag',h:'Ag<sup>+</sup>'},{id:'no3',h:'NO<sub>3</sub><sup>−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'Pt',w:'A'},{id:'eC',h:'Pt',w:'C'}],
+  x:['no3','eA','eC'],a:'w',c:'ag',
+  eqa:['wA','oh','cl','cu'],ca:'wA', eqc:['ag','cu','wC','h'],cc:'ag',
+  ex:'NO₃⁻は反応しにくい→✕。陰極ではイオン化傾向の小さいAg⁺が還元されて銀が析出。'},
+ {name:'水酸化ナトリウム NaOH 水溶液(白金電極)',
+  sp:[{id:'na',h:'Na<sup>+</sup>'},{id:'oh',h:'OH<sup>−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'Pt',w:'A'},{id:'eC',h:'Pt',w:'C'}],
+  x:['na','eA','eC'],a:'oh',c:'w',
+  eqa:['oh','wA','cl','cu'],ca:'oh', eqc:['wC','h','na','ag'],cc:'wC',
+  ex:'陽極はOH⁻が酸化されてO₂発生。陰極はH₂Oが還元されてH₂発生。全体としては水の電気分解と同じ。'},
+ {name:'硫酸銅(II) CuSO₄ 水溶液(銅電極)〜銅の電解精錬〜',
+  sp:[{id:'cu2',h:'Cu<sup>2+</sup>'},{id:'so4',h:'SO<sub>4</sub><sup>2−</sup>'},{id:'w',h:'H<sub>2</sub>O'},
+      {id:'eA',h:'Cu',w:'A'},{id:'eC',h:'Cu',w:'C'}],
+  x:['so4','eC'],a:'eA',c:'cu2',
+  eqa:['cu','wA','oh','cl'],ca:'cu', eqc:['cu','wC','h','ag'],cc:'cu',
+  ex:'電極がCuのような反応しやすい金属だと、陽極は電極自身が溶ける(Cu→Cu²⁺+2e⁻)!陰極ではCu²⁺が析出。これが銅の電解精錬の原理。'},
+];
+
+let idx=0,score=0,phase=0,cur=null,xSel=new Set(),retries=0,eqSelA=-1,eqSelC=-1;
+
+function startGame(){
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  idx=-1;score=0;next();
+}
+function next(){
+  idx++;
+  if(idx>=PROBLEMS.length){finish();return;}
+  cur=PROBLEMS[idx];phase=1;xSel=new Set();retries=0;eqSelA=-1;eqSelC=-1;
+  $('round').textContent=idx+1;$('score').textContent=score;
+  $('pname').innerHTML=cur.name;
+  $('fb').innerHTML='';$('nextb').style.display='none';$('eqs').style.display='none';
+  $('confirm').style.display='block';
+  renderChips();
+  setStep(1,'反応しにくいもの<b>すべて</b>をタップして✕をつけよう(イオン化傾向大の陽イオン / 反応しにくい多原子イオン / 安定な電極・陰極側の金属電極)');
+}
+function setStep(n,t){$('step').innerHTML='<span class="n">STEP '+n+'</span>'+t;}
+function renderChips(){
+  $('anodeBox').innerHTML='';$('cathodeBox').innerHTML='';$('solution').innerHTML='';
+  cur.sp.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='sp'+(s.w?' elecchip':'');
+    d.innerHTML=s.h;d.dataset.id=s.id;
+    if(xSel.has(s.id))d.classList.add('x');
+    d.onclick=()=>tap(s.id,d);
+    (s.w==='A'?$('anodeBox'):s.w==='C'?$('cathodeBox'):$('solution')).appendChild(d);
+  });
+}
+function chipEl(id){return document.querySelector('.sp[data-id="'+id+'"]')}
+function tap(id,el){
+  if(phase===1){
+    if(xSel.has(id)){xSel.delete(id);el.classList.remove('x');}
+    else{xSel.add(id);el.classList.add('x');}
+  }else if(phase===2){
+    judgePick(id,el,cur.a,'pickA','陽極では <b>'+nameOf(cur.a)+'</b> が酸化される。',3);
+  }else if(phase===3){
+    judgePick(id,el,cur.c,'pickC','陰極では <b>'+nameOf(cur.c)+'</b> が還元される。',4);
+  }
+}
+function nameOf(id){const s=cur.sp.find(s=>s.id===id);return s?s.h:'';}
+function confirmX(){
+  if(phase!==1)return;
+  const want=new Set(cur.x);
+  const okAll=want.size===xSel.size&&[...want].every(v=>xSel.has(v));
+  if(okAll){
+    const pts=Math.max(20,100-20*retries);
+    score+=pts;$('score').textContent=score;
+    $('fb').innerHTML='<span class="good">正解!+'+pts+'点</span> 残った物質が反応の候補。';
+    $('confirm').style.display='none';
+    phase=2;
+    setStep(2,'<b>陽極(+)で反応(酸化)するもの</b>をタップしよう');
+  }else{
+    retries++;
+    const missing=[...want].filter(v=>!xSel.has(v)).length;
+    const extra=[...xSel].filter(v=>!want.has(v)).length;
+    $('fb').innerHTML='<span class="bad">まだ合っていない…</span> ✕が足りない:'+missing+'個 / ✕が多い:'+extra+'個(−20点で再挑戦)';
+  }
+}
+function judgePick(id,el,correct,cls,text,nextPhase){
+  if(xSel.has(id)){$('fb').innerHTML='<span class="bad">✕をつけた物質は反応しないよ</span>';return;}
+  if(id===correct){
+    el.classList.add(cls);
+    score+=50;$('score').textContent=score;
+    $('fb').innerHTML='<span class="good">正解!+50点</span> '+text;
+    phase=nextPhase;
+    if(nextPhase===3)setStep(3,'<b>陰極(−)で反応(還元)するもの</b>をタップしよう');
+    else showEqs();
+  }else{
+    $('fb').innerHTML='<span class="bad">ちがう…</span> ✕がついていない物質のうち、'+(phase===2?'酸化されやすい(電子を出しやすい)':'還元されやすい(電子を受け取りやすい)')+'ものはどれ?';
+  }
+}
+function showEqs(){
+  phase=4;
+  setStep(4,'両極の反応式(e⁻をふくむ式)を選ぼう');
+  $('eqs').style.display='block';
+  $('judgeEq').style.display='block';
+  const mk=(pool,dict,box,side)=>{
+    const el=$(box);el.innerHTML='';
+    pool.forEach((k,i)=>{
+      const b=document.createElement('button');
+      b.className='eq';b.textContent=dict[k];b.dataset.k=k;
+      b.onclick=()=>{
+        [...el.children].forEach(c=>c.classList.remove('sel'));
+        b.classList.add('sel');
+        if(side==='A')eqSelA=i;else eqSelC=i;
+        window['key'+side]=k;
+      };
+      el.appendChild(b);
+    });
+  };
+  mk(cur.eqa,EQA,'eqA','A');
+  mk(cur.eqc,EQC,'eqC','C');
+}
+function judgeEqs(){
+  if(phase!==4)return;
+  const selA=document.querySelector('#eqA .sel'),selC=document.querySelector('#eqC .sel');
+  if(!selA||!selC){$('fb').innerHTML='<span class="bad">両方の式を選んでから判定!</span>';return;}
+  let pts=0;
+  [...document.querySelectorAll('#eqA .eq')].forEach(b=>{if(b.dataset.k===cur.ca)b.classList.add('correct');});
+  [...document.querySelectorAll('#eqC .eq')].forEach(b=>{if(b.dataset.k===cur.cc)b.classList.add('correct');});
+  const okA=selA.dataset.k===cur.ca, okC=selC.dataset.k===cur.cc;
+  if(!okA)selA.classList.add('wrong');
+  if(!okC)selC.classList.add('wrong');
+  pts=(okA?50:0)+(okC?50:0);
+  score+=pts;$('score').textContent=score;
+  $('fb').innerHTML=(okA&&okC?'<span class="good">両極とも正解!+100点</span> ':'<span class="bad">まちがいは赤、正解は緑で表示。</span> ')+cur.ex;
+  $('judgeEq').style.display='none';
+  phase=5;
+  $('nextb').style.display='block';
+}
+function finish(){
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;
+  $('fmsg').textContent=score>=1800?'完璧!電気分解は「手順」で解ける。':score>=1200?'あと一歩。✕をつけるルールを確認しよう。':'①✕のルール(イオン化傾向・多原子イオン・安定電極)からもう一度!';
+}
+</script>
+</body>
+</html>

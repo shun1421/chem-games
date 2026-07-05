@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>化学ゲームラボ | 高校化学 学習ゲーム集</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--teal:#0e7c86;--rose:#c2607d;--blue:#3e77b6;--green:#5a9367;--purple:#8a6bbf;--brown:#b3702e;--amber:#e8a13d;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{padding:34px 18px 22px;text-align:center;background:
+ radial-gradient(circle at 15% 0%,rgba(14,124,134,.10),transparent 45%),
+ radial-gradient(circle at 85% 100%,rgba(232,161,61,.12),transparent 45%),#fff;
+ border-bottom:3px solid var(--teal)}
+h1{margin:0;font-size:clamp(24px,5vw,34px);letter-spacing:.12em;font-weight:900}
+h1 .flask{color:var(--teal)}
+.tag{color:var(--mut);font-size:14px;margin-top:8px;letter-spacing:.05em}
+main{max-width:1000px;margin:0 auto;padding:22px 14px 60px}
+.unit{margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+.unit .sq{width:12px;height:12px;border-radius:3px}
+.unit h2{font-size:16px;margin:0;letter-spacing:.08em}
+.unit .ln{flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
+a.tile{display:block;text-decoration:none;color:var(--ink);background:var(--card);
+ border:1.5px solid var(--line);border-top:5px solid var(--c,var(--teal));border-radius:12px;
+ padding:12px 14px;position:relative;transition:transform .12s,box-shadow .12s}
+a.tile:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(27,42,51,.12)}
+.no{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:12px;color:var(--mut)}
+.sym{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--c,var(--teal));line-height:1.1}
+.nm{font-size:15.5px;font-weight:800;margin-top:4px}
+.ds{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.55;min-height:36px}
+.kind{display:inline-block;margin-top:8px;font-size:11px;border:1px solid var(--c,var(--teal));color:var(--c,var(--teal));border-radius:999px;padding:1px 9px;font-weight:700}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:24px;border-top:1px solid var(--line)}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="flask">⌬</span> 化学ゲームラボ</h1>
+  <div class="tag">遊んで身につく高校化学 — 全14アプリ / スマホ対応</div>
+</header>
+<main id="list"></main>
+<footer>化学ゲームラボ | ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。</footer>
+<script>
+const UNITS=[
+ {t:'物質の構成・化学結合',c:'var(--teal)',games:[
+  {no:4,f:'lewis-builder.html',sym:'e·',nm:'分子ビルダー',ds:'電子式を組み立てて原子をゲット。漂う原子をドラッグして分子を合成!',k:'アクション'},
+  {no:6,f:'crystal-classify.html',sym:'Xt',nm:'結晶ソムリエ',ds:'化学式から結晶を4分類。「???」問題は質問で推理する20の扉モード。',k:'クイズ+推理'},
+  {no:8,f:'polarity-3d.html',sym:'δ+',nm:'極性ジャッジ3D',ds:'3D分子をぐるぐる回して、結合に双極子の矢印を割り当て→極性/無極性を判定。',k:'3D判定'},
+  {no:14,f:'lattice-viewer.html',sym:'a³',nm:'結晶格子ラボ',ds:'単位格子を強調した3D結晶モデル。配位数の確認と原子半径の求め方を体感。',k:'教材'},
+ ]},
+ {t:'物質量と化学反応式',c:'var(--teal)',games:[
+  {no:16,f:'mol-sprint.html',sym:'mol',nm:'モル換算スプリント',ds:'質量⇄mol⇄個数⇄体積の変換を60秒で連打。molの反射神経を鍛える。',k:'計算タイムアタック'},
+ ]},
+ {t:'酸と塩基',c:'var(--rose)',games:[
+  {no:32,f:'salt-judge.html',sym:'pH',nm:'塩の液性ジャッジ',ds:'塩の水溶液は酸性?中性?塩基性?もとの酸・塩基の強弱で見きわめる。',k:'クイズ'},
+ ]},
+ {t:'酸化還元・電池と電気分解',c:'var(--rose)',games:[
+  {no:36,f:'oxidation-number.html',sym:'+7',nm:'酸化数バトル',ds:'指定原子の酸化数を高速判定。H₂O₂やNaHの例外ルールも登場。',k:'計算タイムアタック'},
+  {no:40,f:'electrolysis.html',sym:'e⁻',nm:'電気分解ナビ',ds:'✕をつける→陽極→陰極→反応式。4ステップの手順で電気分解を完全攻略。',k:'手順シミュレーション'},
+ ]},
+ {t:'状態変化と気体',c:'var(--blue)',games:[
+  {no:51,f:'gas-race.html',sym:'PV',nm:'気体方程式レース',ds:'PV=nRTの計算レース。R=8.3×10³をあやつって最速で解け。',k:'計算タイムアタック'},
+ ]},
+ {t:'溶液',c:'var(--green)',games:[
+  {no:58,f:'colloid-match.html',sym:'Sol',nm:'コロイドマッチ',ds:'チンダル・凝析・塩析…混同しがちなコロイド用語を高速マッチング。',k:'クイズ'},
+ ]},
+ {t:'化学反応と平衡',c:'var(--purple)',games:[
+  {no:66,f:'le-chatelier.html',sym:'⇌',nm:'平衡移動よそう',ds:'ルシャトリエの原理で平衡の移動方向を予想。不活性気体のひっかけも。',k:'クイズ'},
+ ]},
+ {t:'無機化学',c:'var(--brown)',games:[
+  {no:73,f:'precipitate-colors.html',sym:'↓',nm:'沈殿カラー図鑑',ds:'AgCl?CdS?クロム酸塩?沈殿の色を全問コンプリートせよ。',k:'クイズ'},
+ ]},
+ {t:'有機化学',c:'var(--brown)',games:[
+  {no:89,f:'detection-match.html',sym:'Ag',nm:'検出反応マッチ',ds:'銀鏡・ヨードホルム・FeCl₃…検出反応と構造をつなげて構造決定に強くなる。',k:'クイズ'},
+ ]},
+ {t:'高分子化合物',c:'var(--green)',games:[
+  {no:91,f:'polymer-quiz.html',sym:'[-]n',nm:'重合しきわけ',ds:'付加?縮合?開環?付加縮合?高分子の名前から重合様式を見きわめる。',k:'クイズ'},
+ ]},
+];
+const main=document.getElementById('list');
+for(const u of UNITS){
+  const h=document.createElement('div');h.className='unit';
+  h.innerHTML='<span class="sq" style="background:'+u.c+'"></span><h2>'+u.t+'</h2><span class="ln"></span>';
+  main.appendChild(h);
+  const g=document.createElement('div');g.className='grid';
+  for(const gm of u.games){
+    const a=document.createElement('a');
+    a.className='tile';a.href=gm.f;a.style.setProperty('--c',u.c);
+    a.innerHTML='<span class="no">No.'+gm.no+'</span><div class="sym">'+gm.sym+'</div>'+
+     '<div class="nm">'+gm.nm+'</div><div class="ds">'+gm.ds+'</div><span class="kind">'+gm.k+'</span>';
+    g.appendChild(a);
+  }
+  main.appendChild(g);
+}
+</script>
+</body>
+</html>

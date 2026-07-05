@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>気体方程式レース | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#3e77b6;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px;white-space:nowrap}
+main{max-width:720px;margin:0 auto;padding:20px 14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px;letter-spacing:.04em}
+.desc{color:var(--mut);margin:.4em 0}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+button.primary:active{transform:translateY(1px)}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut)}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#tbar{height:6px;background:var(--line);border-radius:3px;margin:10px 0}
+#tfill{height:100%;width:100%;background:var(--acc);border-radius:3px;transition:width .1s linear}
+#qtext{min-height:86px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;margin:8px 0;line-height:1.5}
+#choices{display:grid;gap:10px}
+#choices button{padding:14px 6px;font-size:16px;font-weight:700;background:#fff;border:2px solid var(--line);border-radius:10px;cursor:pointer;color:var(--ink)}
+#choices button.correct{border-color:var(--ok);background:#e9f7f0}
+#choices button.wrong{border-color:var(--bad);background:#fbeef0}
+#fb{min-height:44px;margin-top:12px;font-size:14px;color:var(--mut);text-align:center;line-height:1.6}
+#fb .good{color:var(--ok);font-weight:800}
+#fb .bad{color:var(--bad);font-weight:800}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+@media(max-width:480px){#qtext{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">気体方程式レース</div>
+  <span class="chip">気体・状態変化</span>
+</header>
+<main>
+  <section id="start" class="panel">
+    <h1>気体方程式レース</h1>
+    <p class="desc">気体の状態方程式 PV=nRT の計算レース。R=8.3×10<sup>3</sup> Pa・L/(K・mol) とする。</p>
+    <ul class="rules"><li>制限時間は90秒</li><li>V=8.3 L の問題が多い理由を考えると暗算が速くなる</li><li>単位(Pa・L・K・mol)に注目</li></ul>
+    <button class="primary" onclick="startGame()">スタート</button>
+  </section>
+  <section id="play" class="panel hidden">
+    <div class="hud">
+      <div>のこり<b id="time"></b>秒</div>
+      <div>スコア<b id="score">0</b></div>
+      <div>連続<b id="combo">0</b></div>
+    </div>
+    <div id="tbar"><div id="tfill"></div></div>
+    <div id="qtext"></div>
+    <div id="choices"></div>
+    <div id="fb"></div>
+  </section>
+  <section id="end" class="panel hidden">
+    <h1>タイムアップ！</h1>
+    <p class="result">スコア <b id="fscore"></b><br>正答 <span id="facc"></span></p>
+    <button class="primary" onclick="startGame()">もう一度</button>
+    <a class="ghost" href="index.html">一覧へ戻る</a>
+  </section>
+</main>
+<script>
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function fmt(x){return (Math.round(x*1000)/1000).toString()}
+function finalize(q,list,correct,ex){
+  const arr=list.map((s,i)=>({s:s,c:i===correct}));shuffle(arr);
+  return {q:q,choices:arr.map(o=>o.s),a:arr.findIndex(o=>o.c),ex:ex};
+}
+function qnum(q,ans,wrongs,unit,ex){
+  let vals=[ans];
+  for(const w of wrongs){if(vals.every(v=>Math.abs(v-w)>1e-9))vals.push(w);if(vals.length>=4)break;}
+  while(vals.length<4)vals.push(ans*(vals.length+5));
+  return finalize(q,vals.map(v=>fmt(v)+" "+unit),0,ex);
+}
+function staticGame(list){let pool=[];return{next(){if(!pool.length)pool=shuffle(list.slice());return pool.pop();}}}
+
+const DB=[
+{q:'n=2.0 mol, T=300 K, V=8.3 L のとき圧力Pは？',a:'6.0×10<sup>5</sup> Pa',w:['3.0×10<sup>5</sup> Pa','1.2×10<sup>6</sup> Pa','6.0×10<sup>4</sup> Pa'],ex:'P=nRT/V=2.0×8.3×10<sup>3</sup>×300÷8.3'},
+{q:'n=1.0 mol, T=400 K, V=8.3 L のとき圧力Pは？',a:'4.0×10<sup>5</sup> Pa',w:['2.0×10<sup>5</sup> Pa','8.0×10<sup>5</sup> Pa','4.0×10<sup>4</sup> Pa'],ex:'P=nRT/V=1.0×8.3×10<sup>3</sup>×400÷8.3'},
+{q:'n=0.50 mol, T=600 K, V=8.3 L のとき圧力Pは？',a:'3.0×10<sup>5</sup> Pa',w:['6.0×10<sup>5</sup> Pa','1.5×10<sup>5</sup> Pa','3.0×10<sup>4</sup> Pa'],ex:'P=nRT/V=0.50×8.3×10<sup>3</sup>×600÷8.3'},
+{q:'n=0.25 mol, T=400 K, V=8.3 L のとき圧力Pは？',a:'1.0×10<sup>5</sup> Pa',w:['2.0×10<sup>5</sup> Pa','5.0×10<sup>4</sup> Pa','1.0×10<sup>6</sup> Pa'],ex:'P=nRT/V=0.25×8.3×10<sup>3</sup>×400÷8.3'},
+{q:'P=1.0×10<sup>5</sup> Pa, n=1.0 mol, T=300 K のとき体積Vは？',a:'約 25 L',w:['約 12 L','約 50 L','約 2.5 L'],ex:'V=nRT/P=8.3×10<sup>3</sup>×300÷10<sup>5</sup>=24.9 L'},
+{q:'P=1.0×10<sup>5</sup> Pa, n=2.0 mol, T=300 K のとき体積Vは？',a:'約 50 L',w:['約 25 L','約 100 L','約 5.0 L'],ex:'V=nRT/P=2.0×8.3×10<sup>3</sup>×300÷10<sup>5</sup>=49.8 L'},
+{q:'P=1.0×10<sup>5</sup> Pa, V=8.3 L, T=250 K のとき物質量nは？',a:'0.40 mol',w:['0.80 mol','0.20 mol','4.0 mol'],ex:'n=PV/RT=10<sup>5</sup>×8.3÷(8.3×10<sup>3</sup>×250)'},
+{q:'P=2.0×10<sup>5</sup> Pa, V=8.3 L, T=400 K のとき物質量nは？',a:'0.50 mol',w:['1.0 mol','0.25 mol','5.0 mol'],ex:'n=PV/RT=2.0×10<sup>5</sup>×8.3÷(8.3×10<sup>3</sup>×400)'},
+{q:'P=1.0×10<sup>5</sup> Pa, V=8.3 L, n=0.50 mol のとき温度Tは？',a:'200 K',w:['400 K','100 K','300 K'],ex:'T=PV/nR=10<sup>5</sup>×8.3÷(0.50×8.3×10<sup>3</sup>)'},
+{q:'P=3.0×10<sup>5</sup> Pa, V=8.3 L, n=1.0 mol のとき温度Tは？',a:'300 K',w:['600 K','150 K','83 K'],ex:'T=PV/nR=3.0×10<sup>5</sup>×8.3÷(1.0×8.3×10<sup>3</sup>)'},
+];
+const GAME=staticGame(DB.map(d=>finalize('PV=nRT で考える。<br>'+d.q,[d.a].concat(d.w),0,d.ex)));
+
+const LIMIT=90;
+let score=0,combo=0,ok=0,total=0,tLeft=0,timer=null,cur=null,locked=false;
+const $=id=>document.getElementById(id);
+function startGame(){
+  score=0;combo=0;ok=0;total=0;tLeft=LIMIT;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  upd();nextQ();clearInterval(timer);
+  timer=setInterval(()=>{tLeft-=0.1;if(tLeft<=0){tLeft=0;finish();}drawT();},100);drawT();
+}
+function drawT(){$('time').textContent=Math.ceil(tLeft);$('tfill').style.width=(tLeft/LIMIT*100)+'%';}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;}
+function nextQ(){
+  locked=false;$('fb').innerHTML='';cur=GAME.next();
+  $('qtext').innerHTML=cur.q;
+  const c=$('choices');c.innerHTML='';
+  c.style.gridTemplateColumns='repeat(2,1fr)';
+  cur.choices.forEach((ch,i)=>{const b=document.createElement('button');b.innerHTML=ch;b.onclick=()=>answer(i,b);c.appendChild(b);});
+}
+function answer(i,btn){
+  if(locked)return;locked=true;total++;
+  const bs=$('choices').children;bs[cur.a].classList.add('correct');
+  if(i===cur.a){ok++;combo++;score+=100+Math.min(combo,10)*10;
+    $('fb').innerHTML='<span class="good">正解！</span> '+(cur.ex||'');setTimeout(nextQ,750);}
+  else{btn.classList.add('wrong');combo=0;
+    $('fb').innerHTML='<span class="bad">おしい！</span> '+(cur.ex||'');setTimeout(nextQ,1700);}
+  upd();
+}
+function finish(){clearInterval(timer);$('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;$('facc').textContent=ok+' 問 / '+total+' 問';}
+</script>
+</body>
+</html>

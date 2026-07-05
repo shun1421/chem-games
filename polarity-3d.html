@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>極性ジャッジ3D | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:760px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:6px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#mname{text-align:center;font-size:20px;font-weight:800;margin:4px 0}
+#stage{width:100%;height:340px;border:2px solid var(--line);border-radius:12px;background:#10222b;touch-action:none;display:block}
+#tip{text-align:center;color:var(--mut);font-size:13px;margin:8px 0;line-height:1.6}
+#judge{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+#judge button{padding:14px;font-size:16px;font-weight:800;background:#fff;border:2px solid var(--line);border-radius:10px;cursor:pointer;color:var(--ink)}
+#judge button.correct{border-color:var(--ok);background:#e9f7f0}
+#judge button.wrong{border-color:var(--bad);background:#fbeef0}
+#fb{min-height:60px;margin-top:10px;font-size:14px;color:var(--mut);text-align:center;line-height:1.7}
+#fb .good{color:var(--ok);font-weight:800}
+#fb .bad{color:var(--bad);font-weight:800}
+#nextb{display:none;margin-top:8px;padding:12px;width:100%;font-size:15px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">極性ジャッジ3D</div>
+  <span class="chip">化学結合</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>極性ジャッジ3D</h1>
+  <p class="desc">3Dの分子モデルをドラッグしていろいろな方向から観察。
+  それぞれの結合をタップして、結合の極性を表す矢印(δ+→δ−、電気陰性度の大きい原子へ向ける)を割り当てよう。
+  矢印を決めたら、分子全体が「極性分子」か「無極性分子」かをジャッジ！</p>
+  <ul class="rules">
+    <li>全8問。結合の矢印がすべて正しく、極性の判定も正しければ+150点</li>
+    <li>結合をタップするたびに、矢印が「なし→一方向→逆方向」と切りかわる</li>
+    <li>同じ元素どうしの結合は極性なし。C−H結合は極性がきわめて小さい(「なし」でもOK)</li>
+    <li>結合に極性があっても、形によって打ち消されれば無極性分子</li>
+  </ul>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="round"></b>/8</div>
+    <div>スコア<b id="score">0</b></div>
+  </div>
+  <div id="mname"></div>
+  <canvas id="stage"></canvas>
+  <div id="tip">ドラッグで回転 / 結合を<b>タップ</b>して矢印を割り当て</div>
+  <div id="judge">
+    <button onclick="answer(true)">極性分子</button>
+    <button onclick="answer(false)">無極性分子</button>
+  </div>
+  <div id="fb"></div>
+  <button id="nextb" onclick="next()">次の分子へ ›</button>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>ジャッジ終了！</h1>
+  <p class="result">スコア <b id="fscore"></b> / 1200<br><span id="fmsg"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+
+const COL={H:'#e8ecef',C:'#4a4a4a',N:'#3e77b6',O:'#d4566a',F:'#7cc97f',Cl:'#3fae63',S:'#e8d13d'};
+const RAD={H:.34,C:.5,N:.48,O:.48,F:.44,Cl:.56,S:.55};
+const EN={H:2.2,C:2.6,N:3.0,O:3.4,F:4.0,Cl:3.2,S:2.6};
+
+const T=1.09/Math.sqrt(3); // 正四面体用
+const MOLS=[
+ {name:'塩化水素 HCl',atoms:[['H',-.85,0,0],['Cl',.85,0,0]],bonds:[[0,1]],polar:true,
+  ex:'H−Cl結合に極性があり、そのまま分子の極性になる。二原子分子で異なる元素なら必ず極性分子。'},
+ {name:'水 H<sub>2</sub>O',atoms:[['O',0,.4,0],['H',-.9,-.35,0],['H',.9,-.35,0]],bonds:[[0,1],[0,2]],polar:true,
+  ex:'折れ線形なので2本のO−H結合の極性が打ち消されず、極性分子になる。'},
+ {name:'二酸化炭素 CO<sub>2</sub>',atoms:[['C',0,0,0],['O',-1.15,0,0],['O',1.15,0,0]],bonds:[[0,1],[0,2]],polar:false,
+  ex:'各C=O結合には極性があるが、直線形なので左右で打ち消し合い、無極性分子。'},
+ {name:'アンモニア NH<sub>3</sub>',atoms:[['N',0,.35,0],['H',.95,-.3,0],['H',-.48,-.3,.82],['H',-.48,-.3,-.82]],
+  bonds:[[0,1],[0,2],[0,3]],polar:true,
+  ex:'三角錐形なので3本のN−H結合の極性が打ち消されず、極性分子。'},
+ {name:'メタン CH<sub>4</sub>',atoms:[['C',0,0,0],['H',1.09*T,1.09*T,1.09*T],['H',1.09*T,-1.09*T,-1.09*T],['H',-1.09*T,1.09*T,-1.09*T],['H',-1.09*T,-1.09*T,1.09*T]].map(a=>[a[0],a[1],a[2],a[3]]),
+  bonds:[[0,1],[0,2],[0,3],[0,4]],polar:false,
+  ex:'正四面体形。C−H結合の極性はきわめて小さく、対称な形で打ち消されるため無極性分子。'},
+ {name:'四塩化炭素 CCl<sub>4</sub>',atoms:[['C',0,0,0],['Cl',1.3*T,1.3*T,1.3*T],['Cl',1.3*T,-1.3*T,-1.3*T],['Cl',-1.3*T,1.3*T,-1.3*T],['Cl',-1.3*T,-1.3*T,1.3*T]],
+  bonds:[[0,1],[0,2],[0,3],[0,4]],polar:false,
+  ex:'C−Cl結合には極性があるが、正四面体形で4本が打ち消し合い、無極性分子。'},
+ {name:'窒素 N<sub>2</sub>',atoms:[['N',-.55,0,0],['N',.55,0,0]],bonds:[[0,1]],polar:false,
+  ex:'同じ元素どうしの結合には極性がない。よって無極性分子。'},
+ {name:'フッ化水素 HF',atoms:[['H',-.75,0,0],['F',.75,0,0]],bonds:[[0,1]],polar:true,
+  ex:'FはH との電気陰性度の差が大きく、強い極性をもつ極性分子。'},
+ {name:'硫化水素 H<sub>2</sub>S',atoms:[['S',0,.35,0],['H',-.95,-.4,0],['H',.95,-.4,0]],bonds:[[0,1],[0,2]],polar:true,
+  ex:'水と同じ折れ線形。S−H結合の極性は小さいが打ち消されず、極性分子。'},
+ {name:'クロロメタン CH<sub>3</sub>Cl',atoms:[['C',0,0,0],['Cl',0,1.5,0],['H',1.03,-.36,0],['H',-.51,-.36,.89],['H',-.51,-.36,-.89]],
+  bonds:[[0,1],[0,2],[0,3],[0,4]],polar:true,
+  ex:'C−Cl結合の強い極性が打ち消されないため、極性分子。'},
+];
+
+let order=[],idx=0,score=0,mol=null,arrow=[],yaw=.6,pitch=.35,locked=false;
+let cv,ctx,W,H,DPR,downP=null,moved=0,autoSpin=true;
+let bondHits=[]; // {mid:{x,y}, i}
+
+function startGame(){
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  cv=$('stage');DPR=window.devicePixelRatio||1;
+  const r=cv.getBoundingClientRect();W=r.width;H=340;
+  cv.width=W*DPR;cv.height=H*DPR;
+  ctx=cv.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
+  order=shuffle(MOLS.slice()).slice(0,8);
+  idx=-1;score=0;
+  bindOnce();
+  next();
+  loop();
+}
+let bound=false;
+function bindOnce(){
+  if(bound)return;bound=true;
+  cv.addEventListener('mousedown',pdown);
+  window.addEventListener('mousemove',pmove);
+  window.addEventListener('mouseup',pup);
+  cv.addEventListener('touchstart',pdown,{passive:false});
+  cv.addEventListener('touchmove',pmove,{passive:false});
+  cv.addEventListener('touchend',pup);
+}
+function next(){
+  idx++;
+  if(idx>=8){finish();return;}
+  mol=order[idx];
+  arrow=mol.bonds.map(()=>0); // 0なし / 1 → b原子 / 2 → a原子
+  locked=false;autoSpin=true;yaw=.6;pitch=.35;
+  $('round').textContent=idx+1;$('score').textContent=score;
+  $('mname').innerHTML=mol.name;
+  $('fb').innerHTML='';$('nextb').style.display='none';
+  [...$('judge').children].forEach(b=>{b.classList.remove('correct','wrong');b.disabled=false;});
+}
+function finish(){
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;
+  $('fmsg').textContent=score>=1000?'極性マスター！':score>=600?'あと少し。形と対称性に注目！':'矢印は電気陰性度の大きい原子へ。再挑戦！';
+}
+
+// ==== 3D ====
+function rot(p){
+  const [x0,y0,z0]=p;
+  const cy=Math.cos(yaw),sy=Math.sin(yaw);
+  let x=x0*cy+z0*sy, z=-x0*sy+z0*cy, y=y0;
+  const cp=Math.cos(pitch),sp=Math.sin(pitch);
+  let y2=y*cp-z*sp, z2=y*sp+z*cp;
+  return [x,y2,z2];
+}
+function proj(p){
+  const f=6,s=95;
+  const k=f/(f-p[2]);
+  return {x:W/2+p[0]*s*k, y:H/2-p[1]*s*k, k};
+}
+function loop(){
+  if(!$('play').classList.contains('hidden')){
+    if(autoSpin&&!locked)yaw+=0.004;
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if(!mol)return;
+  const rp=mol.atoms.map(a=>rot([a[1],a[2],a[3]]));
+  const pp=rp.map(proj);
+  // 描画順:奥から
+  const items=[];
+  mol.atoms.forEach((a,i)=>items.push({z:rp[i][2],type:'atom',i}));
+  mol.bonds.forEach((b,i)=>items.push({z:(rp[b[0]][2]+rp[b[1]][2])/2,type:'bond',i}));
+  items.sort((p,q)=>p.z-q.z);
+  bondHits=[];
+  for(const it of items){
+    if(it.type==='bond'){
+      const [a,b]=mol.bonds[it.i];
+      const p1=pp[a],p2=pp[b];
+      ctx.strokeStyle='#c9d6d3';ctx.lineWidth=7*Math.max(.6,(p1.k+p2.k)/2);
+      ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+      const mid={x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2};
+      bondHits.push({mid,i:it.i});
+      // 矢印
+      const st=arrow[it.i];
+      if(st>0){
+        const from=st===1?p1:p2, to=st===1?p2:p1;
+        drawArrow(from,to);
+      }else{
+        ctx.fillStyle='rgba(232,161,61,.9)';
+        ctx.beginPath();ctx.arc(mid.x,mid.y,4,0,7);ctx.fill();
+      }
+    }else{
+      const a=mol.atoms[it.i],p=pp[it.i];
+      const r=RAD[a[0]]*46*p.k;
+      const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.15,p.x,p.y,r);
+      g.addColorStop(0,'#ffffff');g.addColorStop(.25,COL[a[0]]);g.addColorStop(1,shade(COL[a[0]]));
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle=g;ctx.fill();
+      ctx.fillStyle=(a[0]==='H'||a[0]==='F'||a[0]==='S')?'#33424b':'#fff';
+      ctx.font='800 '+Math.max(11,r*.75)+'px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(a[0],p.x,p.y);
+    }
+  }
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px sans-serif';ctx.textAlign='left';
+  ctx.fillText('● = 矢印なし(タップで切りかえ)',10,H-12);
+}
+function shade(hex){
+  const n=parseInt(hex.slice(1),16);
+  const r=(n>>16)*.45,g=((n>>8)&255)*.45,b=(n&255)*.45;
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawArrow(from,to){
+  const dx=to.x-from.x,dy=to.y-from.y,L=Math.hypot(dx,dy);
+  const ux=dx/L,uy=dy/L;
+  // 結合と平行に少しずらして描く
+  const ox=-uy*13,oy=ux*13;
+  const x1=from.x+ux*L*.18+ox,y1=from.y+uy*L*.18+oy;
+  const x2=from.x+ux*L*.82+ox,y2=from.y+uy*L*.82+oy;
+  ctx.strokeStyle='#e8a13d';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  // 十字のしっぽ(δ+側)
+  ctx.moveTo(x1-uy*5+ux*4,y1+ux*5+uy*4);ctx.lineTo(x1+uy*5+ux*4,y1-ux*5+uy*4);
+  ctx.stroke();
+  ctx.fillStyle='#e8a13d';
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-ux*11-uy*6,y2-uy*11+ux*6);
+  ctx.lineTo(x2-ux*11+uy*6,y2-uy*11-ux*6);
+  ctx.closePath();ctx.fill();
+}
+
+// ==== 入力 ====
+function evP(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+  return {x:t.clientX-r.left,y:t.clientY-r.top};}
+function pdown(e){downP=evP(e);moved=0;autoSpin=false;e.preventDefault();}
+function pmove(e){
+  if(!downP)return;
+  const p=evP(e);
+  const dx=p.x-downP.x,dy=p.y-downP.y;
+  moved+=Math.abs(dx)+Math.abs(dy);
+  yaw+=dx*0.01;pitch+=dy*0.008;
+  pitch=Math.max(-1.4,Math.min(1.4,pitch));
+  downP=p;
+  if(e.cancelable)e.preventDefault();
+}
+function pup(e){
+  if(!downP)return;
+  if(moved<6&&!locked){ // タップ → 結合切りかえ
+    const p=evP(e);
+    let best=null,bd=1e9;
+    for(const b of bondHits){
+      const d=(p.x-b.mid.x)**2+(p.y-b.mid.y)**2;
+      if(d<bd){bd=d;best=b;}
+    }
+    if(best&&bd<38**2){arrow[best.i]=(arrow[best.i]+1)%3;}
+  }
+  downP=null;
+}
+
+// ==== 判定 ====
+function bondAccepted(bi){
+  const [a,b]=mol.bonds[bi];
+  const ea=mol.atoms[a][0],eb=mol.atoms[b][0];
+  const d=EN[eb]-EN[ea];
+  const acc=[];
+  if(Math.abs(d)<0.05){acc.push(0);}
+  else{
+    acc.push(d>0?1:2); // 電気陰性度の大きい方へ
+    if((ea==='C'&&eb==='H')||(ea==='H'&&eb==='C'))acc.push(0); // C-Hは「なし」も可
+  }
+  return acc;
+}
+function answer(saidPolar){
+  if(locked)return;locked=true;
+  const wrongBonds=[];
+  mol.bonds.forEach((b,i)=>{if(!bondAccepted(i).includes(arrow[i]))wrongBonds.push(i);});
+  // 正しい矢印に修正して見せる
+  mol.bonds.forEach((b,i)=>{const acc=bondAccepted(i);if(!acc.includes(arrow[i]))arrow[i]=acc[0];});
+  const polarOK=(saidPolar===mol.polar);
+  const bondOK=wrongBonds.length===0;
+  const btns=$('judge').children;
+  btns[mol.polar?0:1].classList.add('correct');
+  if(!polarOK)btns[saidPolar?0:1].classList.add('wrong');
+  btns[0].disabled=btns[1].disabled=true;
+  let pts=0;
+  if(bondOK&&polarOK)pts=150;
+  else if(polarOK)pts=70;
+  else if(bondOK)pts=50;
+  score+=pts;$('score').textContent=score;
+  let head=bondOK&&polarOK?'<span class="good">完璧！+150点</span>'
+        :polarOK?'<span class="good">判定は正解(+70点)</span> <span class="bad">矢印にミスあり(正しい矢印に直したよ)</span>'
+        :bondOK?'<span class="bad">判定ミス…</span><span class="good">矢印は正解(+50点)</span>'
+        :'<span class="bad">ざんねん…正しい矢印を表示中</span>';
+  $('fb').innerHTML=head+'<br>'+mol.ex;
+  $('nextb').style.display='block';
+}
+</script>
+</body>
+</html>

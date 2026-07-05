@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>酸化数バトル | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#c2607d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px;white-space:nowrap}
+main{max-width:720px;margin:0 auto;padding:20px 14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px;letter-spacing:.04em}
+.desc{color:var(--mut);margin:.4em 0}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
+button.primary:active{transform:translateY(1px)}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut)}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+#tbar{height:6px;background:var(--line);border-radius:3px;margin:10px 0}
+#tfill{height:100%;width:100%;background:var(--acc);border-radius:3px;transition:width .1s linear}
+#qtext{min-height:86px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;margin:8px 0;line-height:1.5}
+#choices{display:grid;gap:10px}
+#choices button{padding:14px 6px;font-size:16px;font-weight:700;background:#fff;border:2px solid var(--line);border-radius:10px;cursor:pointer;color:var(--ink)}
+#choices button.correct{border-color:var(--ok);background:#e9f7f0}
+#choices button.wrong{border-color:var(--bad);background:#fbeef0}
+#fb{min-height:44px;margin-top:12px;font-size:14px;color:var(--mut);text-align:center;line-height:1.6}
+#fb .good{color:var(--ok);font-weight:800}
+#fb .bad{color:var(--bad);font-weight:800}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+@media(max-width:480px){#qtext{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">酸化数バトル</div>
+  <span class="chip">酸化還元</span>
+</header>
+<main>
+  <section id="start" class="panel">
+    <h1>酸化数バトル</h1>
+    <p class="desc">指定された原子(オレンジ色)の酸化数を素早く判定。連続正解でスコアが伸びる。</p>
+    <ul class="rules"><li>制限時間は90秒</li><li>単体は0、H:+1、O:−2が基本ルール</li><li>H<sub>2</sub>O<sub>2</sub>のOとNaHのHは例外！</li></ul>
+    <button class="primary" onclick="startGame()">スタート</button>
+  </section>
+  <section id="play" class="panel hidden">
+    <div class="hud">
+      <div>のこり<b id="time"></b>秒</div>
+      <div>スコア<b id="score">0</b></div>
+      <div>連続<b id="combo">0</b></div>
+    </div>
+    <div id="tbar"><div id="tfill"></div></div>
+    <div id="qtext"></div>
+    <div id="choices"></div>
+    <div id="fb"></div>
+  </section>
+  <section id="end" class="panel hidden">
+    <h1>タイムアップ！</h1>
+    <p class="result">スコア <b id="fscore"></b><br>正答 <span id="facc"></span></p>
+    <button class="primary" onclick="startGame()">もう一度</button>
+    <a class="ghost" href="index.html">一覧へ戻る</a>
+  </section>
+</main>
+<script>
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function fmt(x){return (Math.round(x*1000)/1000).toString()}
+function finalize(q,list,correct,ex){
+  const arr=list.map((s,i)=>({s:s,c:i===correct}));shuffle(arr);
+  return {q:q,choices:arr.map(o=>o.s),a:arr.findIndex(o=>o.c),ex:ex};
+}
+function qnum(q,ans,wrongs,unit,ex){
+  let vals=[ans];
+  for(const w of wrongs){if(vals.every(v=>Math.abs(v-w)>1e-9))vals.push(w);if(vals.length>=4)break;}
+  while(vals.length<4)vals.push(ans*(vals.length+5));
+  return finalize(q,vals.map(v=>fmt(v)+" "+unit),0,ex);
+}
+function staticGame(list){let pool=[];return{next(){if(!pool.length)pool=shuffle(list.slice());return pool.pop();}}}
+
+const CH=['−4','−3','−2','−1','0','+1','+2','+3','+4','+5','+6','+7'];
+function T(s){return '<span style="color:#e8a13d">'+s+'</span>'}
+const DB=[
+['H<sub>2</sub>'+T('S'),'−2','Hは+1×2、全体は0 → S=−2'],
+[T('S')+'O<sub>2</sub>','+4','Oは−2×2、全体は0 → S=+4'],
+['H<sub>2</sub>'+T('S')+'O<sub>4</sub>','+6','H:+1×2, O:−2×4 → S=+6'],
+[T('S')+'O<sub>4</sub><sup>2−</sup>','+6','O:−2×4、全体は−2 → S=+6'],
+['N'+'H<sub>3</sub>…の'+T('N'),'−3','H:+1×3、全体0 → N=−3'],
+['H'+T('N')+'O<sub>3</sub>','+5','H:+1, O:−2×3 → N=+5'],
+[T('N')+'O<sub>2</sub>','+4','O:−2×2 → N=+4'],
+[T('N')+'O','+2','O:−2 → N=+2'],
+[T('N')+'<sub>2</sub>','0','単体の酸化数は0'],
+['K'+T('Mn')+'O<sub>4</sub>','+7','K:+1, O:−2×4 → Mn=+7'],
+[T('Mn')+'O<sub>2</sub>','+4','O:−2×2 → Mn=+4'],
+[T('Mn')+'<sup>2+</sup>','+2','単原子イオンは電荷がそのまま酸化数'],
+[T('Cr')+'<sub>2</sub>O<sub>7</sub><sup>2−</sup>','+6','O:−2×7、全体−2 → Cr2個で+12 → +6'],
+['H<sub>2</sub>'+T('O')+'<sub>2</sub>','−1','過酸化水素のOは例外的に−1！'],
+['Fe<sub>2</sub>'+T('O')+'<sub>3</sub>…のO','−2','化合物中のOはふつう−2'],
+[T('Fe')+'<sub>2</sub>O<sub>3</sub>','+3','O:−2×3 → Fe2個で+6 → +3'],
+[T('Fe')+'SO<sub>4</sub>','+2','SO<sub>4</sub><sup>2−</sup>とみて Fe=+2'],
+[T('Cl')+'<sub>2</sub>','0','単体の酸化数は0'],
+['H'+T('Cl')+'O','+1','次亜塩素酸。H:+1, O:−2 → Cl=+1'],
+['K'+T('Cl')+'O<sub>3</sub>','+5','K:+1, O:−2×3 → Cl=+5'],
+['H'+T('Cl')+'O<sub>4</sub>','+7','過塩素酸。Cl=+7(最高酸化数)'],
+['Na'+T('H'),'−1','金属の水素化物ではHは例外的に−1！'],
+[T('C')+'O<sub>2</sub>','+4','O:−2×2 → C=+4'],
+[T('C')+'H<sub>4</sub>','−4','H:+1×4 → C=−4'],
+['Cu<sub>2</sub>'+T('O')+'…のO','−2','Oは−2。ちなみにCuは+1。'],
+[T('Cu')+'<sub>2</sub>O','+1','O:−2 → Cu2個で+2 → +1'],
+];
+const GAME=staticGame(DB.map(d=>({q:'オレンジ色の原子の酸化数は？<br>'+d[0],choices:CH,a:CH.indexOf(d[1]),ex:d[2]})));
+
+const LIMIT=90;
+let score=0,combo=0,ok=0,total=0,tLeft=0,timer=null,cur=null,locked=false;
+const $=id=>document.getElementById(id);
+function startGame(){
+  score=0;combo=0;ok=0;total=0;tLeft=LIMIT;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  upd();nextQ();clearInterval(timer);
+  timer=setInterval(()=>{tLeft-=0.1;if(tLeft<=0){tLeft=0;finish();}drawT();},100);drawT();
+}
+function drawT(){$('time').textContent=Math.ceil(tLeft);$('tfill').style.width=(tLeft/LIMIT*100)+'%';}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;}
+function nextQ(){
+  locked=false;$('fb').innerHTML='';cur=GAME.next();
+  $('qtext').innerHTML=cur.q;
+  const c=$('choices');c.innerHTML='';
+  c.style.gridTemplateColumns='repeat(4,1fr)';
+  cur.choices.forEach((ch,i)=>{const b=document.createElement('button');b.innerHTML=ch;b.onclick=()=>answer(i,b);c.appendChild(b);});
+}
+function answer(i,btn){
+  if(locked)return;locked=true;total++;
+  const bs=$('choices').children;bs[cur.a].classList.add('correct');
+  if(i===cur.a){ok++;combo++;score+=100+Math.min(combo,10)*10;
+    $('fb').innerHTML='<span class="good">正解！</span> '+(cur.ex||'');setTimeout(nextQ,750);}
+  else{btn.classList.add('wrong');combo=0;
+    $('fb').innerHTML='<span class="bad">おしい！</span> '+(cur.ex||'');setTimeout(nextQ,1700);}
+  upd();
+}
+function finish(){clearInterval(timer);$('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;$('facc').textContent=ok+' 問 / '+total+' 問';}
+</script>
+</body>
+</html>
