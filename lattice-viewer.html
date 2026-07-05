@@ -51,38 +51,87 @@ sub,sup{font-size:.62em}
   </div>
   <div id="status">粒子をタップすると、<b>となり合う粒子(最近接粒子)</b>がオレンジ色に光ります。配位数を自分の目で数えてみよう。<br>ドラッグで回転 / ホイール(ピンチ)で拡大縮小</div>
   <div id="info"></div>
-  <div class="note">※ 太い黄色の枠が<b>単位格子</b>。単位格子の外側にも構造が続いていることを、うすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。</div>
+  <div class="note">※ 中央の黄色い枠が<b>単位格子</b>。そのまわり四方八方に、となりの単位格子へ続く構造をうすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。</div>
 </div>
 </main>
 
 <script>
 const $=id=>document.getElementById(id);
 const SQ2=Math.SQRT2, SQ3=Math.sqrt(3);
+const HC=Math.sqrt(8/3); // 六方最密のc軸の高さ(a=1基準, c/a≒1.633)
 
-function genSC(){const pts=[];for(let x=0;x<=2;x++)for(let y=0;y<=2;y++)for(let z=0;z<=2;z++)pts.push({p:[x,y,z],t:0});return pts;}
-function genBCC(){const pts=genSC();for(let x=0;x<2;x++)for(let y=0;y<2;y++)for(let z=0;z<2;z++)pts.push({p:[x+.5,y+.5,z+.5],t:0});return pts;}
+// 立方晶系: 中央の単位格子(0..1)の四方八方に±1格子ぶんのゴースト粒子
+function genSC(){const pts=[];for(let x=-1;x<=2;x++)for(let y=-1;y<=2;y++)for(let z=-1;z<=2;z++)pts.push({p:[x,y,z],t:0});return pts;}
+function genBCC(){const pts=genSC();for(let x=-1;x<2;x++)for(let y=-1;y<2;y++)for(let z=-1;z<2;z++)pts.push({p:[x+.5,y+.5,z+.5],t:0});return pts;}
 function genFCC(){const pts=genSC();
-  for(let x=0;x<2;x++)for(let y=0;y<2;y++)for(let z=0;z<=2;z++)pts.push({p:[x+.5,y+.5,z],t:0});
-  for(let x=0;x<2;x++)for(let y=0;y<=2;y++)for(let z=0;z<2;z++)pts.push({p:[x+.5,y,z+.5],t:0});
-  for(let x=0;x<=2;x++)for(let y=0;y<2;y++)for(let z=0;z<2;z++)pts.push({p:[x,y+.5,z+.5],t:0});
+  for(let x=-1;x<2;x++)for(let y=-1;y<2;y++)for(let z=-1;z<=2;z++)pts.push({p:[x+.5,y+.5,z],t:0});
+  for(let x=-1;x<2;x++)for(let y=-1;y<=2;y++)for(let z=-1;z<2;z++)pts.push({p:[x+.5,y,z+.5],t:0});
+  for(let x=-1;x<=2;x++)for(let y=-1;y<2;y++)for(let z=-1;z<2;z++)pts.push({p:[x,y+.5,z+.5],t:0});
   return pts;}
-function genNaCl(){const pts=[];
-  for(let x=0;x<=4;x++)for(let y=0;y<=4;y++)for(let z=0;z<=4;z++){
-    pts.push({p:[x/2,y/2,z/2],t:(x+y+z)%2});} // t0=Na(小) t1=Cl(大)
+function genNaCl(){const pts=[]; // イオン数が多いので周囲は半格子ぶん
+  for(let i=0;i<=4;i++)for(let j=0;j<=4;j++)for(let k=0;k<=4;k++)
+    pts.push({p:[(i-1)/2,(j-1)/2,(k-1)/2],t:(i+j+k+1)%2}); // t0=Na(小) t1=Cl(大)
   return pts;}
+function genHCP(){ // ABAB積層。偶数層=Aサイト、奇数層=Bサイト
+  const pts=[];
+  for(let k=-1;k<=3;k++){
+    const z=k*HC/2,B=(k&1)!==0;
+    const ox=B?0.5:0,oy=B?1/(2*SQ3):0;
+    for(let n=-4;n<=4;n++)for(let m=-4;m<=4;m++){
+      const x=n+m*0.5+ox,y=m*SQ3/2+oy;
+      if(x*x+y*y<=4.21)pts.push({p:[x,y,z],t:0});
+    }
+  }
+  return pts;}
+
+function cubeFrame(){
+  return {v:[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]],
+          e:[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]};
+}
+function hexFrame(){ // 六角柱(参考枠)+中心軸からの3分割線
+  const v=[],e=[];
+  for(let i=0;i<6;i++){const a=Math.PI/3*i;v.push([Math.cos(a),Math.sin(a),0]);}
+  for(let i=0;i<6;i++){const a=Math.PI/3*i;v.push([Math.cos(a),Math.sin(a),HC]);}
+  for(let i=0;i<6;i++){e.push([i,(i+1)%6],[i+6,(i+1)%6+6],[i,i+6]);}
+  v.push([0,0,0],[0,0,HC]); // 12,13: 中心軸
+  e.push([12,4],[13,10]);   // 3分割の残りの線(V0,V2への線は単位格子の辺)
+  return {v,e};
+}
+function rhombFrame(){ // 単位格子=六角柱の1/3の菱形柱
+  const V0=[1,0],V1=[.5,SQ3/2],V2=[-.5,SQ3/2];
+  const v=[[0,0,0],[V0[0],V0[1],0],[V1[0],V1[1],0],[V2[0],V2[1],0],
+           [0,0,HC],[V0[0],V0[1],HC],[V1[0],V1[1],HC],[V2[0],V2[1],HC]];
+  const e=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  return {v,e};
+}
+function inBox(p){return p.every(v=>v>-1e-6&&v<1+1e-6);}
+function inHexCell(p){
+  if(p[2]<-1e-6||p[2]>HC+1e-6)return false;
+  for(const th of[Math.PI/6,Math.PI/2,Math.PI*5/6])
+    if(Math.abs(p[0]*Math.cos(th)+p[1]*Math.sin(th))>SQ3/2+1e-4)return false;
+  return true;
+}
 
 const ST={
  sc:{name:'単純立方格子',gen:genSC,rTouch:[.5],rSmall:[.11],col:['#7fa8bd'],
    n:'1個',coord:6,fill:'52%',rel:'2r = a',nd:1,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
    ex:'立方体の頂点だけに粒子。となりの粒子とは辺にそって接する。例:ポロニウム'},
  bcc:{name:'体心立方格子',gen:genBCC,rTouch:[SQ3/4],rSmall:[.11],col:['#7fa8bd'],
    n:'2個',coord:8,fill:'68%',rel:'4r = √3 a(体対角線)',nd:SQ3/2,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
    ex:'中心の粒子は8個の頂点粒子と接する。例:Na, K, Fe'},
  fcc:{name:'面心立方格子',gen:genFCC,rTouch:[SQ2/4],rSmall:[.11],col:['#7fa8bd'],
    n:'4個',coord:12,fill:'74%',rel:'4r = √2 a(面対角線)',nd:SQ2/2,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
    ex:'面の中心の粒子が、面対角線にそって接する。最密構造。例:Cu, Ag, Al'},
+ hcp:{name:'六方最密構造',gen:genHCP,rTouch:[.5],rSmall:[.11],col:['#7fa8bd'],
+   n:'2個(六角柱の1/3)',coord:12,fill:'74%',rel:'2r = a(六角形の1辺)',nd:1,
+   center:[0,0,HC/2],frame:rhombFrame(),sub:hexFrame(),inCell:inHexCell,zm:.8,
+   ex:'ABAB…と層が重なる最密構造(充填率は面心立方と同じ74%)。<b>太い黄枠が単位格子</b>で、点線の六角柱のちょうど1/3。六角柱全体では 12×1/6 + 2×1/2 + 3 = 6個の原子をふくむ。例:Mg, Zn'},
  nacl:{name:'塩化ナトリウム型',gen:genNaCl,rTouch:[.19,.31],rSmall:[.09,.13],col:['#9db4d8','#5aa06b'],
    n:'Na⁺4個+Cl⁻4個',coord:6,fill:'—',rel:'2(r₊ + r₋) = a',nd:.5,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
    ex:'Na⁺(青)とCl⁻(緑)が交互に並ぶ。どちらのイオンも反対符号のイオン6個に囲まれる(配位数6)。'},
 };
 
@@ -119,8 +168,8 @@ function resetSel(){selected=-1;neighbors=[];picked=[];dirty=true;}
 function resetView(){yaw=.65;pitch=.42;zoom=1;dirty=true;}
 
 // ==== 3D ====
-function rot(p,c){
-  const x0=(p[0]-c)*1,y0=(p[1]-c),z0=(p[2]-c);
+function rot(p,C){
+  const x0=p[0]-C[0],y0=p[1]-C[1],z0=p[2]-C[2];
   const cy=Math.cos(yaw),sy=Math.sin(yaw);
   const x=x0*cy+z0*sy, z=-x0*sy+z0*cy;
   const cp=Math.cos(pitch),sp=Math.sin(pitch);
@@ -128,42 +177,59 @@ function rot(p,c){
   return [x,y2,z2];
 }
 function proj(p){
-  const f=7,s=118*zoom;
+  const f=7,s=118*zoom*(ST[key].zm||1);
   const k=f/(f-p[2]);
   return {x:W/2+p[0]*s*k,y:H/2-p[1]*s*k,k,s};
 }
-function inCell(p){return p.every(v=>v>-1e-6&&v<1+1e-6);}
 
 let screenPts=[];
 function draw(){
   ctx.clearRect(0,0,W,H);
   const s=ST[key];
-  const c=1; // 領域中心 (0..2)
-  const rp=pts.map(a=>rot(a.p,c));
+  const C=s.center;
+  const rp=pts.map(a=>rot(a.p,C));
   const pp=rp.map(proj);
   screenPts=pp;
-  // 単位格子の枠(奥側を先に)
-  const corners=[[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]];
-  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-  const cp=corners.map(q=>proj(rot(q,c)));
+  // 単位格子の枠(奥側を先にうすく)。subは参考枠(六角柱)で点線
+  const cp=s.frame.v.map(q=>proj(rot(q,C)));
+  const sp2=s.sub?s.sub.v.map(q=>proj(rot(q,C))):null;
+  if(sp2){
+    ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(232,161,61,.3)';ctx.lineWidth=1.5;
+    for(const e of s.sub.e){ctx.beginPath();ctx.moveTo(sp2[e[0]].x,sp2[e[0]].y);ctx.lineTo(sp2[e[1]].x,sp2[e[1]].y);ctx.stroke();}
+    ctx.setLineDash([]);
+  }
   ctx.strokeStyle='rgba(232,161,61,.35)';ctx.lineWidth=2;
-  for(const e of edges){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
-  // 粒子(奥→手前)
+  for(const e of s.frame.e){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
+  // 粒子(奥→手前)。選択中はハイライト以外を暗くして配位数を見やすく
+  const hasSel=selected>=0||picked.length>0;
   const ord=pts.map((_,i)=>i).sort((a,b)=>rp[a][2]-rp[b][2]);
   for(const i of ord){
     const a=pts[i],p=pp[i];
     const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
-    const r=rBase*p.s*p.k/1;
-    const inside=inCell(a.p);
-    let col=s.col[a.t];
-    if(i===selected)col='#d4566a';
-    else if(neighbors.includes(i))col='#e8a13d';
+    const r=rBase*p.s*p.k;
+    const inside=s.inCell(a.p);
     const pi=picked.indexOf(i);
-    if(pi>=0)col='#d4566a';
-    ctx.globalAlpha=inside?1:.22;
-    const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.1,p.x,p.y,r);
-    g.addColorStop(0,'#fff');g.addColorStop(.3,col);g.addColorStop(1,shade(col));
-    ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle=g;ctx.fill();
+    const isSel=i===selected||pi>=0, isNb=neighbors.includes(i);
+    let col=s.col[a.t];
+    if(isSel)col='#d4566a';
+    else if(isNb)col='#e8a13d';
+    let alpha;
+    if(isSel||isNb)alpha=1;             // ハイライトは格子の外でも常にはっきり
+    else if(hasSel)alpha=inside?.3:.06; // 選択中はその他を暗く
+    else alpha=inside?1:.15;
+    ctx.globalAlpha=alpha;
+    if(alpha<.5){ // ゴースト粒子はフラット塗り(軽量)
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle=col;ctx.fill();
+    }else{
+      const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.35,r*.1,p.x,p.y,r);
+      g.addColorStop(0,'#fff');g.addColorStop(.3,col);g.addColorStop(1,shade(col));
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.fillStyle=g;ctx.fill();
+    }
+    if(isSel||isNb){ // 白いリングでさらに強調
+      ctx.globalAlpha=1;
+      ctx.lineWidth=2.5;ctx.strokeStyle='#fff';
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.stroke();
+    }
     if(pi>=0){ // 選択番号バッジ
       ctx.globalAlpha=1;
       ctx.fillStyle='#fff';ctx.font='800 '+Math.max(11,r*.8)+'px sans-serif';
@@ -172,9 +238,14 @@ function draw(){
     }
     ctx.globalAlpha=1;
   }
-  // 単位格子の枠(手前に重ね描き)
+  // 枠(手前に重ね描き)
+  if(sp2){
+    ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(232,161,61,.55)';ctx.lineWidth=1.5;
+    for(const e of s.sub.e){ctx.beginPath();ctx.moveTo(sp2[e[0]].x,sp2[e[0]].y);ctx.lineTo(sp2[e[1]].x,sp2[e[1]].y);ctx.stroke();}
+    ctx.setLineDash([]);
+  }
   ctx.strokeStyle='rgba(232,161,61,.95)';ctx.lineWidth=2.5;
-  for(const e of edges){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
+  for(const e of s.frame.e){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
   // 原子半径モード:4点選択で図形
   if(radiusMode&&picked.length===4){
     ctx.strokeStyle='#7de3d0';ctx.lineWidth=2;
@@ -196,7 +267,7 @@ function draw(){
     }
   }
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px sans-serif';ctx.textAlign='left';
-  ctx.fillText(s.name+'(黄色の枠が単位格子)',10,H-12);
+  ctx.fillText(s.name+(s.sub?'(太い黄枠=単位格子、点線=六角柱)':'(黄色の枠が単位格子)'),10,H-12);
 }
 function fmtLen(d){
   const table=[[.5,'a/2'],[1,'a'],[SQ2/2,'(√2/2)a'],[SQ3/2,'(√3/2)a'],[SQ2,'√2 a'],[SQ3,'√3 a'],
@@ -231,7 +302,7 @@ function selectAtom(i){
     else if(Math.abs(d-dmin)<1e-6)neighbors.push(j);
   });
   const name=key==='nacl'?(A.t===0?'Na⁺':'Cl⁻'):'この粒子';
-  status('<b>'+name+'</b>の最近接粒子(距離 '+fmtLen(dmin)+')をオレンジ色で表示。画面内で数えられた数: <b>'+neighbors.length+'個</b> / 理論値(結晶全体では): <b>'+ST[key].coord+'個</b><br>端の粒子は結晶が続けばもっと囲まれる。中央付近の粒子で数えてみよう。');
+  status('<b>'+name+'</b>の最近接粒子(距離 '+fmtLen(dmin)+')をオレンジ色で表示。数えられた数: <b>'+neighbors.length+'個</b> / 理論値: <b>'+ST[key].coord+'個</b><br>まわりの半透明の粒子もふくめて数えるのがコツ。「小粒子モデル」に切りかえて回転させると数えやすい。');
   dirty=true;
 }
 
@@ -270,7 +341,7 @@ function pup(e){
       const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
       const r=Math.max(12,rBase*sp.s*sp.k);
       if((p.x-sp.x)**2+(p.y-sp.y)**2<r*r){
-        const z=rot(a.p,1)[2];
+        const z=rot(a.p,ST[key].center)[2];
         if(z>bz){bz=z;best=i;}
       }
     });
