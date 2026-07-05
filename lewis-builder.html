@@ -121,14 +121,14 @@ const EL={
  Cl:{v:7,u:1,c:'#2e7d54',r:23},
 };
 const SPAWN=['H','H','H','H','H','O','O','O','C','C','N','N','Cl','Cl','F'];
-const DOT_DIRS=[[0,-1],[1,0],[0,1],[-1,0]]; // 上・右・下・左
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]]; // 上・右・下・左(原子ごとの4方向スロット)
+const BOND_LEN=34;
 function compKey(comp){return Object.keys(comp).sort().map(k=>k+(comp[k]>1?comp[k]:'')).join('')}
-// 分子式の元素の並び順(炭素→水素→その他アルファベット順、Hill方式)
+// 分子式の元素の並び順(炭素→窒素→水素→その他アルファベット順。NH3等の慣用表記に合わせる)
 function formulaOrder(comp){
-  const order=[];
-  if(comp.C)order.push('C');
-  if(comp.H)order.push('H');
-  Object.keys(comp).filter(e=>e!=='C'&&e!=='H').sort().forEach(e=>order.push(e));
+  const pri=['C','N','H'];
+  const order=pri.filter(e=>comp[e]);
+  Object.keys(comp).filter(e=>!pri.includes(e)).sort().forEach(e=>order.push(e));
   return order;
 }
 function formulaSegs(comp){ // [{t,sub}] 形式の分子式(下付き数字を分離)
@@ -140,7 +140,7 @@ function formulaHTML(comp){return formulaSegs(comp).map(s=>s.sub?'<sub>'+s.t+'</
 
 let clusters=[],score=0,made=0,tLeft=0,timer=null,raf=null,running=false,madeList={};
 let cv,ctx,W,H,DPR;
-let drag=null,downPos=null,spawnT=0,current=null,fails=0;
+let drag=null,drag_pending=null,downPos=null,spawnT=0,current=null,fails=0;
 let floats=[]; // 得点表示
 
 function startGame(){
@@ -171,14 +171,20 @@ function upd(){$('score').textContent=score;$('count').textContent=made;
   $('made').innerHTML=Object.keys(madeList).map(k=>'<span>'+madeList[k].label+' ×'+madeList[k].n+'</span>').join('');}
 function msg(t,color){$('msg').textContent=t;$('msg').style.color=color||'var(--mut)';}
 
+function newAtom(el){return {el,dx:0,dy:0,ue:0,used:[false,false,false,false]};}
 function spawn(){
   const el=pick(SPAWN);
-  const c={atoms:[{el}],comp:{[el]:1},unpaired:0,needsLewis:true,
+  const c={atoms:[newAtom(el)],bonds:[],needsLewis:true,
     x:40+Math.random()*(W-80),y:40+Math.random()*(H-80),
     vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5};
   clusters.push(c);
 }
 function totalAtoms(){return clusters.reduce((s,c)=>s+c.atoms.length,0)}
+function extent(c){ // クラスターの見た目上の半径(壁judgeバウンド用)
+  let m=0;
+  for(const a of c.atoms){const d=Math.hypot(a.dx,a.dy)+EL[a.el].r;if(d>m)m=d;}
+  return m;
+}
 
 function loop(){
   if(!running)return;
@@ -188,9 +194,9 @@ function loop(){
   for(const c of clusters){
     if(c===drag)continue;
     c.x+=c.vx;c.y+=c.vy;
-    const m=c.atoms.length*16+14;
+    const m=extent(c)+14;
     if(c.x<m){c.x=m;c.vx*=-1}if(c.x>W-m){c.x=W-m;c.vx*=-1}
-    if(c.y<30){c.y=30;c.vy*=-1}if(c.y>H-30){c.y=H-30;c.vy*=-1}
+    if(c.y<m){c.y=m;c.vy*=-1}if(c.y>H-m){c.y=H-m;c.vy*=-1}
     c.vx+= (Math.random()-.5)*0.03;c.vy+=(Math.random()-.5)*0.03;
     c.vx=Math.max(-0.7,Math.min(0.7,c.vx));c.vy=Math.max(-0.7,Math.min(0.7,c.vy));
   }
@@ -198,23 +204,25 @@ function loop(){
   raf=requestAnimationFrame(loop);
 }
 
-function atomPos(c,i){ // クラスター内i番目の原子座標
-  const n=c.atoms.length;
-  const x0=c.x-(n-1)*17;
-  return {x:x0+i*34,y:c.y};
-}
+function worldPos(c,i){const a=c.atoms[i];return {x:c.x+a.dx,y:c.y+a.dy};}
 function draw(){
   ctx.clearRect(0,0,W,H);
   for(const c of clusters){
-    // 結合線
-    if(c.atoms.length>1){
-      ctx.strokeStyle='#7d939c';ctx.lineWidth=5;
-      ctx.beginPath();
-      const p0=atomPos(c,0),p1=atomPos(c,c.atoms.length-1);
-      ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.stroke();
+    // 結合線(結合次数だけ平行線を描く)
+    ctx.strokeStyle='#7d939c';ctx.lineWidth=3;
+    for(const bd of c.bonds){
+      const p=worldPos(c,bd.i),q=worldPos(c,bd.j);
+      const len=Math.hypot(q.x-p.x,q.y-p.y)||1;
+      const nx=-(q.y-p.y)/len,ny=(q.x-p.x)/len;
+      for(let k=0;k<bd.order;k++){
+        const off=(k-(bd.order-1)/2)*4;
+        ctx.beginPath();
+        ctx.moveTo(p.x+nx*off,p.y+ny*off);ctx.lineTo(q.x+nx*off,q.y+ny*off);
+        ctx.stroke();
+      }
     }
     c.atoms.forEach((a,i)=>{
-      const p=atomPos(c,i),e=EL[a.el];
+      const p=worldPos(c,i),e=EL[a.el];
       ctx.beginPath();ctx.arc(p.x,p.y,e.r,0,7);
       ctx.fillStyle=c.needsLewis?'#dfe7e6':e.c;ctx.fill();
       ctx.lineWidth=2;ctx.strokeStyle=c.needsLewis?'#b4c3c0':'rgba(0,0,0,.15)';ctx.stroke();
@@ -222,18 +230,19 @@ function draw(){
       ctx.font='800 '+(a.el.length>1?14:16)+'px sans-serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(a.el,p.x,p.y);
-    });
-    // 不対電子(各原子の四方(上・右・下・左)に展開して表示)
-    if(!c.needsLewis&&c.unpaired>0){
-      const n=c.atoms.length;
-      for(let k=0;k<c.unpaired;k++){
-        const ai=k%n,d=DOT_DIRS[Math.floor(k/n)%4];
-        const p=atomPos(c,ai),rad=EL[c.atoms[ai].el].r;
-        ctx.beginPath();
-        ctx.arc(p.x+d[0]*(rad+10),p.y+d[1]*(rad+10),3.4,0,7);
-        ctx.fillStyle='#d4566a';ctx.fill();
+      // 不対電子(この原子の空いている方向にだけ表示)
+      if(!c.needsLewis&&a.ue>0){
+        let shown=0;
+        for(let d=0;d<4&&shown<a.ue;d++){
+          if(a.used[d])continue;
+          const dir=DIRS[d];
+          ctx.beginPath();
+          ctx.arc(p.x+dir[0]*(e.r+10),p.y+dir[1]*(e.r+10),3.4,0,7);
+          ctx.fillStyle='#d4566a';ctx.fill();
+          shown++;
+        }
       }
-    }
+    });
     if(c.needsLewis){
       ctx.fillStyle='#94a7ad';ctx.font='11px sans-serif';
       ctx.fillText('タップ',c.x,c.y+EL[c.atoms[0].el].r+12);
@@ -267,7 +276,7 @@ function hit(p){
   for(let i=clusters.length-1;i>=0;i--){
     const c=clusters[i];
     for(let j=0;j<c.atoms.length;j++){
-      const q=atomPos(c,j),e=EL[c.atoms[j].el];
+      const q=worldPos(c,j),e=EL[c.atoms[j].el];
       if((p.x-q.x)**2+(p.y-q.y)**2<(e.r+8)**2)return c;
     }
   }
@@ -281,7 +290,6 @@ function down(e){
   else if(c){drag=null;drag_pending=c;}
   e.preventDefault();
 }
-let drag_pending=null;
 function move(e){
   if(!running)return;
   const p=evPos(e);
@@ -289,47 +297,79 @@ function move(e){
 }
 function up(e){
   if(!running)return;
-  const p=downPos?{...downPos}:null;
-  if(drag_pending&&p){openModal(drag_pending);drag_pending=null;drag=null;return;}
+  if(drag_pending&&downPos){openModal(drag_pending);drag_pending=null;drag=null;return;}
   if(drag){
-    // 重なり判定
-    const target=clusters.find(c=>c!==drag&&!c.needsLewis&&overlap(drag,c));
-    if(target)tryMerge(drag,target);
+    let target=null,pair=null;
+    for(const c of clusters){
+      if(c===drag||c.needsLewis)continue;
+      const p=findBondPair(drag,c);
+      if(p){target=c;pair=p;break;}
+    }
+    if(target){
+      tryMerge(drag,target,pair.i,pair.j);
+    }else{
+      const near=clusters.find(c=>c!==drag&&!c.needsLewis&&overlapAny(drag,c));
+      if(near){msg('不対電子がない原子どうしは結合できない！','var(--bad)');nudge(drag,near);}
+    }
     drag=null;
   }
 }
-function overlap(a,b){
+function overlapAny(a,b){ // 接触しているかどうかだけの判定(メッセージ表示用)
   for(let i=0;i<a.atoms.length;i++)for(let j=0;j<b.atoms.length;j++){
-    const p=atomPos(a,i),q=atomPos(b,j);
+    const p=worldPos(a,i),q=worldPos(b,j);
     if((p.x-q.x)**2+(p.y-q.y)**2<(EL[a.atoms[i].el].r+EL[b.atoms[j].el].r+6)**2)return true;
   }
   return false;
 }
-function tryMerge(a,b){
-  if(a.unpaired<1||b.unpaired<1){msg('不対電子がない原子は結合できない！','var(--bad)');nudge(a,b);return;}
-  const comp={...a.comp};
-  for(const el in b.comp)comp[el]=(comp[el]||0)+b.comp[el];
-  const order=Math.min(a.unpaired,b.unpaired,3); // 結合次数
-  const merged={
-    atoms:a.atoms.concat(b.atoms),comp,
-    unpaired:a.unpaired+b.unpaired-2*order,
-    needsLewis:false,
-    x:(a.x+b.x)/2,y:(a.y+b.y)/2,
-    vx:(a.vx+b.vx)/2,vy:(a.vy+b.vy)/2};
+function findBondPair(a,b){ // 不対電子と空きスロットがある原子どうしで、最も近い接触ペアを探す
+  let best=null,bd=Infinity;
+  for(let i=0;i<a.atoms.length;i++){
+    const A=a.atoms[i];
+    if(A.ue<1||!A.used.includes(false))continue;
+    for(let j=0;j<b.atoms.length;j++){
+      const B=b.atoms[j];
+      if(B.ue<1||!B.used.includes(false))continue;
+      const p=worldPos(a,i),q=worldPos(b,j);
+      const d2=(p.x-q.x)**2+(p.y-q.y)**2;
+      const rr=(EL[A.el].r+EL[B.el].r+6)**2;
+      if(d2<rr&&d2<bd){bd=d2;best={i,j};}
+    }
+  }
+  return best;
+}
+function tryMerge(a,b,ai,bj){
+  const A=a.atoms[ai],B=b.atoms[bj];
+  const order=Math.min(A.ue,B.ue,3); // 結合次数
+  const da=A.used.indexOf(false),db=B.used.indexOf(false);
+  A.used[da]=true;B.used[db]=true;
+  A.ue-=order;B.ue-=order;
+  // bの原子全体を、aの空きスロット方向にぴったりつながるよう平行移動
+  const dir=DIRS[da];
+  const pa=worldPos(a,ai);
+  const targetX=pa.x+dir[0]*BOND_LEN,targetY=pa.y+dir[1]*BOND_LEN;
+  const pb=worldPos(b,bj);
+  const shiftX=targetX-pb.x,shiftY=targetY-pb.y;
+  const offset=a.atoms.length;
+  const newAtoms=a.atoms.concat(b.atoms.map(at=>({...at,
+    dx:(b.x+at.dx+shiftX)-a.x, dy:(b.y+at.dy+shiftY)-a.y})));
+  const newBonds=a.bonds.concat(b.bonds.map(bd=>({i:bd.i+offset,j:bd.j+offset,order:bd.order})));
+  newBonds.push({i:ai,j:bj+offset,order});
   clusters=clusters.filter(c=>c!==a&&c!==b);
-  if(merged.unpaired===0){
+  const totalUe=newAtoms.reduce((s,at)=>s+at.ue,0);
+  if(totalUe===0){
     // 不対電子を使い切った → 分子完成、フィールドから消える
-    const bonds=merged.atoms.reduce((s,at)=>s+EL[at.el].u,0)/2;
+    const comp={};newAtoms.forEach(at=>comp[at.el]=(comp[at.el]||0)+1);
+    const bonds=newAtoms.reduce((s,at)=>s+EL[at.el].u,0)/2;
     const pts=bonds*50;
     score+=pts;made++;
     const key=compKey(comp);
     if(!madeList[key])madeList[key]={label:formulaHTML(comp),n:0};
     madeList[key].n++;
-    floats.push({segs:formulaSegs(comp),pts,x:merged.x,y:merged.y,life:70});
+    floats.push({segs:formulaSegs(comp),pts,x:a.x,y:a.y,life:70});
     msg('分子完成！ +'+pts+'点','var(--ok)');
     upd();
   }else{
-    clusters.push(merged);
+    clusters.push({atoms:newAtoms,bonds:newBonds,needsLewis:false,x:a.x,y:a.y,vx:(a.vx+b.vx)/2,vy:(a.vy+b.vy)/2});
     msg(order>1?('多重結合(結合次数'+order+')で連結！'):'連結！のこり不対電子を使い切ろう');
   }
 }
@@ -368,9 +408,9 @@ function checkLewis(){
   }
   if(ok){
     current.needsLewis=false;
-    current.unpaired=EL[current.atoms[0].el].u;
+    current.atoms[0].ue=EL[current.atoms[0].el].u;
     score+=10;upd();
-    msg('電子式OK！不対電子 '+current.unpaired+' 個で結合できる','var(--ok)');
+    msg('電子式OK！不対電子 '+current.atoms[0].ue+' 個で結合できる','var(--ok)');
     closeModal();
   }else{
     fails++;
