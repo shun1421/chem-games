@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>気体分子ラボ | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#3e77b6;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:940px;margin:0 auto;padding:14px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.modes .lbl{font-size:12px;color:var(--mut);width:100%;margin-bottom:-4px;font-weight:700}
+.modes button{padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);font-family:inherit}
+.modes button.on{border-color:var(--acc);background:var(--acc);color:#fff}
+.modes button.on.real{border-color:var(--bad);background:var(--bad)}
+.stage{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0}
+#box{width:250px;height:290px;border:2px solid var(--line);border-radius:12px;background:#10222b;display:block;flex-shrink:0;margin:0 auto}
+#graph{flex:1;min-width:260px;height:290px;border:2px solid var(--line);border-radius:12px;background:#fdfefe;display:block}
+.ctrl{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.crow{display:flex;align-items:center;gap:10px;background:#fafcfb;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.crow .nm{font-size:13px;font-weight:800;min-width:110px}
+.crow .nm small{font-weight:600;color:var(--mut)}
+.crow input[type=range]{flex:1;accent-color:var(--acc);min-width:80px}
+.crow .val{font-family:var(--mono);font-size:14px;font-weight:700;min-width:96px;text-align:right}
+.crow.dep{border-color:var(--amber);background:#fdf6ea}
+.crow.dep .val{color:#a86b12;font-size:15px}
+.crow.dep .free{flex:1;font-size:11.5px;color:var(--mut)}
+.sweeprow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.sweeprow .lbl{font-size:12.5px;color:var(--mut);font-weight:700}
+.sweeprow button{padding:8px 13px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);font-family:inherit}
+.sweeprow button.on{border-color:var(--amber);background:var(--amber);color:#fff}
+.sweeprow .play{margin-left:auto;border-color:var(--acc);color:var(--acc);padding:8px 18px}
+.sweeprow .play.running{background:var(--acc);color:#fff}
+#status{font-size:13.5px;color:var(--ink);background:#eef4fa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.7;margin-top:4px}
+#status b{color:var(--acc)}
+#info{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-top:10px}
+.ibox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--mut)}
+.ibox b{display:block;font-size:14.5px;color:var(--ink);font-family:var(--mono);margin-top:2px}
+.ibox.warn b{color:var(--bad)}
+.note{font-size:12px;color:var(--mut);margin-top:10px;line-height:1.7}
+sub,sup{font-size:.62em}
+@media(max-width:600px){#graph{min-width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">気体分子ラボ</div>
+  <span class="chip">状態変化と気体</span>
+</header>
+<main>
+<div class="panel">
+  <div class="modes">
+    <span class="lbl">気体の種類</span>
+    <button id="mIdeal" onclick="setGas('ideal')">理想気体</button>
+    <button id="mReal" onclick="setGas('real')">実在気体(H<sub>2</sub>O)</button>
+    <span class="lbl">容器のモード</span>
+    <button id="hV" onclick="setHold('V')">体積を固定(ピストンを固定) → Pが決まる</button>
+    <button id="hP" onclick="setHold('P')">圧力を固定(ピストン自由) → Vが決まる</button>
+  </div>
+  <div class="stage">
+    <canvas id="box"></canvas>
+    <canvas id="graph"></canvas>
+  </div>
+  <div class="ctrl" id="ctrl"></div>
+  <div class="sweeprow" id="sweeprow"></div>
+  <div id="status"></div>
+  <div id="info"></div>
+  <div class="note">※ 粒子の速さは √T に比例(温度=分子運動の激しさ)。実在気体モードでは<b>分子間力(引力)</b>と<b>分子自身の大きさ</b>があり、
+  気体はファンデルワールスの状態方程式(H<sub>2</sub>O: a=5.5×10<sup>5</sup> Pa·L<sup>2</sup>/mol<sup>2</sup>, b=0.031 L/mol)で計算。
+  「全て気体としたときの圧力 > 飽和蒸気圧」なら凝縮がおこり、圧力は水の<b>蒸気圧曲線(赤線)</b>に沿います(373 Kで1.0×10<sup>5</sup> Pa)。
+  R=8.3×10<sup>3</sup> Pa·L/(K·mol)</div>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const R=8.3e3;              // Pa·L/(K·mol)
+const A=5.5e5, B=0.031;     // 水のファンデルワールス定数 a[Pa·L²/mol²], b[L/mol]
+
+const VARS={
+ n:{min:0.2,max:5,step:0.1,name:'n',jp:'物質量',unit:'mol',fmt:v=>v.toFixed(1)},
+ T:{min:200,max:1000,step:5,name:'T',jp:'絶対温度',unit:'K',fmt:v=>String(Math.round(v))},
+ V:{min:1,max:50,step:0.5,name:'V',jp:'体積',unit:'L',fmt:v=>v.toFixed(1)},
+ P:{min:2e4,max:2e6,step:1e4,name:'P',jp:'圧力',unit:'×10⁵Pa',fmt:v=>(v/1e5).toFixed(2)},
+};
+
+let gasMode='ideal';   // 'ideal' | 'real'
+let holdMode='V';      // 'V':体積固定(P従属) | 'P':圧力固定(V従属)
+let sweepVar='T';
+let vals={n:1.0,T:300,V:25,P:1.0e5};
+let condensed=false, Z=1, sweeping=false, sweepT0=0;
+const SWEEP_SEC=7;
+
+// ==== 物理 ====
+function pIdeal(V,T,n){return n*R*T/V;}
+function pReal(V,T,n){return n*R*T/(V-n*B)-A*n*n/(V*V);}
+function dPdV(V,T,n){return -n*R*T/((V-n*B)**2)+2*A*n*n/(V**3);}
+function vIdeal(P,T,n){return n*R*T/P;}
+function vReal(P,T,n){ // ニュートン法で気体枝の根を探す。凝縮域なら null
+  let v=vIdeal(P,T,n);
+  for(let i=0;i<80;i++){
+    const f=P-(n*R*T/(v-n*B)-A*n*n/(v*v));
+    const fp=n*R*T/((v-n*B)**2)-2*A*n*n/(v**3);
+    if(!isFinite(fp)||fp===0)return null;
+    const dv=f/fp;
+    v-=dv;
+    if(!isFinite(v)||v<=n*B)return null;
+    if(Math.abs(dv)<1e-10*v)break;
+  }
+  if(v<3*n*B||dPdV(v,T,n)>0)return null;
+  return v;
+}
+const TC=647.096, PC=2.2064e7; // 水の臨界温度[K]・臨界圧力[Pa]
+function psat(T){ // 水の飽和蒸気圧[Pa](IAPWS補助式)。T>=TCでは凝縮しない
+  if(T>=TC)return Infinity;
+  const t=1-T/TC;
+  const lnPr=(TC/T)*(-7.85951783*t+1.84408259*Math.pow(t,1.5)-11.7866497*t**3
+    +22.6807411*Math.pow(t,3.5)-15.9618719*t**4+1.80122502*Math.pow(t,7.5));
+  return PC*Math.exp(lnPr);
+}
+function liquidV(n){return Math.max(0.018*n,0.05);} // 液体の水の体積[L](18mL/mol)
+
+let gasFrac=1; // 気体として存在する割合(凝縮時の粒子表示用)
+function recompute(){
+  condensed=false;gasFrac=1;
+  if(holdMode==='V'){
+    if(gasMode==='ideal'){vals.P=pIdeal(vals.V,vals.T,vals.n);}
+    else{
+      const ps=psat(vals.T);
+      if(pIdeal(vals.V,vals.T,vals.n)>ps){
+        // 全て気体と仮定した圧力が蒸気圧を超える → 一部凝縮して気液平衡。P=飽和蒸気圧
+        condensed=true;vals.P=ps;
+        gasFrac=Math.min(1,ps*vals.V/(vals.n*R*vals.T));
+      }else vals.P=pReal(vals.V,vals.T,vals.n);
+    }
+  }else{
+    if(gasMode==='ideal'){vals.V=vIdeal(vals.P,vals.T,vals.n);}
+    else{
+      const ps=psat(vals.T);
+      const v=vals.P>ps?null:vReal(vals.P,vals.T,vals.n);
+      if(v===null){condensed=true;gasFrac=0;vals.V=liquidV(vals.n);} // 外圧>蒸気圧 → すべて液体
+      else vals.V=v;
+    }
+  }
+  Z=condensed?null:vals.P*vals.V/(vals.n*R*vals.T);
+}
+
+// ==== UI ====
+function indepVars(){return holdMode==='V'?['V','T','n']:['P','T','n'];}
+function depVar(){return holdMode==='V'?'P':'V';}
+
+function setGas(m){gasMode=m;stopSweep();recompute();buildControls();graphDirty=true;}
+function setHold(m){
+  holdMode=m;stopSweep();
+  if(!indepVars().includes(sweepVar))sweepVar='T';
+  recompute();buildControls();graphDirty=true;
+}
+function setSweep(v){sweepVar=v;stopSweep();buildControls();graphDirty=true;}
+
+function buildControls(){
+  $('mIdeal').className=gasMode==='ideal'?'on':'';
+  $('mReal').className=gasMode==='real'?'on real':'';
+  $('hV').className=holdMode==='V'?'on':'';
+  $('hP').className=holdMode==='P'?'on':'';
+  const c=$('ctrl');c.innerHTML='';
+  for(const k of indepVars()){
+    const m=VARS[k];
+    const row=document.createElement('div');row.className='crow';
+    row.innerHTML=`<span class="nm">${m.name} <small>(${m.jp})</small></span>
+      <input type="range" id="sl-${k}" min="${m.min}" max="${m.max}" step="${m.step}" value="${vals[k]}">
+      <span class="val" id="vl-${k}"></span>`;
+    c.appendChild(row);
+    $('sl-'+k).addEventListener('input',e=>{
+      stopSweep();vals[k]=parseFloat(e.target.value);recompute();updateReadouts();graphDirty=true;
+    });
+  }
+  const d=depVar(),md=VARS[d];
+  const row=document.createElement('div');row.className='crow dep';
+  row.innerHTML=`<span class="nm">${md.name} <small>(${md.jp})</small></span>
+    <span class="free">← ほかの3つの変数から決まる</span>
+    <span class="val" id="vl-${d}"></span>`;
+  c.appendChild(row);
+  // スイープ選択
+  const s=$('sweeprow');s.innerHTML='<span class="lbl">連続変化させる変数:</span>';
+  for(const k of indepVars()){
+    const b=document.createElement('button');
+    b.textContent=k;
+    b.className=sweepVar===k?'on':'';
+    b.onclick=()=>setSweep(k);
+    s.appendChild(b);
+  }
+  const play=document.createElement('button');
+  play.id='playBtn';play.className='play';
+  play.textContent='▶ 変化を再生';
+  play.onclick=toggleSweep;
+  s.appendChild(play);
+  updateReadouts();
+}
+
+function updateReadouts(){
+  for(const k of ['n','T','V','P']){
+    const el=$('vl-'+k);
+    if(el)el.textContent=VARS[k].fmt(vals[k])+' '+VARS[k].unit;
+    const sl=$('sl-'+k);
+    if(sl&&Math.abs(parseFloat(sl.value)-vals[k])>1e-9)sl.value=vals[k];
+  }
+  const zbox=condensed
+    ?`<div class="ibox warn">Z = PV/nRT<b>—(凝縮中)</b></div>`
+    :(gasMode==='real'
+      ?`<div class="ibox${Math.abs(Z-1)>.05?' warn':''}">Z = PV/nRT<b>${Z.toFixed(3)}</b></div>`
+      :`<div class="ibox">Z = PV/nRT<b>1.000(定義)</b></div>`);
+  const pfmt=vals.P>=1e4?(vals.P/1e5).toFixed(2)+'×10⁵Pa':Math.round(vals.P)+' Pa';
+  $('info').innerHTML=
+    `<div class="ibox">P(圧力)<b>${pfmt}</b></div>`+
+    `<div class="ibox">V(体積)<b>${vals.V<100?vals.V.toFixed(1):Math.round(vals.V)} L</b></div>`+
+    `<div class="ibox">T(温度)<b>${Math.round(vals.T)} K</b></div>`+
+    `<div class="ibox">n(物質量)<b>${vals.n.toFixed(1)} mol</b></div>`+
+    zbox+
+    (condensed?`<div class="ibox warn">状態<b>${holdMode==='V'?'気液平衡(P=蒸気圧)':'凝縮(液体)'}</b></div>`:'');
+  $('status').innerHTML=lawText();
+}
+
+function lawText(){
+  let law;
+  if(sweepVar==='T')law=holdMode==='V'
+    ?'V・n一定でTを変える → <b>P ∝ T</b>(温度が上がると衝突が激しく・頻繁になる)'
+    :'P・n一定でTを変える → <b>V ∝ T</b>(シャルルの法則)';
+  else if(sweepVar==='V'||sweepVar==='P')
+    law='T・n一定で'+sweepVar+'を変える → <b>PV = 一定</b>(ボイルの法則)';
+  else law=holdMode==='V'
+    ?'V・T一定でnを変える → <b>P ∝ n</b>(粒子が増えると衝突回数が増える)'
+    :'P・T一定でnを変える → <b>V ∝ n</b>(アボガドロの法則)';
+  let extra=gasMode==='real'
+    ?'<br>実在気体(H<sub>2</sub>O)は<b>分子間力</b>と<b>分子自身の体積</b>のため理想気体(破線)からずれる。凝縮域は<b>赤線</b>で表示。'
+    :'<br>理想気体:分子自身の大きさと分子間力を無視。どんな条件でも PV=nRT が成り立ち、凝縮しない。';
+  if(gasMode==='real'&&holdMode==='V'&&sweepVar==='T')
+    extra+='<b>凝縮域のP–T曲線は蒸気圧曲線そのもの</b>(373 Kで1.0×10⁵ Pa)。';
+  return law+extra;
+}
+
+// ==== スイープ ====
+function toggleSweep(){
+  if(sweeping){stopSweep();return;}
+  sweeping=true;sweepT0=performance.now();
+  const m=VARS[sweepVar];
+  vals[sweepVar]=m.min;
+  $('playBtn').textContent='■ 停止';
+  $('playBtn').classList.add('running');
+}
+function stopSweep(){
+  if(!sweeping)return;
+  sweeping=false;
+  const b=$('playBtn');
+  if(b){b.textContent='▶ 変化を再生';b.classList.remove('running');}
+}
+function sweepStep(now){
+  const t=(now-sweepT0)/(SWEEP_SEC*1000);
+  const m=VARS[sweepVar];
+  if(t>=1){vals[sweepVar]=m.max;stopSweep();}
+  else vals[sweepVar]=m.min+(m.max-m.min)*t;
+  recompute();updateReadouts();graphDirty=true;
+}
+
+// ==== 容器と粒子 ====
+let bc,bctx,BW,BH,DPR;
+let particles=[];
+const X0=44,X1=196,BOT=262,TOP=14;      // シリンダー内壁
+let pistonY=100;
+
+function gasHeight(){ // 表示上の気体柱の高さ(px)
+  const v=Math.min(Math.max(vals.V,0.15),50);
+  return Math.max(22,26+(v-1)/(50-1)*206);
+}
+function targetCount(){return Math.round(vals.n*14);}
+function addParticle(){
+  const py=BOT-gasHeight();
+  particles.push({
+    x:X0+6+Math.random()*(X1-X0-12),
+    y:py+6+Math.random()*(BOT-py-12),
+    a:Math.random()*6.28, f:0.6+Math.random()*0.8,
+    vx:0,vy:0,init:true});
+}
+function stepParticles(){
+  const N=targetCount();
+  while(particles.length<N)addParticle();
+  if(particles.length>N)particles.length=N;
+  const pyT=BOT-gasHeight();
+  pistonY+=(pyT-pistonY)*0.18;
+  const speed=1.55*Math.sqrt(vals.T/300);
+  const r=4;
+  // 気液平衡では蒸気が必ず存在する(蒸気圧) → 凝縮中でも最低1粒子は気体
+  const gasN=gasFrac>0?Math.max(1,Math.round(gasFrac*particles.length)):0;
+  particles.forEach((p,idx)=>{
+    const liquid=idx>=gasN;
+    if(p.init){p.vx=Math.cos(p.a)*speed*p.f;p.vy=Math.sin(p.a)*speed*p.f;p.init=false;}
+    if(liquid){ // 凝縮した分子: 底へ集まってふるえる
+      p.vy+=0.35;p.vx*=0.9;p.vy*=0.9;
+      p.vx+=(Math.random()-.5)*0.35;p.vy+=(Math.random()-.5)*0.2;
+    }else{
+      // 温度に合わせて速さをゆるやかに調整(熱浴)
+      const cur=Math.hypot(p.vx,p.vy)||0.01;
+      const want=speed*p.f;
+      const sc=(cur+(want-cur)*0.06)/cur;
+      p.vx*=sc;p.vy*=sc;
+    }
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<X0+r){p.x=X0+r;p.vx=Math.abs(p.vx);}
+    if(p.x>X1-r){p.x=X1-r;p.vx=-Math.abs(p.vx);}
+    if(p.y<pistonY+r){p.y=pistonY+r;p.vy=Math.abs(p.vy);}
+    if(p.y>BOT-r){p.y=BOT-r;p.vy=-Math.abs(p.vy)*(liquid?0.25:1);}
+  });
+  // 実在気体: 分子間力(近距離の引力)+分子の大きさ(短距離の反発)
+  if(gasMode==='real'){
+    const pull=condensed?0.09:0.045*(300/vals.T);
+    for(let i=0;i<particles.length;i++)for(let j=i+1;j<particles.length;j++){
+      const a=particles[i],b=particles[j];
+      const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+      if(d<1e-3||d>24)continue;
+      if(d<8){ // 反発(排除体積)
+        const push=0.35*(8-d)/8;
+        a.vx-=dx/d*push;a.vy-=dy/d*push;
+        b.vx+=dx/d*push;b.vy+=dy/d*push;
+      }else{  // 引力
+        const f=pull*(1-d/24);
+        a.vx+=dx/d*f;a.vy+=dy/d*f;
+        b.vx-=dx/d*f;b.vy-=dy/d*f;
+      }
+    }
+  }
+}
+function drawBox(){
+  bctx.clearRect(0,0,BW,BH);
+  // シリンダー
+  bctx.strokeStyle='#7d939c';bctx.lineWidth=3;
+  bctx.beginPath();
+  bctx.moveTo(X0-3,TOP);bctx.lineTo(X0-3,BOT+3);bctx.lineTo(X1+3,BOT+3);bctx.lineTo(X1+3,TOP);
+  bctx.stroke();
+  // ピストン
+  const grad=bctx.createLinearGradient(0,pistonY-16,0,pistonY);
+  grad.addColorStop(0,'#5b6f78');grad.addColorStop(1,'#8ba0a9');
+  bctx.fillStyle=grad;
+  bctx.fillRect(X0-2,pistonY-16,X1-X0+4,16);
+  bctx.fillStyle='#5b6f78';
+  bctx.fillRect((X0+X1)/2-4,TOP-8,8,pistonY-16-TOP+8);
+  if(holdMode==='V'){ // 固定ピン
+    bctx.fillStyle='#e8a13d';
+    bctx.fillRect(X0-10,pistonY-14,8,12);bctx.fillRect(X1+2,pistonY-14,8,12);
+  }else{ // おもり
+    bctx.fillStyle='#3d4a52';
+    const w=Math.min(5,Math.max(1,Math.round(vals.P/4e5)));
+    for(let i=0;i<w;i++)bctx.fillRect((X0+X1)/2-22,pistonY-26-i*9,44,7);
+  }
+  if(vals.V>50){ // 表示範囲を超えた
+    bctx.fillStyle='#7de3d0';bctx.font='700 12px sans-serif';bctx.textAlign='center';
+    bctx.fillText('↑ V='+Math.round(vals.V)+' L',(X0+X1)/2,TOP+24);
+  }
+  // 粒子
+  const col=gasMode==='ideal'?'#6ac0c9':'#7fa8e0';
+  for(const p of particles){
+    bctx.beginPath();bctx.arc(p.x,p.y,4,0,7);
+    bctx.fillStyle=col;bctx.fill();
+    bctx.beginPath();bctx.arc(p.x-1.2,p.y-1.2,1.3,0,7);
+    bctx.fillStyle='rgba(255,255,255,.7)';bctx.fill();
+  }
+  // 圧力バー(右側)
+  const bx=X1+14,bw=14;
+  bctx.strokeStyle='#3a4d57';bctx.lineWidth=1.5;
+  bctx.strokeRect(bx,TOP,bw,BOT-TOP);
+  const frac=Math.min(vals.P/2e6,1);
+  bctx.fillStyle=condensed?'#d4566a':'#e8a13d';
+  bctx.fillRect(bx,TOP+(BOT-TOP)*(1-frac),bw,(BOT-TOP)*frac);
+  const y1atm=TOP+(BOT-TOP)*(1-1e5/2e6);
+  bctx.strokeStyle='rgba(255,255,255,.8)';
+  bctx.beginPath();bctx.moveTo(bx-2,y1atm);bctx.lineTo(bx+bw+2,y1atm);bctx.stroke();
+  bctx.fillStyle='rgba(255,255,255,.65)';bctx.font='9px sans-serif';bctx.textAlign='left';
+  bctx.fillText('P',bx+3,TOP-4);
+  bctx.fillText('1atm',bx-8,y1atm+11);
+  if(condensed){
+    bctx.fillStyle='#ff8fa3';bctx.font='800 15px sans-serif';bctx.textAlign='center';
+    bctx.fillText('凝縮(液化)!',(X0+X1)/2,pistonY+((BOT-pistonY)/2)-24);
+  }
+  bctx.fillStyle='rgba(255,255,255,.5)';bctx.font='11px sans-serif';bctx.textAlign='left';
+  bctx.fillText(gasMode==='ideal'?'理想気体':'実在気体 H₂O',10,BH-8);
+}
+
+// ==== グラフ ====
+let gc,gctx,GW,GH,graphDirty=true;
+function sampleCurve(){
+  const sv=sweepVar,dep=depVar(),m=VARS[sv];
+  const N=140,xs=[],yi=[],yr=[],yc=[]; // yc=凝縮域(赤線)
+  for(let i=0;i<=N;i++){
+    const x=m.min+(m.max-m.min)*i/N;
+    const t={...vals,[sv]:x};
+    let a,b=null,c=null;
+    if(dep==='P'){
+      a=pIdeal(t.V,t.T,t.n);
+      if(gasMode==='real'){
+        const ps=psat(t.T);
+        if(a>ps)c=ps;              // 凝縮: 圧力は飽和蒸気圧に沿う(蒸気圧曲線)
+        else b=pReal(t.V,t.T,t.n);
+      }
+    }else{
+      a=vIdeal(t.P,t.T,t.n);
+      if(gasMode==='real'){
+        const ps=psat(t.T);
+        const v=t.P>ps?null:vReal(t.P,t.T,t.n);
+        if(v===null)c=liquidV(t.n); // 凝縮: すべて液体(体積は液体の分だけ)
+        else b=v;
+      }
+    }
+    xs.push(x);yi.push(a);yr.push(b);yc.push(c);
+  }
+  return {xs,yi,yr,yc};
+}
+function drawGraph(){
+  gctx.clearRect(0,0,GW,GH);
+  const sv=sweepVar,dep=depVar(),m=VARS[sv],md=VARS[dep];
+  const L=48,Rm=12,Tm=20,Bm=36;
+  const {xs,yi,yr,yc}=sampleCurve();
+  let ymax=0;
+  for(let i=0;i<xs.length;i++){
+    ymax=Math.max(ymax,yi[i]||0,yr[i]||0,yc[i]||0);
+  }
+  ymax=Math.max(ymax*1.08,1e-9);
+  const px=x=>L+(x-m.min)/(m.max-m.min)*(GW-L-Rm);
+  const py=y=>GH-Bm-(y/ymax)*(GH-Tm-Bm);
+  // 軸
+  gctx.strokeStyle='#9fb3ba';gctx.lineWidth=1.5;
+  gctx.beginPath();gctx.moveTo(L,Tm-6);gctx.lineTo(L,GH-Bm);gctx.lineTo(GW-Rm+4,GH-Bm);gctx.stroke();
+  // 目盛り
+  gctx.fillStyle='#5b6f78';gctx.font='10px sans-serif';
+  gctx.textAlign='center';
+  for(let i=0;i<=4;i++){
+    const x=m.min+(m.max-m.min)*i/4;
+    gctx.fillText(sv==='P'?(x/1e5).toFixed(1):(sv==='n'?x.toFixed(1):String(Math.round(x))),px(x),GH-Bm+14);
+    gctx.strokeStyle='#e4ecee';gctx.lineWidth=1;
+    gctx.beginPath();gctx.moveTo(px(x),Tm);gctx.lineTo(px(x),GH-Bm);gctx.stroke();
+  }
+  gctx.textAlign='right';
+  for(let i=1;i<=4;i++){
+    const y=ymax*i/4;
+    gctx.fillText(dep==='P'?(y/1e5).toFixed(1):(y<10?y.toFixed(1):String(Math.round(y))),L-5,py(y)+3);
+    gctx.strokeStyle='#e4ecee';
+    gctx.beginPath();gctx.moveTo(L,py(y));gctx.lineTo(GW-Rm,py(y));gctx.stroke();
+  }
+  gctx.textAlign='left';gctx.font='700 11px sans-serif';gctx.fillStyle='#1b2a33';
+  gctx.fillText(dep==='P'?'P (×10⁵Pa)':'V (L)',6,12);
+  gctx.textAlign='right';
+  gctx.fillText(sv==='P'?sv+' (×10⁵Pa)':sv+' ('+m.unit+')',GW-8,GH-6);
+  // 理想気体の曲線
+  gctx.lineWidth=2.2;
+  gctx.strokeStyle=gasMode==='real'?'#9aa9b0':'#3e77b6';
+  if(gasMode==='real')gctx.setLineDash([6,5]);
+  gctx.beginPath();
+  xs.forEach((x,i)=>{i===0?gctx.moveTo(px(x),py(yi[i])):gctx.lineTo(px(x),py(yi[i]));});
+  gctx.stroke();gctx.setLineDash([]);
+  // 実在気体の曲線(気体域=青、凝縮域=赤)
+  if(gasMode==='real'){
+    gctx.strokeStyle='#3e77b6';gctx.lineWidth=2.6;
+    gctx.beginPath();let pen=false;
+    xs.forEach((x,i)=>{
+      if(yr[i]===null){pen=false;return;}
+      pen?gctx.lineTo(px(x),py(yr[i])):gctx.moveTo(px(x),py(yr[i]));
+      pen=true;
+    });
+    gctx.stroke();
+    // 凝縮域の赤線(P–Tなら蒸気圧曲線そのもの)。境界で気体側の曲線とつなぐ
+    gctx.strokeStyle='#d4566a';gctx.lineWidth=2.6;
+    gctx.beginPath();pen=false;
+    xs.forEach((x,i)=>{
+      if(yc[i]===null){
+        if(pen&&yr[i]!==null)gctx.lineTo(px(x),py(yr[i])); // 凝縮→気体の境界
+        pen=false;return;
+      }
+      if(!pen&&i>0&&yr[i-1]!==null)gctx.moveTo(px(xs[i-1]),py(yr[i-1])); // 気体→凝縮の境界
+      else if(!pen)gctx.moveTo(px(x),py(yc[i]));
+      gctx.lineTo(px(x),py(yc[i]));
+      pen=true;
+    });
+    gctx.stroke();
+    gctx.font='10.5px sans-serif';gctx.textAlign='right';
+    gctx.fillStyle='#3e77b6';gctx.fillText('青=実在気体(H₂O)',GW-12,Tm+2);
+    gctx.fillStyle='#d4566a';gctx.fillText(dep==='P'?'赤=凝縮(P=飽和蒸気圧)':'赤=凝縮(液体)',GW-12,Tm+14);
+    gctx.fillStyle='#8a9aa4';gctx.fillText('破線=理想気体',GW-12,Tm+26);
+  }
+  // 現在の状態点(凝縮中は赤)
+  const cx=px(Math.min(Math.max(vals[sv],m.min),m.max));
+  const cy=py(Math.min(vals[dep],ymax));
+  gctx.beginPath();gctx.arc(cx,cy,6,0,7);
+  gctx.fillStyle=condensed?'#d4566a':'#e8a13d';gctx.fill();
+  gctx.lineWidth=2;gctx.strokeStyle='#fff';gctx.stroke();
+  if(condensed){
+    gctx.font='700 10px sans-serif';gctx.textAlign='center';gctx.fillStyle='#d4566a';
+    gctx.fillText('凝縮',cx,cy-10);
+  }
+}
+
+// ==== メインループ ====
+function loop(now){
+  if(sweeping)sweepStep(now);
+  stepParticles();
+  drawBox();
+  if(graphDirty){graphDirty=false;drawGraph();}
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('load',()=>{
+  DPR=window.devicePixelRatio||1;
+  bc=$('box');
+  let r=bc.getBoundingClientRect();BW=r.width;BH=r.height;
+  bc.width=BW*DPR;bc.height=BH*DPR;
+  bctx=bc.getContext('2d');bctx.setTransform(DPR,0,0,DPR,0,0);
+  gc=$('graph');
+  r=gc.getBoundingClientRect();GW=r.width;GH=r.height;
+  gc.width=GW*DPR;gc.height=GH*DPR;
+  gctx=gc.getContext('2d');gctx.setTransform(DPR,0,0,DPR,0,0);
+  recompute();buildControls();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

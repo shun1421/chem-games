@@ -31,6 +31,7 @@ crystal-classify.html    … No.6  結晶分類+質問推理(手書き)
 ion-formula.html         … No.10 イオン式・組成式(手書き、ion_learning-game由来)
 polarity-3d.html         … No.8  3D極性判定(自作3D投影、手書き)
 lattice-viewer.html      … No.14 結晶格子3D教材(自作3D投影、手書き)
+gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体、手書き)
 electrolysis.html        … No.40 電気分解の手順ゲーム(手書き)
 ```
 
