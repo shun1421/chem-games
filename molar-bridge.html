@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>モルブリッジ | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:620px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer;font-family:inherit}
+.primary:disabled{opacity:.35;cursor:default}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hud{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:8px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+.qcard{background:#eef6f5;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.eq{font-size:18px;font-weight:800;text-align:center;margin-bottom:8px}
+.qtext{font-size:15px;text-align:center;line-height:1.7}
+.qtext b{color:var(--acc)}
+.bridge{display:flex;align-items:stretch;gap:6px;margin:14px 0}
+.node{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;color:var(--mut);
+ writing-mode:vertical-rl;text-orientation:upright;letter-spacing:2px}
+.slots{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slotbox{border:2.5px dashed var(--line);border-radius:12px;min-height:86px;padding:6px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:border-color .15s;position:relative}
+.slotbox .lb{font-size:10.5px;color:var(--mut);font-weight:700;position:absolute;top:5px}
+.slotbox .cd{font-size:14px;font-weight:800;font-family:var(--mono);margin-top:12px;text-align:center;line-height:1.3}
+.slotbox.filled{border-style:solid;border-color:var(--acc);background:#f0f8f8}
+.slotbox.good{border-color:var(--ok);background:#e6f5ec}
+.slotbox.ng{border-color:var(--bad);background:#fbe3e7}
+.handlbl{font-size:12px;color:var(--mut);font-weight:700;margin:10px 0 6px}
+.hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.hcard{padding:12px 8px;font-size:14px;font-weight:800;font-family:var(--mono);text-align:center;
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:10px;cursor:pointer;color:var(--ink);transition:all .1s}
+.hcard:active{transform:translateY(2px);border-bottom-width:2px}
+.hcard.used{opacity:.25;pointer-events:none}
+#fb{min-height:24px;font-size:14px;line-height:1.7;margin-top:10px;font-weight:700}
+#fb .good{color:var(--ok)}#fb .bad{color:var(--bad)}
+#fb .calc{display:block;font-weight:600;color:var(--ink);background:#f6faf9;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13.5px}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+@media(max-width:480px){.slotbox .cd{font-size:12px}.hand{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">モルブリッジ</div>
+  <span class="chip">物質量・量的関係</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>モルブリッジ 〜変換カードで橋をかけろ〜</h1>
+  <p class="desc">化学反応式の量的関係は「<b>molへ変換 → 係数比で変換 → 答えの単位へ変換</b>」の3ステップ。
+  正しい変換カードを順番にならべて、計算の橋(ブリッジ)を完成させよう!</p>
+  <ul class="rules">
+    <li>全5問。カードをタップするとスロットに置かれる(置いたカードはタップで戻せる)</li>
+    <li>正解100点+連続正解ボーナス(コンボ×10)</li>
+    <li>気体の体積は標準状態(22.4 L/mol)で考える</li>
+  </ul>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="qnum">1/5</b></div>
+    <div>スコア<b id="score">0</b></div>
+    <div>コンボ<b id="combo">0</b></div>
+  </div>
+  <div class="qcard">
+    <div class="eq" id="eq"></div>
+    <div class="qtext" id="qtext"></div>
+  </div>
+  <div class="bridge">
+    <div class="slots" id="slots"></div>
+  </div>
+  <div class="handlbl">変換カード(正しい3枚を順にならべよう)</div>
+  <div class="hand" id="hand"></div>
+  <button class="primary" id="judgeBtn" onclick="judge()" disabled>橋をかける！</button>
+  <div id="fb"></div>
+  <button class="primary" id="nextBtn" style="display:none" onclick="nextQ()">次の問題 →</button>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>クリア！</h1>
+  <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+
+const SLOT_LB=['① molへ','② 係数比','③ 答えの単位へ'];
+// steps: 正解カード3枚(順番どおり) / decoys: まぎらわしいカード
+const QS=[
+ {eq:'2H<sub>2</sub> + O<sub>2</sub> → 2H<sub>2</sub>O',
+  give:'H<sub>2</sub> 4.0 g',ask:'生成する H<sub>2</sub>O は何 g ?',
+  steps:['÷ 2.0 g/mol','× 2/2','× 18 g/mol'],
+  decoys:['× 2.0 g/mol','÷ 18 g/mol','× 1/2'],
+  calc:'4.0 g ÷ 2.0 g/mol = 2.0 mol → × 2/2 = 2.0 mol → × 18 g/mol = <b>36 g</b>'},
+ {eq:'CH<sub>4</sub> + 2O<sub>2</sub> → CO<sub>2</sub> + 2H<sub>2</sub>O',
+  give:'CH<sub>4</sub> 8.0 g',ask:'生成する CO<sub>2</sub> は標準状態で何 L ?',
+  steps:['÷ 16 g/mol','× 1/1','× 22.4 L/mol'],
+  decoys:['× 16 g/mol','÷ 22.4 L/mol','× 2/1'],
+  calc:'8.0 g ÷ 16 g/mol = 0.50 mol → × 1/1 = 0.50 mol → × 22.4 L/mol = <b>11.2 L</b>'},
+ {eq:'2Mg + O<sub>2</sub> → 2MgO',
+  give:'Mg 4.8 g',ask:'生成する MgO は何 g ?',
+  steps:['÷ 24 g/mol','× 2/2','× 40 g/mol'],
+  decoys:['× 24 g/mol','÷ 40 g/mol','× 1/2'],
+  calc:'4.8 g ÷ 24 g/mol = 0.20 mol → × 2/2 = 0.20 mol → × 40 g/mol = <b>8.0 g</b>'},
+ {eq:'N<sub>2</sub> + 3H<sub>2</sub> → 2NH<sub>3</sub>',
+  give:'H<sub>2</sub> 6.72 L(標準状態)',ask:'生成する NH<sub>3</sub> は標準状態で何 L ?',
+  steps:['÷ 22.4 L/mol','× 2/3','× 22.4 L/mol'],
+  decoys:['× 3/2','× 17 g/mol','× 6.0×10²³ /mol'],
+  calc:'6.72 L ÷ 22.4 L/mol = 0.30 mol → × 2/3 = 0.20 mol → × 22.4 L/mol = <b>4.48 L</b>'},
+ {eq:'C + O<sub>2</sub> → CO<sub>2</sub>',
+  give:'C(黒鉛) 6.0 g',ask:'生成する CO<sub>2</sub> は何 g ?',
+  steps:['÷ 12 g/mol','× 1/1','× 44 g/mol'],
+  decoys:['× 12 g/mol','÷ 44 g/mol','× 22.4 L/mol'],
+  calc:'6.0 g ÷ 12 g/mol = 0.50 mol → × 1/1 = 0.50 mol → × 44 g/mol = <b>22 g</b>'},
+ {eq:'4Al + 3O<sub>2</sub> → 2Al<sub>2</sub>O<sub>3</sub>',
+  give:'Al 5.4 g',ask:'生成する Al<sub>2</sub>O<sub>3</sub> は何 g ?',
+  steps:['÷ 27 g/mol','× 2/4','× 102 g/mol'],
+  decoys:['× 4/2','÷ 102 g/mol','× 27 g/mol'],
+  calc:'5.4 g ÷ 27 g/mol = 0.20 mol → × 2/4 = 0.10 mol → × 102 g/mol = <b>10.2 g</b>'},
+ {eq:'Zn + 2HCl → ZnCl<sub>2</sub> + H<sub>2</sub>',
+  give:'Zn 13 g',ask:'発生する H<sub>2</sub> は標準状態で何 L ?',
+  steps:['÷ 65 g/mol','× 1/1','× 22.4 L/mol'],
+  decoys:['× 65 g/mol','× 2/1','÷ 22.4 L/mol'],
+  calc:'13 g ÷ 65 g/mol = 0.20 mol → × 1/1 = 0.20 mol → × 22.4 L/mol = <b>4.48 L</b>'},
+ {eq:'CaCO<sub>3</sub> → CaO + CO<sub>2</sub>',
+  give:'CaCO<sub>3</sub> 10 g',ask:'発生する CO<sub>2</sub> は標準状態で何 L ?',
+  steps:['÷ 100 g/mol','× 1/1','× 22.4 L/mol'],
+  decoys:['× 100 g/mol','÷ 22.4 L/mol','× 6.0×10²³ /mol'],
+  calc:'10 g ÷ 100 g/mol = 0.10 mol → × 1/1 = 0.10 mol → × 22.4 L/mol = <b>2.24 L</b>'},
+];
+
+let deck=[],qi=0,score=0,combo=0,ok=0,slots=[],hand=[],answered=false;
+
+function startGame(){
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  deck=shuffle([...QS]).slice(0,5);
+  qi=0;score=0;combo=0;ok=0;
+  showQ();
+}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;$('qnum').textContent=(qi+1)+'/5';}
+function showQ(){
+  answered=false;
+  const q=deck[qi];
+  slots=[null,null,null];
+  hand=shuffle(q.steps.concat(q.decoys)).map(t=>({t,used:false}));
+  $('eq').innerHTML=q.eq;
+  $('qtext').innerHTML=q.give+' から、'+q.ask;
+  $('fb').innerHTML='';
+  $('nextBtn').style.display='none';
+  $('judgeBtn').style.display='block';
+  upd();render();
+}
+function render(){
+  const sb=$('slots');sb.innerHTML='';
+  slots.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='slotbox'+(s!==null?' filled':'');
+    d.innerHTML='<span class="lb">'+SLOT_LB[i]+'</span><span class="cd">'+(s!==null?hand[s].t:'')+'</span>';
+    d.onclick=()=>{if(answered||slots[i]===null)return;hand[slots[i]].used=false;slots[i]=null;render();};
+    sb.appendChild(d);
+  });
+  const hb=$('hand');hb.innerHTML='';
+  hand.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='hcard'+(c.used?' used':'');
+    b.textContent=c.t;
+    b.onclick=()=>{
+      if(answered||c.used)return;
+      const k=slots.indexOf(null);
+      if(k<0)return;
+      slots[k]=i;c.used=true;render();
+    };
+    hb.appendChild(b);
+  });
+  $('judgeBtn').disabled=slots.includes(null);
+}
+function judge(){
+  if(answered||slots.includes(null))return;
+  answered=true;
+  const q=deck[qi];
+  const okSlots=slots.map((s,i)=>hand[s].t===q.steps[i]);
+  const allOk=okSlots.every(Boolean);
+  [...$('slots').children].forEach((d,i)=>d.classList.add(okSlots[i]?'good':'ng'));
+  if(allOk){
+    ok++;combo++;
+    const pts=100+Math.min(combo,10)*10;
+    score+=pts;
+    $('fb').innerHTML='<span class="good">正解！ +'+pts+'点</span><span class="calc">'+q.calc+'</span>';
+  }else{
+    combo=0;
+    $('fb').innerHTML='<span class="bad">おしい！ 正しい橋:</span><span class="calc">'
+      +q.steps.map((s,i)=>SLOT_LB[i]+' '+s).join(' / ')+'<br>'+q.calc+'</span>';
+  }
+  upd();
+  $('judgeBtn').style.display='none';
+  $('nextBtn').style.display='block';
+}
+function nextQ(){
+  qi++;
+  if(qi>=5){
+    $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    $('fscore').textContent=score;
+    $('facc').textContent=ok+' 問 / 5 問 正解';
+    return;
+  }
+  showQ();
+}
+</script>
+</body>
+</html>

@@ -32,6 +32,9 @@ ion-formula.html         … No.10 イオン式・組成式(手書き、ion_lear
 polarity-3d.html         … No.8  3D極性判定(自作3D投影、手書き)
 lattice-viewer.html      … No.14 結晶格子3D教材(自作3D投影、手書き)
 gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体、手書き)
+element-match.html       … No.1  元素記号マッチング(手書き、elemental-master-118由来)
+element-position.html    … No.2  周期表の位置あて(手書き、同上)
+molar-bridge.html        … No.17 量的関係の変換カード(手書き、molar-bridge-online由来)
 electrolysis.html        … No.40 電気分解の手順ゲーム(手書き)
 ```
 

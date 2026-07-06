@@ -33,19 +33,27 @@ a.tile:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(27,42,51,.12)
 .nm{font-size:15.5px;font-weight:800;margin-top:4px}
 .ds{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.55;min-height:36px}
 .kind{display:inline-block;margin-top:8px;font-size:11px;border:1px solid var(--c,var(--teal));color:var(--c,var(--teal));border-radius:999px;padding:1px 9px;font-weight:700}
-footer{text-align:center;color:var(--mut);font-size:12px;padding:24px;border-top:1px solid var(--line)}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:24px;border-top:1px solid var(--line);line-height:1.9}
+footer .credit{display:inline-block;margin-top:10px;padding:4px 16px;font-size:12.5px;font-weight:700;letter-spacing:.06em;
+ color:var(--teal);border:1px solid var(--line);border-radius:999px;background:#fff}
+footer .credit .flask{margin-right:4px}
 sub,sup{font-size:.62em}
 </style>
 </head>
 <body>
 <header>
   <h1><span class="flask">⌬</span> 化学ゲームラボ</h1>
-  <div class="tag">遊んで身につく高校化学 — 全16アプリ / スマホ対応</div>
+  <div class="tag">遊んで身につく高校化学 — 全19アプリ / スマホ対応</div>
 </header>
 <main id="list"></main>
-<footer>化学ゲームラボ | ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。</footer>
+<footer>化学ゲームラボ | ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。<br>
+<span class="credit"><span class="flask">⌬</span>制作: 鹿児島中央高校 福永</span></footer>
 <script>
 const UNITS=[
+ {t:'元素と周期表',c:'var(--teal)',games:[
+  {no:1,f:'element-match.html',sym:'118',nm:'元素マッチング',ds:'元素名⇄元素記号のペアをタップで消していく40秒勝負。基本20〜全118元素の3レベル。',k:'タイムアタック'},
+  {no:2,f:'element-position.html',sym:'⊞',nm:'ポジションマスター',ds:'周期表の光ったマスに入る元素を4択で当てる。族と周期の感覚を体で覚える。',k:'クイズ'},
+ ]},
  {t:'物質の構成・化学結合',c:'var(--teal)',games:[
   {no:4,f:'lewis-builder.html',sym:'e·',nm:'分子ビルダー',ds:'電子式を組み立てて原子をゲット。漂う原子をドラッグして分子を合成!',k:'アクション'},
   {no:6,f:'crystal-classify.html',sym:'Xt',nm:'結晶ソムリエ',ds:'化学式から結晶を4分類。「???」問題は質問で推理する20の扉モード。',k:'クイズ+推理'},
@@ -55,6 +63,7 @@ const UNITS=[
  ]},
  {t:'物質量と化学反応式',c:'var(--teal)',games:[
   {no:16,f:'mol-sprint.html',sym:'mol',nm:'モル換算スプリント',ds:'質量⇄mol⇄個数⇄体積の変換を60秒で連打。molの反射神経を鍛える。',k:'計算タイムアタック'},
+  {no:17,f:'molar-bridge.html',sym:'⇒g',nm:'モルブリッジ',ds:'「÷モル質量 → ×係数比 → ×モル質量」。変換カードで橋をかけて量的関係を解く。',k:'カード計算'},
  ]},
  {t:'酸と塩基',c:'var(--rose)',games:[
   {no:32,f:'salt-judge.html',sym:'pH',nm:'塩の液性ジャッジ',ds:'塩の水溶液は酸性?中性?塩基性?もとの酸・塩基の強弱で見きわめる。',k:'クイズ'},

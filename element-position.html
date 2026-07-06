@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ポジションマスター | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace;
+--cell:34px;--gap:3px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:900px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+h2{font-size:18px;margin:0 0 8px;text-align:center}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+.lvbtn{display:block;width:100%;margin-top:10px;padding:14px;font-size:16px;font-weight:800;
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:12px;cursor:pointer;color:var(--ink);font-family:inherit;transition:all .1s}
+.lvbtn:active{transform:translateY(2px);border-bottom-width:2px}
+.lvbtn b{color:var(--acc);margin-right:8px}
+.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer;font-family:inherit}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none;background:none;border:none;font-size:15px;cursor:pointer;width:100%;font-family:inherit}
+.scrollwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px -6px;padding:0 6px 8px}
+.periodic-wrapper{display:inline-grid;
+ grid-template-columns:26px repeat(18,var(--cell));
+ grid-template-rows:24px repeat(7,var(--cell)) 12px repeat(2,var(--cell));
+ gap:var(--gap);background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line)}
+.label{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mut);font-weight:700}
+.cell{width:var(--cell);height:var(--cell);background:#fbfdfd;border:1px solid var(--line);border-radius:4px;
+ display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:var(--mono);transition:all .2s}
+.cell.empty{background:transparent;border:none}
+.cell.spacer{grid-column:1/20;background:transparent;border:none}
+.cell.target{border:2px solid var(--ink);animation:blink .8s infinite;z-index:10}
+@keyframes blink{0%,100%{background:#fff}50%{background:var(--amber)}}
+.cell.correct-fill{background:var(--acc);color:#fff;border:none;font-size:13px}
+.choices{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:16px}
+.choices button{min-width:82px;padding:14px 18px;font-size:19px;font-weight:800;font-family:var(--mono);
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:12px;cursor:pointer;color:var(--ink);transition:all .1s}
+.choices button:active{transform:translateY(2px);border-bottom-width:2px}
+.qhead{text-align:center;font-size:16px;font-weight:800;margin-bottom:4px}
+.result{font-size:18px;text-align:center;line-height:2;font-weight:800}
+.result b{font-family:var(--mono);font-size:30px;color:var(--acc)}
+@media(max-width:600px){:root{--cell:27px}.cell{font-size:9px}.cell.correct-fill{font-size:10px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">ポジションマスター</div>
+  <span class="chip">元素と周期表</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>ポジションマスター 〜周期表の位置あて〜</h1>
+  <p class="desc">周期表の光ったマスに入る元素はどれ?4択で答えて周期表の構造(族と周期)を体で覚えよう。全10問。</p>
+  <ul class="rules">
+    <li>黄色く点滅しているマスに入る元素記号を選ぶ</li>
+    <li>Lv.1: 原子番号1〜20 / Lv.2: +受験頻出 / Lv.3: 全118元素</li>
+    <li>正解した元素は周期表にうまっていく</li>
+  </ul>
+  <button class="lvbtn" onclick="startGame(1)"><b>Lv.1</b>基本20元素</button>
+  <button class="lvbtn" onclick="startGame(2)"><b>Lv.2</b>+受験頻出</button>
+  <button class="lvbtn" onclick="startGame(3)"><b>Lv.3</b>全118元素</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="qhead" id="qcounter">第 1 / 10 問</div>
+  <div class="scrollwrap"><div class="periodic-wrapper" id="table-grid"></div></div>
+  <div class="choices" id="choices"></div>
+</section>
+
+<section id="end" class="panel hidden">
+  <h2>リザルト</h2>
+  <div class="scrollwrap"><div class="periodic-wrapper" id="result-table-grid"></div></div>
+  <p class="result" id="fstats"></p>
+  <button class="primary" onclick="startGame(level)">同じレベルでもう一度</button>
+  <button class="ghost" onclick="goHome()">レベル選択にもどる</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const rawData=[
+ "H,1,1,1,1","He,2,18,1,1","Li,3,1,2,1","Be,4,2,2,1","B,5,13,2,1","C,6,14,2,1","N,7,15,2,1","O,8,16,2,1","F,9,17,2,1","Ne,10,18,2,1",
+ "Na,11,1,3,1","Mg,12,2,3,1","Al,13,13,3,1","Si,14,14,3,1","P,15,15,3,1","S,16,16,3,1","Cl,17,17,3,1","Ar,18,18,3,1",
+ "K,19,1,4,1","Ca,20,2,4,1","Sc,21,3,4,3","Ti,22,4,4,3","V,23,5,4,3","Cr,24,6,4,2","Mn,25,7,4,2","Fe,26,8,4,2","Co,27,9,4,2","Ni,28,10,4,2","Cu,29,11,4,2","Zn,30,12,4,2","Ga,31,13,4,3","Ge,32,14,4,3","As,33,15,4,3","Se,34,16,4,3","Br,35,17,4,2","Kr,36,18,4,3",
+ "Rb,37,1,5,3","Sr,38,2,5,3","Y,39,3,5,3","Zr,40,4,5,3","Nb,41,5,5,3","Mo,42,6,5,3","Tc,43,7,5,3","Ru,44,8,5,3","Rh,45,9,5,3","Pd,46,10,5,3","Ag,47,11,5,2","Cd,48,12,5,3","In,49,13,5,3","Sn,50,14,5,2","Sb,51,15,5,3","Te,52,16,5,3","I,53,17,5,2","Xe,54,18,5,3",
+ "Cs,55,1,6,3","Ba,56,2,6,2","La,57,4,9,3","Ce,58,5,9,3","Pr,59,6,9,3","Nd,60,7,9,3","Pm,61,8,9,3","Sm,62,9,9,3","Eu,63,10,9,3","Gd,64,11,9,3","Tb,65,12,9,3","Dy,66,13,9,3","Ho,67,14,9,3","Er,68,15,9,3","Tm,69,16,9,3","Yb,70,17,9,3","Lu,71,18,9,3",
+ "Hf,72,4,6,3","Ta,73,5,6,3","W,74,6,6,3","Re,75,7,6,3","Os,76,8,6,3","Ir,77,9,6,3","Pt,78,10,6,2","Au,79,11,6,2","Hg,80,12,6,2","Tl,81,13,6,3","Pb,82,14,6,2","Bi,83,15,6,3","Po,84,16,6,3","At,85,17,6,3","Rn,86,18,6,3",
+ "Fr,87,1,7,3","Ra,88,2,7,3","Ac,89,4,10,3","Th,90,5,10,3","Pa,91,6,10,3","U,92,7,10,3","Np,93,8,10,3","Pu,94,9,10,3","Am,95,10,10,3","Cm,96,11,10,3","Bk,97,12,10,3","Cf,98,13,10,3","Es,99,14,10,3","Fm,100,15,10,3","Md,101,16,10,3","No,102,17,10,3","Lr,103,18,10,3",
+ "Rf,104,4,7,3","Db,105,5,7,3","Sg,106,6,7,3","Bh,107,7,7,3","Hs,108,8,7,3","Mt,109,9,7,3","Ds,110,10,7,3","Rg,111,11,7,3","Cn,112,12,7,3","Nh,113,13,7,3","Fl,114,14,7,3","Mc,115,15,7,3","Lv,116,16,7,3","Ts,117,17,7,3","Og,118,18,7,3"
+];
+const elements=rawData.map(d=>{const [s,n,c,r,l]=d.split(',');return {s,n:+n,c:+c,r:+r,l:+l};});
+
+let pool=[],qIdx=0,correct=0,target=null,solved=[],level=1;
+
+function startGame(lv){
+  level=lv;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  pool=elements.filter(e=>e.l<=lv);
+  createTable('table-grid');
+  qIdx=0;correct=0;solved=[];
+  nextQuestion();
+}
+function goHome(){
+  $('play').classList.add('hidden');$('end').classList.add('hidden');$('start').classList.remove('hidden');
+}
+function createTable(cid){
+  const g=$(cid);g.innerHTML='';
+  g.appendChild(mk('label',''));
+  for(let c=1;c<=18;c++)g.appendChild(mk('label',c));
+  for(let r=1;r<=7;r++){
+    g.appendChild(mk('label',r));
+    for(let c=1;c<=18;c++)g.appendChild(mkCell(cid,c,r));
+  }
+  const sp=document.createElement('div');sp.className='cell spacer';g.appendChild(sp);
+  const lbl=['*','**'];
+  for(let r=9;r<=10;r++){
+    g.appendChild(mk('label',lbl[r-9]));
+    for(let c=1;c<=3;c++)g.appendChild(mk('cell empty',''));
+    for(let c=4;c<=18;c++)g.appendChild(mkCell(cid,c,r));
+  }
+}
+function mkCell(cid,c,r){
+  const has=elements.some(e=>e.c===c&&e.r===r);
+  const d=document.createElement('div');
+  d.id=cid+'-'+c+'-'+r;
+  d.className=has?'cell':'cell empty';
+  return d;
+}
+function mk(cls,t){const d=document.createElement('div');d.className=cls;d.textContent=t;return d;}
+
+function nextQuestion(){
+  qIdx++;
+  if(qIdx>10)return showResult();
+  $('qcounter').textContent='第 '+qIdx+' / 10 問';
+  target=pool[Math.floor(Math.random()*pool.length)];
+  document.querySelectorAll('#table-grid .cell').forEach(c=>{
+    if(!c.classList.contains('empty')&&!c.classList.contains('spacer')){c.className='cell';c.textContent='';}
+  });
+  const tc=$('table-grid-'+target.c+'-'+target.r);
+  if(tc)tc.classList.add('target');
+  renderChoices();
+}
+function renderChoices(){
+  const box=$('choices');box.innerHTML='';
+  let ch=[target];
+  while(ch.length<4){
+    const r=pool[Math.floor(Math.random()*pool.length)];
+    if(!ch.includes(r))ch.push(r);
+  }
+  ch.sort(()=>0.5-Math.random()).forEach(el=>{
+    const b=document.createElement('button');
+    b.textContent=el.s;
+    b.onclick=()=>checkAnswer(el,b);
+    box.appendChild(b);
+  });
+}
+function checkAnswer(sel,btn){
+  document.querySelectorAll('#choices button').forEach(b=>b.style.pointerEvents='none');
+  const cell=$('table-grid-'+target.c+'-'+target.r);
+  if(sel.n===target.n){
+    btn.style.background='var(--ok)';btn.style.color='#fff';btn.style.borderColor='var(--ok)';
+    correct++;solved.push(target);
+  }else{
+    btn.style.background='var(--bad)';btn.style.color='#fff';btn.style.borderColor='var(--bad)';
+  }
+  if(cell){cell.textContent=target.s;cell.classList.remove('target');cell.classList.add('correct-fill');}
+  setTimeout(nextQuestion,1400);
+}
+function showResult(){
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  createTable('result-table-grid');
+  solved.forEach(el=>{
+    const c=$('result-table-grid-'+el.c+'-'+el.r);
+    if(c){c.textContent=el.s;c.classList.add('correct-fill');}
+  });
+  $('fstats').innerHTML='10問中 <b>'+correct+'</b> 問正解！';
+}
+</script>
+</body>
+</html>
