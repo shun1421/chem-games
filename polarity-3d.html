@@ -146,7 +146,7 @@ function bindOnce(){
   window.addEventListener('mouseup',pup);
   cv.addEventListener('touchstart',pdown,{passive:false});
   cv.addEventListener('touchmove',pmove,{passive:false});
-  cv.addEventListener('touchend',pup);
+  cv.addEventListener('touchend',pup,{passive:false});
 }
 function next(){
   idx++;
@@ -256,7 +256,9 @@ function drawArrow(from,to){
 }
 
 // ==== 入力 ====
-function evP(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+function evP(e){const r=cv.getBoundingClientRect();
+  // touchendではe.touchesは空になるためchangedTouchesから座標を取る
+  const t=(e.touches&&e.touches.length)?e.touches[0]:((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
   return {x:t.clientX-r.left,y:t.clientY-r.top};}
 function pdown(e){downP=evP(e);moved=0;autoSpin=false;e.preventDefault();}
 function pmove(e){
@@ -270,8 +272,9 @@ function pmove(e){
   if(e.cancelable)e.preventDefault();
 }
 function pup(e){
+  if(e.cancelable)e.preventDefault(); // touchend後の合成マウスイベントを抑止
   if(!downP)return;
-  if(moved<6&&!locked){ // タップ → 結合切りかえ
+  if(moved<9&&!locked){ // タップ → 結合切りかえ
     const p=evP(e);
     let best=null,bd=1e9;
     for(const b of bondHits){
