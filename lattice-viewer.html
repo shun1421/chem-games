@@ -307,7 +307,9 @@ function selectAtom(i){
 }
 
 // ==== 入力 ====
-function evP(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+function evP(e){const r=cv.getBoundingClientRect();
+  // touchendではe.touchesは空になるためchangedTouchesから座標を取る
+  const t=(e.touches&&e.touches.length)?e.touches[0]:((e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e);
   return {x:t.clientX-r.left,y:t.clientY-r.top};}
 function pdown(e){
   if(e.touches&&e.touches.length===2){
@@ -331,15 +333,17 @@ function pmove(e){
   if(e.cancelable)e.preventDefault();
 }
 function pup(e){
+  if(e.cancelable)e.preventDefault(); // touchend後の合成マウスイベントを抑止
   if(!downP){return;}
-  if(moved<6){ // タップ → 粒子選択(手前優先)
+  if(moved<9){ // タップ → 粒子選択(単位格子内のみ・手前優先)
     const p=evP(e);
     const s=ST[key];
     let best=-1,bz=-1e9;
     pts.forEach((a,i)=>{
+      if(!s.inCell(a.p))return; // 単位格子の外の粒子は選択対象にしない
       const sp=screenPts[i];if(!sp)return;
       const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
-      const r=Math.max(12,rBase*sp.s*sp.k);
+      const r=Math.max(14,rBase*sp.s*sp.k);
       if((p.x-sp.x)**2+(p.y-sp.y)**2<r*r){
         const z=rot(a.p,ST[key].center)[2];
         if(z>bz){bz=z;best=i;}
@@ -368,7 +372,7 @@ window.addEventListener('load',()=>{
   window.addEventListener('mouseup',pup);
   cv.addEventListener('touchstart',pdown,{passive:false});
   cv.addEventListener('touchmove',pmove,{passive:false});
-  cv.addEventListener('touchend',pup);
+  cv.addEventListener('touchend',pup,{passive:false});
   cv.addEventListener('wheel',wheel,{passive:false});
   setStruct('fcc');
   (function loop(){if(dirty){dirty=false;draw();}requestAnimationFrame(loop);})();
