@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>有効数字ドリル | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:620px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut)}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+.modebtn{display:block;width:100%;margin-top:10px;padding:14px;font-size:16px;font-weight:800;
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:12px;cursor:pointer;color:var(--ink);font-family:inherit;transition:all .1s;text-align:left}
+.modebtn:active{transform:translateY(2px);border-bottom-width:2px}
+.modebtn b{color:var(--acc);margin-right:8px}
+.modebtn small{display:block;font-weight:600;color:var(--mut);font-size:12px;margin-top:2px}
+.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer;font-family:inherit}
+.primary:disabled{opacity:.35;cursor:default}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none;background:none;border:none;font-size:15px;cursor:pointer;width:100%;font-family:inherit}
+.hud{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:8px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+.qcard{background:#eef6f5;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.qtext{font-size:15px;text-align:center;line-height:1.8}
+.qnum{font-size:24px;font-weight:800;font-family:var(--mono);text-align:center;margin-top:4px}
+.qnum sup{font-size:.6em}
+.ansrow{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+.anslbl{font-size:11.5px;color:var(--mut);font-weight:700;margin-bottom:6px}
+.ansdisp{font-size:26px;font-weight:800;font-family:var(--mono);text-align:center;min-height:38px;letter-spacing:1px}
+.ansdisp sup{font-size:.55em}
+.btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.dbtn{flex:1;min-width:96px;padding:11px 6px;font-size:13px;font-weight:800;font-family:inherit;
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:10px;cursor:pointer;color:var(--ink);transition:all .1s;text-align:center}
+.dbtn:active{transform:translateY(2px);border-bottom-width:2px}
+.dbtn .ico{display:block;font-family:var(--mono);font-size:15px;color:var(--acc);margin-bottom:1px}
+.dbtn.exp .ico{color:#8a6bbf}
+.cntbtns{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.cntbtns button{padding:16px 4px;font-size:18px;font-weight:800;font-family:var(--mono);
+ border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:10px;cursor:pointer;color:var(--ink);transition:all .1s}
+.cntbtns button:active{transform:translateY(2px);border-bottom-width:2px}
+.cntbtns button.correct{background:var(--ok);color:#fff;border-color:var(--ok)}
+.cntbtns button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+#fb{min-height:24px;font-size:14px;line-height:1.8;margin-top:10px;font-weight:700}
+#fb .good{color:var(--ok)}#fb .bad{color:var(--bad)}
+#fb .calc{display:block;font-weight:600;color:var(--ink);background:#f6faf9;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13.5px}
+#fb .calc sup{font-size:.6em}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">有効数字ドリル</div>
+  <span class="chip">計算の基礎</span>
+</header>
+<main>
+<section id="start" class="panel">
+  <h1>有効数字ドリル</h1>
+  <p class="desc">桁ボタン(エクセルの桁数合わせ風)で表示の桁を増減して、正しい有効数字をつくるドリル。全8問×4モード。</p>
+  <ul class="rules">
+    <li>正解100点+連続正解ボーナス(コンボ×10)</li>
+    <li>丸めるときは、その次の位を<b>四捨五入</b></li>
+    <li>指数表記は 1以上10未満の a ×10<sup>n</sup> の形にする</li>
+  </ul>
+  <button class="modebtn" onclick="startGame('round')"><b>①</b>丸めて表す<small>例: 0.245(2桁) → 0.25 と 2.5×10⁻¹ の両方をつくる</small></button>
+  <button class="modebtn" onclick="startGame('count')"><b>②</b>桁数をかぞえる<small>例: 0.0450 の有効数字は何桁?</small></button>
+  <button class="modebtn" onclick="startGame('addsub')"><b>③</b>たし算・ひき算<small>例: 3.42−0.1=3.32 → 末位をそろえて 3.3</small></button>
+  <button class="modebtn" onclick="startGame('muldiv')"><b>④</b>かけ算・わり算<small>例: 3.42×2.1=7.182 → 桁数をそろえて 7.2</small></button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="qnum2">1/8</b></div>
+    <div>スコア<b id="score">0</b></div>
+    <div>コンボ<b id="combo">0</b></div>
+  </div>
+  <div class="qcard">
+    <div class="qtext" id="qtext"></div>
+    <div class="qnum" id="qshow"></div>
+  </div>
+  <div id="qbody"></div>
+  <div id="fb"></div>
+  <button class="primary" id="nextBtn" style="display:none" onclick="nextQ()">次の問題 →</button>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>クリア！</h1>
+  <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
+  <button class="primary" onclick="startGame(mode)">同じモードでもう一度</button>
+  <button class="ghost" onclick="goHome()">モード選択にもどる</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+
+// ==== 10進文字列ユーティリティ(浮動小数点の誤差なしで正確に四捨五入する) ====
+function splitNum(s){ // '0.245' → {ds:'245', pt:0} 値=0.ds…×10^pt
+  let [i,f='']=String(s).split('.');
+  let ds=i+f, pt=i.length;
+  while(ds.length>1&&ds[0]==='0'){ds=ds.slice(1);pt--;}
+  if(/^0+$/.test(ds)){ds='0';pt=1;}
+  return {ds,pt};
+}
+function joinNum(ds,pt){
+  if(pt<=0)return '0.'+'0'.repeat(-pt)+ds;
+  if(pt>=ds.length)return ds+'0'.repeat(pt-ds.length);
+  return ds.slice(0,pt)+'.'+ds.slice(pt);
+}
+function decCount(s){return String(s).includes('.')?String(s).split('.')[1].length:0;}
+function roundDec(s,nd){ // 小数nd桁に四捨五入
+  let {ds,pt}=splitNum(s);
+  const g=Math.max(1,1-pt); // 整数部が1桁以上になるようにガード0を足す(繰り上がり対策も兼ねる)
+  ds='0'.repeat(g)+ds;pt+=g;
+  const keep=pt+nd;
+  if(keep>=ds.length)ds=ds+'0'.repeat(keep-ds.length);
+  else{
+    let num=BigInt(ds.slice(0,keep));
+    if(ds[keep]>='5')num+=1n;
+    ds=num.toString().padStart(keep,'0');
+  }
+  let ip=ds.slice(0,pt).replace(/^0+(?=\d)/,''), fp=ds.slice(pt);
+  return fp?ip+'.'+fp:ip;
+}
+function shiftNum(s,k){const {ds,pt}=splitNum(s);return joinNum(ds,pt+k);} // ×10^k
+function countSig(str){ // 有効数字の桁数('1200'のような曖昧な整数は出題しない)
+  let d=String(str).replace('.','').replace(/^0+/,'');
+  if(String(str).includes('.'))return d.length;
+  return (d.replace(/0+$/,'')||'0').length;
+}
+function sigForms(s,sig){ // 有効sig桁に丸めた {normal, mant, exp}。normalが曖昧ならnull
+  const {ds,pt}=splitNum(s);
+  const nd=sig-pt;
+  let normal=null;
+  if(nd>=0){
+    normal=roundDec(s,nd);
+    if(countSig(normal)!==sig)normal=null; // 繰り上がりで桁が変わった(9.98→10.0等)
+    if(normal&&!normal.includes('.')&&normal.endsWith('0'))normal=null; // 曖昧な整数
+  }
+  let E=pt-1;
+  let mant=roundDec(joinNum(ds,1),sig-1);
+  if(parseFloat(mant)>=10){E++;mant=roundDec(joinNum('0'+ds,1),sig-1);}
+  return {normal,mant,exp:E};
+}
+function addSubStr(a,b,op){
+  const da=decCount(a),db=decCount(b),m=Math.max(da,db);
+  const A=BigInt(a.replace('.','')+'0'.repeat(m-da));
+  const B=BigInt(b.replace('.','')+'0'.repeat(m-db));
+  const R=op==='+'?A+B:A-B;
+  let s=R.toString().padStart(m+1,'0');
+  return m?s.slice(0,-m)+'.'+s.slice(-m):s;
+}
+function mulStr(a,b){
+  const m=decCount(a)+decCount(b);
+  const R=BigInt(a.replace('.',''))*BigInt(b.replace('.',''));
+  let s=R.toString().padStart(m+1,'0');
+  return m?s.slice(0,-m)+'.'+s.slice(-m):s;
+}
+function divRaw(a,b){ // a÷b を12有効桁まで(正確な先頭桁列)
+  const A=splitNum(a),B=splitNum(b);
+  const N=12n;
+  const scaled=BigInt(A.ds)*(10n**N);
+  const q=scaled/BigInt(B.ds), exact=scaled%BigInt(B.ds)===0n;
+  const qs=q.toString();
+  const pt=qs.length+(A.pt-A.ds.length)-(B.pt-B.ds.length)-12;
+  return {full:joinNum(qs,pt),exact};
+}
+function trimZeros(s){return s.includes('.')?s.replace(/0+$/,'').replace(/\.$/,''):s;}
+function sciHTML(mant,exp){return mant+' ×10<sup>'+(exp<0?'−'+(-exp):exp)+'</sup>';}
+
+// ==== 問題生成 ====
+function randDigits(n){let d=String(ri(1,9));for(let i=1;i<n;i++)d+=String(ri(0,9));return d;}
+function genRound(){
+  for(let t=0;t<60;t++){
+    const sig=pick([2,2,2,3]);
+    const ds=randDigits(sig+1+(Math.random()<0.4?1:0));
+    const pt=ri(-2,2); // 値=0.ds×10^pt → 0.00xxx〜xx.xx
+    const raw=joinNum(ds,pt);
+    const f=sigForms(raw,sig);
+    if(!f.normal)continue;
+    if(f.normal===raw)continue; // 丸めても変わらない問題は除外
+    return {raw,sig,f,
+      ex:(sig+1)+'桁目を四捨五入。指数表記は 1≦a<10 の a×10<sup>n</sup> の形。'};
+  }
+  return {raw:'0.245',sig:2,f:sigForms('0.245',2),ex:'3桁目を四捨五入。'};
+}
+function genCount(){
+  const type=pick([1,1,2,2,3,4]);
+  let disp,html,sig,ex;
+  if(type===1){ // 先頭に0が並ぶ小数
+    sig=pick([1,2,2,3,3]);
+    const ds=randDigits(sig);
+    disp=joinNum(ds,ri(-3,0));html=disp;
+    ex='先頭の0(位取りの0)は<b>数えない</b>。'+(ds.endsWith('0')?'ただし末尾の0は数える。':'');
+  }else if(type===2){ // 末尾に0のある小数
+    sig=pick([2,3,3,4]);
+    let ds=randDigits(sig-1)+'0';
+    disp=joinNum(ds,ri(1,Math.max(1,sig-1)));html=disp;
+    if(!disp.includes('.')){disp=joinNum(ds,sig-1);html=disp;}
+    ex='小数の末尾の0は<b>数える</b>(測定の精度を表す)。';
+  }else if(type===3){ // 指数表記
+    sig=pick([2,3]);
+    const ds=randDigits(sig);
+    const mant=joinNum(ds,1);
+    const e=pick([-4,-3,-2,2,3,4]);
+    disp=mant+'e'+e;html=sciHTML(mant,e);
+    ex='指数表記では <b>aの桁数</b>がそのまま有効数字(10<sup>n</sup>は数えない)。';
+  }else{ // 中間や末尾が0でない整数
+    sig=pick([2,3,4]);
+    let ds;
+    do{ds=randDigits(sig);}while(ds.endsWith('0'));
+    if(sig>=3&&Math.random()<0.6)ds=ds[0]+'0'+ds.slice(2); // はさまれた0
+    disp=ds;html=disp;
+    ex='数字の間にはさまれた0は<b>数える</b>。';
+  }
+  return {html,sig,ex};
+}
+function genAddSub(){
+  for(let t=0;t<60;t++){
+    const da=pick([1,2,2,3]);let db=pick([0,1,1,2]);
+    if(db>=da)db=Math.max(0,da-pick([1,2])); // 末位の桁数は必ず異なる(db<da)
+    const x=randDigits(ri(1,2))+'.'+randDigits(da);         // 小数da桁
+    const y=db>0?randDigits(1)+'.'+randDigits(db):randDigits(1); // 小数db桁(0なら整数)
+    const op=pick(['+','−']);
+    if(op==='−'&&parseFloat(x)<=parseFloat(y))continue;
+    const raw=addSubStr(x,y,op==='+'?'+':'-');
+    if(parseFloat(raw)<=0)continue;
+    const expd=roundDec(raw,db);
+    if(parseFloat(expd)<=0)continue; // 丸めると0になる(桁落ち)問題は除外
+    if(expd===raw)continue; // 丸め不要の問題は除外
+    return {x,y,op,raw,expd,
+      ex:'たし算・ひき算は<b>末位(小数点以下の桁数)があらい方</b>(小数'+db+'桁)にそろえる。'};
+  }
+  return {x:'3.42',y:'0.1',op:'−',raw:'3.32',expd:'3.3',ex:'末位があらい方にそろえる。'};
+}
+function genMulDiv(){
+  for(let t=0;t<60;t++){
+    const op=pick(['×','÷']);
+    const sa=pick([2,3,3]),sb=2;
+    const sig=Math.min(sa,sb);
+    const x=joinNum(randDigits(sa),ri(1,2));
+    const y=joinNum(randDigits(sb),1);
+    if(!x.includes('.')&&x.endsWith('0'))continue; // '40'のような曖昧な整数は出さない
+    if(parseFloat(y)===0)continue;
+    let raw,disp;
+    if(op==='×'){
+      raw=mulStr(x,y);disp=raw;
+    }else{
+      const d=divRaw(x,y);
+      raw=d.full;
+      const {ds,pt}=splitNum(raw);
+      const dsT=ds.replace(/0+$/,'')||'0';
+      if(d.exact&&dsT.length<=5)disp=trimZeros(joinNum(ds,pt));
+      else disp=trimZeros(joinNum(ds.slice(0,5),pt))+'…';
+    }
+    const f=sigForms(raw,sig);
+    if(!f.normal)continue;
+    if(trimZeros(f.normal)===disp.replace('…',''))continue; // 丸めても見た目が変わらない問題は除外
+    return {x,y,op,disp,raw,expd:f.normal,
+      ex:'かけ算・わり算は<b>有効数字の桁数が少ない方</b>('+sig+'桁)にそろえる。'};
+  }
+  return {x:'3.42',y:'2.1',op:'×',disp:'7.182',raw:'7.182',expd:'7.2',ex:'桁数が少ない方にそろえる。'};
+}
+
+// ==== ゲーム進行 ====
+const QN=8;
+let mode='round',qi=0,score=0,combo=0,ok=0,cur=null,answered=false;
+let nd=0,md=0,ex=0; // 表示中の小数桁 / 仮数の小数桁 / 指数
+
+function startGame(m){
+  mode=m;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  qi=0;score=0;combo=0;ok=0;
+  showQ();
+}
+function goHome(){
+  $('play').classList.add('hidden');$('end').classList.add('hidden');$('start').classList.remove('hidden');
+}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;$('qnum2').textContent=(qi+1)+'/'+QN;}
+function showQ(){
+  answered=false;$('fb').innerHTML='';$('nextBtn').style.display='none';
+  if(mode==='round'){
+    cur=genRound();
+    $('qtext').innerHTML='次の数値を有効数字 <b>'+cur.sig+'桁</b> で表せ(2つの表記の両方をつくる)';
+    $('qshow').textContent=cur.raw;
+    nd=decCount(cur.raw);md=decCount(cur.raw);ex=0;
+    $('qbody').innerHTML=
+     '<div class="ansrow"><div class="anslbl">ふつうの表記</div><div class="ansdisp" id="nDisp"></div>'+
+     '<div class="btnrow">'+
+     '<button class="dbtn" onclick="chNd(1)"><span class="ico">.0→.00</span>桁をふやす</button>'+
+     '<button class="dbtn" onclick="chNd(-1)"><span class="ico">.00→.0</span>桁をへらす</button>'+
+     '</div></div>'+
+     '<div class="ansrow"><div class="anslbl">指数表記(a×10<sup>n</sup>)</div><div class="ansdisp" id="sDisp"></div>'+
+     '<div class="btnrow">'+
+     '<button class="dbtn" onclick="chMd(1)"><span class="ico">.0→.00</span>桁をふやす</button>'+
+     '<button class="dbtn" onclick="chMd(-1)"><span class="ico">.00→.0</span>桁をへらす</button>'+
+     '<button class="dbtn exp" onclick="chEx(1)"><span class="ico">n +1</span>指数をふやす</button>'+
+     '<button class="dbtn exp" onclick="chEx(-1)"><span class="ico">n −1</span>指数をへらす</button>'+
+     '</div></div>'+
+     '<button class="primary" id="judgeBtn" onclick="judgeRound()">けってい</button>';
+    paintRound();
+  }else if(mode==='count'){
+    cur=genCount();
+    $('qtext').innerHTML='次の数値の<b>有効数字は何桁</b>?';
+    $('qshow').innerHTML=cur.html;
+    $('qbody').innerHTML='<div class="cntbtns">'+[1,2,3,4,5].map(n=>
+      '<button onclick="judgeCount('+n+',this)">'+n+'桁</button>').join('')+'</div>';
+  }else{
+    cur=(mode==='addsub')?genAddSub():genMulDiv();
+    $('qtext').innerHTML='計算結果を<b>正しい有効数字</b>で表せ';
+    $('qshow').innerHTML=cur.x+' '+cur.op+' '+cur.y+' = '+(cur.disp||cur.raw);
+    nd=decCount(cur.raw);
+    if(cur.disp&&cur.disp.includes('…'))nd=Math.min(nd,6);
+    $('qbody').innerHTML=
+     '<div class="ansrow"><div class="anslbl">答え</div><div class="ansdisp" id="nDisp"></div>'+
+     '<div class="btnrow">'+
+     '<button class="dbtn" onclick="chNd(1)"><span class="ico">.0→.00</span>桁をふやす</button>'+
+     '<button class="dbtn" onclick="chNd(-1)"><span class="ico">.00→.0</span>桁をへらす</button>'+
+     '</div></div>'+
+     '<button class="primary" id="judgeBtn" onclick="judgeCalc()">けってい</button>';
+    paintCalc();
+  }
+  upd();
+}
+function chNd(d){if(answered)return;nd=Math.max(0,Math.min(8,nd+d));mode==='round'?paintRound():paintCalc();}
+function chMd(d){if(answered)return;md=Math.max(0,Math.min(7,md+d));paintRound();}
+function chEx(d){if(answered)return;ex=Math.max(-7,Math.min(7,ex+d));paintRound();}
+function paintRound(){
+  $('nDisp').textContent=roundDec(cur.raw,nd);
+  $('sDisp').innerHTML=sciHTML(roundDec(shiftNum(cur.raw,-ex),md),ex);
+}
+function paintCalc(){$('nDisp').textContent=roundDec(cur.raw,nd);}
+
+function finishQ(good,fbHTML){
+  answered=true;
+  if(good){ok++;combo++;const pts=100+Math.min(combo,10)*10;score+=pts;
+    $('fb').innerHTML='<span class="good">正解！ +'+pts+'点</span>'+fbHTML;}
+  else{combo=0;$('fb').innerHTML='<span class="bad">おしい！</span>'+fbHTML;}
+  const jb=$('judgeBtn');if(jb)jb.style.display='none';
+  $('nextBtn').style.display='block';
+  upd();
+}
+function judgeRound(){
+  if(answered)return;
+  const f=cur.f;
+  const nOK=roundDec(cur.raw,nd)===f.normal;
+  const sOK=(ex===f.exp)&&(roundDec(shiftNum(cur.raw,-ex),md)===f.mant);
+  let detail='';
+  if(!nOK||!sOK){
+    detail=(nOK?'':'ふつうの表記が不正解。')+(sOK?'':'指数表記が不正解。');
+  }
+  finishQ(nOK&&sOK,
+    '<span class="calc">'+detail+'正解: <b>'+f.normal+'</b> = <b>'+sciHTML(f.mant,f.exp)+'</b><br>'+cur.ex+'</span>');
+}
+function judgeCount(n,btn){
+  if(answered)return;
+  const good=n===cur.sig;
+  btn.classList.add(good?'correct':'wrong');
+  document.querySelectorAll('.cntbtns button').forEach((b,i)=>{
+    b.style.pointerEvents='none';
+    if(i+1===cur.sig)b.classList.add('correct');
+  });
+  finishQ(good,'<span class="calc">正解: <b>'+cur.sig+'桁</b><br>'+cur.ex+'</span>');
+}
+function judgeCalc(){
+  if(answered)return;
+  const good=roundDec(cur.raw,nd)===cur.expd;
+  finishQ(good,'<span class="calc">正解: <b>'+cur.expd+'</b><br>'+cur.ex+'</span>');
+}
+function nextQ(){
+  qi++;
+  if(qi>=QN){
+    $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    $('fscore').textContent=score;
+    $('facc').textContent=ok+' 問 / '+QN+' 問 正解';
+    return;
+  }
+  showQ();
+}
+</script>
+</body>
+</html>
