@@ -249,15 +249,25 @@ function genAddSub(){
   }
   return {x:'3.42',y:'0.1',op:'−',raw:'3.32',expd:'3.3',ex:'末位があらい方にそろえる。'};
 }
+function mkOperand(s){ // 有効s桁の数値文字列(曖昧でない形)
+  for(let t=0;t<20;t++){
+    const ds=randDigits(s);
+    const pt=ri(0,Math.min(s,2)); // 整数部0〜2桁
+    if(pt===s&&ds.endsWith('0'))continue; // '40'のような曖昧な整数は回避
+    return joinNum(ds,pt);
+  }
+  return joinNum(randDigits(s),1);
+}
 function genMulDiv(){
-  for(let t=0;t<60;t++){
+  for(let t=0;t<80;t++){
     const op=pick(['×','÷']);
-    const sa=pick([2,3,3]),sb=2;
-    const sig=Math.min(sa,sb);
-    const x=joinNum(randDigits(sa),ri(1,2));
-    const y=joinNum(randDigits(sb),1);
-    if(!x.includes('.')&&x.endsWith('0'))continue; // '40'のような曖昧な整数は出さない
-    if(parseFloat(y)===0)continue;
+    // 答えの有効桁数: 2桁・3桁を多めに、1桁・4桁も出題
+    const sig=pick([1,2,2,2,3,3,3,4]);
+    const other=Math.min(5,sig+pick([0,1,1,2])); // 相手の桁数はsig以上
+    let sa=sig,sb=other;
+    if(Math.random()<0.5){sa=other;sb=sig;}
+    const x=mkOperand(sa);
+    const y=mkOperand(sb);
     let raw,disp;
     if(op==='×'){
       raw=mulStr(x,y);disp=raw;
