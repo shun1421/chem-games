@@ -36,6 +36,7 @@ element-match.html       … No.1  元素記号マッチング(手書き、eleme
 element-position.html    … No.2  周期表の位置あて(手書き、同上)
 molar-bridge.html        … No.17 量的関係の変換カード(手書き、molar-bridge-online由来)
 sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確に丸め、手書き)
+sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio、手書き)
 electrolysis.html        … No.40 電気分解の手順ゲーム(手書き)
 ```
 

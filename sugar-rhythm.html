@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>単糖リズム | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#5a9367;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;--blue:#3e77b6;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:620px;margin:0 auto;padding:16px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut);line-height:1.75}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
+.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer;font-family:inherit}
+.primary.sub{background:#fff;color:var(--acc);border:2px solid var(--acc)}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+/* 音の対応表 */
+.legend{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+.lg{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13.5px}
+.lg .dot{width:26px;height:26px;border-radius:50%;flex-shrink:0}
+.lg .snd{font-weight:800;font-size:15px;min-width:52px}
+.lg .tx{color:var(--mut)}
+/* 音のタイプ選択 */
+.kits{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.kits .lb{font-size:12px;color:var(--mut);font-weight:700;margin-right:2px}
+.kits .kb{padding:7px 13px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
+ font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit}
+.kits .kb.on{border-color:var(--acc);background:var(--acc);color:#fff}
+.d-oh{background:var(--bad)}.d-h{background:var(--blue)}.d-c{background:var(--amber)}
+.c-oh{color:var(--bad)}.c-h{color:var(--blue)}.c-c{color:#a86b12}
+/* プレイ画面 */
+.hud{display:flex;gap:10px;justify-content:space-between;font-size:13px;color:var(--mut);margin-bottom:10px}
+.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+.quest{text-align:center;background:#eef5f0;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.quest .lb{font-size:12px;color:var(--mut);font-weight:700}
+.quest .nm{font-size:22px;font-weight:800;margin-top:2px}
+.stagewrap{position:relative}
+svg#board{width:100%;height:auto;display:block;background:#fbfdfc;border:1px solid var(--line);border-radius:12px}
+/* 判定オーバーレイ */
+#judge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#judge.hidden{display:none}
+#judge .mark{font-size:150px;font-weight:900;line-height:1;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+#judge .mark.maru{color:rgba(212,86,106,.85)}
+#judge .mark.batsu{color:rgba(62,119,182,.85)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+/* リズムトラック */
+.track{display:flex;gap:6px;justify-content:center;margin:10px 0 4px}
+.tk{flex:1;max-width:64px;border:2px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center;background:#fff}
+.tk .no{font-size:10px;color:var(--mut);font-family:var(--mono)}
+.tk .sd{font-size:14px;font-weight:800;min-height:20px;line-height:20px}
+.tk.now{border-color:var(--ink);box-shadow:0 0 0 3px rgba(27,42,51,.08)}
+.tk.beat{transform:scale(1.12);transition:transform .08s}
+.tk.wrong{border-color:var(--bad);background:#fbe3e7}
+.tk.right{border-color:var(--ok);background:#e6f5ec}
+/* 太鼓ボタン */
+.pads{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.pad{padding:16px 4px;border-radius:14px;border:0;border-bottom:5px solid rgba(0,0,0,.22);
+ color:#fff;font-family:inherit;cursor:pointer;transition:transform .06s,border-bottom-width .06s}
+.pad:active,.pad.hit{transform:translateY(3px);border-bottom-width:2px}
+.pad:disabled{opacity:.4;cursor:default}
+.pad .s{display:block;font-size:19px;font-weight:900;letter-spacing:.08em}
+.pad .g{display:block;font-size:12px;font-weight:700;margin-top:3px;opacity:.95}
+.p-oh{background:var(--bad)}.p-h{background:var(--blue)}.p-c{background:var(--amber)}
+.subrow{display:flex;gap:8px;margin-top:8px}
+.subrow button{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:#fff;
+ font-weight:700;font-size:13px;color:var(--ink);cursor:pointer;font-family:inherit}
+.subrow button:disabled{opacity:.4;cursor:default}
+#fb{min-height:26px;margin-top:10px;font-size:14px;line-height:1.8;font-weight:700}
+#fb .good{color:var(--ok)}#fb .bad{color:var(--bad)}
+#fb .note{display:block;font-weight:600;color:var(--ink);background:#f6faf8;border:1px solid var(--line);
+ border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13.5px}
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+sub,sup{font-size:.62em}
+@media(max-width:420px){.pad .s{font-size:17px}.pad .g{font-size:11px}#judge .mark{font-size:120px}
+ .kits .lb{width:100%;margin-bottom:2px} /* 音のタイプのボタンを1行におさめる */
+ .kits .kb{padding:7px 10px;font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">単糖リズム</div>
+  <span class="chip">糖類・単糖の構造</span>
+</header>
+<main>
+
+<section id="start" class="panel">
+  <h1>単糖リズム 〜六員環をリズムで覚える〜</h1>
+  <p class="desc">六員環(ピラノース環)を <b>1位の炭素から時計回り</b> に見て、
+  それぞれの炭素についている基を音におきかえると、単糖の構造は<b>5つの音のリズム</b>になる。
+  リズムをたたいて構造式を完成させよう！</p>
+  <div class="legend">
+    <div class="lg"><span class="dot d-oh"></span><span class="snd c-oh">ドン</span>
+      <span class="tx"><b>OH</b> が下向き(Hは上)</span></div>
+    <div class="lg"><span class="dot d-h"></span><span class="snd c-h">カッ</span>
+      <span class="tx"><b>H</b> が下向き(OHは上)</span></div>
+    <div class="lg"><span class="dot d-c"></span><span class="snd c-c">ドーン</span>
+      <span class="tx"><b>CH<sub>2</sub>OH</b> がついている(5位の炭素)</span></div>
+  </div>
+  <div class="kits" id="kits"></div>
+  <ul class="rules">
+    <li>全6問。1位→5位の順にパッドをたたくと構造式が描かれる</li>
+    <li>音のタイプは4種類。ボタンで切りかえ(プレイ中も変えられる)</li>
+    <li>5つたたくと自動で判定。正解100点+連続ボーナス(コンボ×10, 上限10)</li>
+    <li>判定のあと、正しいリズムが流れる。耳で覚えよう</li>
+  </ul>
+  <button class="primary" onclick="startGame()">スタート</button>
+  <button class="primary sub" onclick="demo()">お手本を聞く(α-グルコース)</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="qnum">1/6</b></div>
+    <div>スコア<b id="score">0</b></div>
+    <div>コンボ<b id="combo">0</b></div>
+  </div>
+  <div class="quest">
+    <div class="lb">つくる単糖</div>
+    <div class="nm" id="qname"></div>
+  </div>
+  <div class="stagewrap">
+    <svg id="board" viewBox="0 0 380 312" role="img" aria-label="ピラノース環の構造式"></svg>
+    <div id="judge" class="hidden"><div class="mark" id="jmark"></div></div>
+  </div>
+  <div class="track" id="track"></div>
+  <div class="pads">
+    <button class="pad p-oh" id="padOH" onclick="hit('OH')"><span class="s">ドン</span><span class="g">OH が下</span></button>
+    <button class="pad p-h"  id="padH"  onclick="hit('H')"><span class="s">カッ</span><span class="g">H が下</span></button>
+    <button class="pad p-c"  id="padC"  onclick="hit('C')"><span class="s">ドーン</span><span class="g">CH<sub>2</sub>OH</span></button>
+  </div>
+  <div class="subrow">
+    <button id="undoBtn" onclick="undo()">← 1つ戻る</button>
+    <button id="listenBtn" onclick="playPattern(cur.pat)">正しいリズムを聞く</button>
+  </div>
+  <div class="kits" id="kits2"></div>
+  <div id="fb"></div>
+  <div class="subrow" id="afterRow" style="display:none">
+    <button id="retryBtn" onclick="retry()">もう一度試す</button>
+    <button id="nextBtn" onclick="nextQ()">次の問題 →</button>
+  </div>
+</section>
+
+<section id="end" class="panel hidden">
+  <h1>リズムマスター！</h1>
+  <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+
+// ==== 問題データ(1位→5位の順。OH=OHが下 / H=Hが下 / C=CH2OH) ====
+const SUGARS=[
+ {n:'α-グルコース',pat:['OH','OH','H','OH','C'],
+  ex:'グルコースは 2位下・3位上・4位下。α型なので1位のOHも下 → ドン ドン カッ ドン ドーン'},
+ {n:'β-グルコース',pat:['H','OH','H','OH','C'],
+  ex:'β型は1位のOHが上(Hが下)。あとはα-グルコースと同じ → カッ ドン カッ ドン ドーン'},
+ {n:'α-ガラクトース',pat:['OH','OH','H','H','C'],
+  ex:'ガラクトースはグルコースの4位だけが逆(OHが上) → ドン ドン カッ カッ ドーン'},
+ {n:'β-ガラクトース',pat:['H','OH','H','H','C'],
+  ex:'β型は1位が上、ガラクトースは4位も上 → カッ ドン カッ カッ ドーン'},
+ {n:'α-マンノース',pat:['OH','H','H','OH','C'],
+  ex:'マンノースはグルコースの2位だけが逆(OHが上) → ドン カッ カッ ドン ドーン'},
+ {n:'β-マンノース',pat:['H','H','H','OH','C'],
+  ex:'β型は1位が上、マンノースは2位も上 → カッ カッ カッ ドン ドーン'},
+];
+const SND={OH:'ドン',H:'カッ',C:'ドーン'};
+const CLS={OH:'c-oh',H:'c-h',C:'c-c'};
+
+// ==== 音(Web Audio API。外部ファイルなし) ====
+let AC=null,MASTER=null,NOISE=null;
+function ac(){
+  if(!AC){
+    const K=window.AudioContext||window.webkitAudioContext;
+    AC=new K();
+    // 音量は各音のゲインで調整済み(4種類とも単発ピーク約0.65、連打でも1.0未満)
+    MASTER=AC.createGain();MASTER.gain.value=.34;MASTER.connect(AC.destination);
+    const len=Math.floor(AC.sampleRate*.4);
+    NOISE=AC.createBuffer(1,len,AC.sampleRate);
+    const d=NOISE.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  }
+  if(AC.state==='suspended')AC.resume();
+  return AC;
+}
+function tone(f0,f1,t0,dur,type,vol){
+  const c=ac(),o=c.createOscillator(),g=c.createGain();
+  o.type=type||'sine';
+  o.frequency.setValueAtTime(f0,t0);
+  if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t0+dur);
+  g.gain.setValueAtTime(.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol||.7,t0+.006);
+  g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g);g.connect(MASTER);o.start(t0);o.stop(t0+dur+.02);
+}
+function noise(t0,dur,freq,q,vol){
+  const c=ac(),s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+  s.buffer=NOISE;
+  f.type='bandpass';f.frequency.value=freq;f.Q.value=q||1;
+  g.gain.setValueAtTime(vol||.5,t0);
+  g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  s.connect(f);f.connect(g);g.connect(MASTER);s.start(t0);s.stop(t0+dur+.02);
+}
+// 声のフォルマント周波数 [F1,F2,F3](男性/女性)
+const VOW_M={a:[730,1090,2440],o:[570,840,2410],N:[260,1000,2200]};
+const VOW_F={a:[850,1220,2810],o:[590,920,2710],N:[300,1100,2500]};
+// 声の合成: 基本周波数(のこぎり波+サイン)をフォルマントで母音に整形する
+function say(t0,plan,VOW){
+  const c=ac();
+  const dur=plan.segs.reduce((s,v)=>s+v[1],0);
+  const out=c.createGain();out.gain.value=plan.amp;out.connect(MASTER);
+  const osc=c.createOscillator();osc.type='sawtooth';
+  const sub=c.createOscillator();sub.type='sine'; // 低域を足して太くする
+  [osc,sub].forEach(o=>{
+    o.frequency.setValueAtTime(plan.f0[0],t0);
+    o.frequency.linearRampToValueAtTime(plan.f0[1],t0+dur);
+  });
+  const mkEnv=()=>{
+    const e=c.createGain();
+    e.gain.setValueAtTime(.0001,t0);
+    e.gain.exponentialRampToValueAtTime(1,t0+.016);
+    if(plan.cut){ // 促音「ッ」: 最後をスパッと切る
+      e.gain.setValueAtTime(1,t0+dur-.035);
+      e.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    }else{
+      e.gain.setValueAtTime(.95,t0+dur*.5);
+      e.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    }
+    return e;
+  };
+  const env=mkEnv();
+  osc.connect(env);
+  // 低域はフォルマントを通さず直接混ぜる(通すと削られて太さが出ない)
+  const se=mkEnv(),sg=c.createGain();sg.gain.value=.55;
+  sub.connect(se);se.connect(sg);sg.connect(out);
+  const G=[1,.5,.22],Q=[7,9,10];
+  for(let i=0;i<3;i++){
+    const bp=c.createBiquadFilter();bp.type='bandpass';bp.Q.value=Q[i];
+    let t=t0;
+    plan.segs.forEach(([v,d],si)=>{
+      if(si===0)bp.frequency.setValueAtTime(VOW[v][i],t);
+      else bp.frequency.linearRampToValueAtTime(VOW[v][i],t+.05); // 母音から撥音へ移る
+      t+=d;
+    });
+    const g=c.createGain();g.gain.value=G[i];
+    env.connect(bp);bp.connect(g);g.connect(out);
+  }
+  osc.start(t0);osc.stop(t0+dur+.05);
+  sub.start(t0);sub.stop(t0+dur+.05);
+  if(plan.burst==='d')noise(t0,.028,340,.8,.45);      // 「ド」の破裂
+  if(plan.burst==='k')noise(t0,.032,2600,1,.5);        // 「カ」の破裂
+}
+// ==== 音のタイプ(4種) ====
+const KITS={
+ male:{label:'男性の声',
+  don:t=>{say(t,{burst:'d',segs:[['o',.11],['N',.19]],f0:[108,92],amp:2.6},VOW_M);
+          tone(190,62,t,.2,'sine',.3);}, // 太鼓の打感を薄く重ねる
+  ka:t=>{say(t,{burst:'k',segs:[['a',.15]],f0:[124,112],amp:2.5,cut:true},VOW_M);
+         noise(t,.05,2600,1.2,.22);},
+  doon:t=>{say(t,{burst:'d',segs:[['o',.28],['N',.26]],f0:[102,78],amp:2.9},VOW_M);
+           tone(180,55,t,.34,'sine',.36);}},
+ female:{label:'女性の声',
+  don:t=>{say(t,{burst:'d',segs:[['o',.11],['N',.18]],f0:[220,198],amp:2.5},VOW_F);
+          tone(250,120,t,.16,'sine',.2);},
+  ka:t=>{say(t,{burst:'k',segs:[['a',.14]],f0:[244,228],amp:2.4,cut:true},VOW_F);
+         noise(t,.045,3100,1.2,.2);},
+  doon:t=>{say(t,{burst:'d',segs:[['o',.26],['N',.25]],f0:[214,170],amp:2.8},VOW_F);
+           tone(232,112,t,.3,'sine',.22);}},
+ taiko:{label:'和太鼓',
+  don:t=>{tone(168,52,t,.32,'sine',2.09);        // 宮太鼓の面
+          tone(245,92,t,.14,'triangle',.63);     // 胴鳴り
+          noise(t,.035,700,.6,.94);},            // 撥のアタック
+  ka:t=>{noise(t,.05,3200,1.4,5.42);             // 縁打ち(カッ)
+         tone(1500,900,t,.045,'triangle',2.33);},
+  doon:t=>{tone(120,38,t,.6,'sine',2.06);        // 大太鼓
+           tone(182,60,t,.28,'sine',.53);
+           noise(t,.045,500,.6,.75);}},
+ chip:{label:'電子音',
+  don:t=>{tone(430,190,t,.14,'square',1.63);
+          tone(215,96,t,.17,'square',.93);},
+  ka:t=>{tone(1180,1180,t,.05,'square',1.68);
+         tone(1620,1620,t,.028,'square',.75);},
+  doon:t=>{tone(330,110,t,.36,'square',1.47);
+           tone(165,55,t,.4,'square',.91);
+           tone(660,660,t+.02,.26,'square',.46);}},
+};
+const KIT_ORDER=['male','female','taiko','chip'];
+let kit='male';
+function setKit(k,preview){
+  kit=k;renderKits();
+  if(preview!==false)playSnd('OH');
+}
+function renderKits(){
+  ['kits','kits2'].forEach(id=>{
+    const box=$(id);if(!box)return;
+    box.innerHTML='<span class="lb">音のタイプ</span>';
+    KIT_ORDER.forEach(k=>{
+      const b=document.createElement('button');
+      b.className='kb'+(kit===k?' on':'');
+      b.textContent=KITS[k].label;
+      b.onclick=()=>setKit(k);
+      box.appendChild(b);
+    });
+  });
+}
+function playSnd(k,t0){const c=ac();const t=t0||c.currentTime;const K=KITS[kit];
+  (k==='OH'?K.don:k==='H'?K.ka:K.doon)(t);}
+function pinpon(){const c=ac(),t=c.currentTime;
+  tone(988,988,t,.28,'sine',.55);tone(784,784,t+.22,.5,'sine',.55);}
+function bubu(){const c=ac(),t=c.currentTime;
+  tone(165,165,t,.19,'square',.4);tone(140,140,t+.26,.3,'square',.4);}
+
+let rhythmTimers=[];
+function clearRhythm(){rhythmTimers.forEach(clearTimeout);rhythmTimers=[];
+  document.querySelectorAll('.tk').forEach(t=>t.classList.remove('beat'));}
+function playPattern(pat,cb){
+  clearRhythm();
+  const c=ac(),t0=c.currentTime+.12,gap=.46;
+  pat.forEach((k,i)=>{
+    playSnd(k,t0+i*gap);
+    rhythmTimers.push(setTimeout(()=>{
+      const tk=$('tk'+i);
+      if(tk){tk.classList.add('beat');setTimeout(()=>tk.classList.remove('beat'),120);}
+    },(.12+i*gap)*1000));
+  });
+  if(cb)rhythmTimers.push(setTimeout(cb,(.12+pat.length*gap)*1000));
+}
+function demo(){
+  const p=SUGARS[0].pat;
+  playPattern(p);
+}
+
+// ==== 構造式(ハースの投影式)の描画 ====
+const NS='http://www.w3.org/2000/svg';
+// 六角形の頂点(時計回りに 1位→5位、右上が環の酸素)
+const V={1:[270,155],2:[230,224],3:[150,224],4:[110,155],5:[150,86],O:[230,86]};
+function el(t,at,txt){
+  const e=document.createElementNS(NS,t);
+  for(const k in at)e.setAttribute(k,at[k]);
+  if(txt!=null)e.textContent=txt;
+  return e;
+}
+function label(x,y,main,sub,color,size){
+  const g=el('g',{});
+  const t=el('text',{x:x,y:y,'text-anchor':'middle','font-size':size||15,
+    'font-weight':700,fill:color||'#1b2a33','font-family':'sans-serif'});
+  t.appendChild(el('tspan',{},main));
+  if(sub){t.appendChild(el('tspan',{'font-size':(size||15)*.68,dy:4},sub));
+    t.appendChild(el('tspan',{'font-size':size||15,dy:-4},'OH'));}
+  g.appendChild(t);return g;
+}
+function drawBoard(marks,badSet){
+  const svg=$('board');svg.innerHTML='';
+  // 環の結合
+  const ring=[['1','2'],['2','3'],['3','4'],['4','5'],['5','O'],['O','1']];
+  ring.forEach(([a,b])=>{
+    const p=V[a],q=V[b];
+    const front=(a==='1'&&b==='2')||(a==='2'&&b==='3')||(a==='3'&&b==='4');
+    svg.appendChild(el('line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],
+      stroke:'#3d4a52','stroke-width':front?5:2,'stroke-linecap':'round'}));
+  });
+  // 環の酸素
+  svg.appendChild(el('circle',{cx:V.O[0],cy:V.O[1],r:13,fill:'#fbfdfc'}));
+  svg.appendChild(label(V.O[0],V.O[1]+6,'O',null,'#d4566a',19));
+  // 炭素番号
+  for(let i=1;i<=5;i++){
+    const v=V[i];
+    const dx=(i===1?18:i===4?-18:0), dy=(i===2||i===3)?16:(i===5?-4:5);
+    svg.appendChild(label(v[0]+dx,v[1]+dy,String(i),null,'#8aa0a8',12));
+  }
+  // 各炭素の置換基
+  for(let i=1;i<=5;i++){
+    const m=marks[i-1];
+    if(!m)continue;
+    const v=V[i],bad=badSet&&badSet.has(i-1);
+    const col=bad?'#d4566a':'#1b2a33';
+    // 下向きの基
+    const downTxt=(m==='OH')?'OH':'H';
+    svg.appendChild(el('line',{x1:v[0],y1:v[1],x2:v[0],y2:v[1]+22,
+      stroke:col,'stroke-width':2}));
+    svg.appendChild(label(v[0],v[1]+38,downTxt,null,col,15));
+    // 上向きの基
+    svg.appendChild(el('line',{x1:v[0],y1:v[1],x2:v[0],y2:v[1]-20,
+      stroke:col,'stroke-width':2}));
+    if(m==='C')svg.appendChild(label(v[0],v[1]-28,'CH','2',col,15));
+    else svg.appendChild(label(v[0],v[1]-28,(m==='OH')?'H':'OH',null,col,15));
+    if(bad){
+      svg.appendChild(el('circle',{cx:v[0],cy:v[1],r:19,fill:'none',
+        stroke:'#d4566a','stroke-width':2.5,'stroke-dasharray':'4 3'}));
+    }
+  }
+}
+
+// ==== ゲーム進行 ====
+let deck=[],qi=0,cur=null,input=[],score=0,combo=0,ok=0,locked=false;
+
+function startGame(){
+  ac(); // 最初のタップで音を有効化
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  deck=shuffle([...SUGARS]);qi=0;score=0;combo=0;ok=0;
+  showQ();
+}
+function upd(){$('score').textContent=score;$('combo').textContent=combo;$('qnum').textContent=(qi+1)+'/'+deck.length;}
+function showQ(){
+  cur=deck[qi];input=[];locked=false;
+  clearRhythm();
+  $('qname').textContent=cur.n;
+  $('fb').innerHTML='';
+  $('judge').classList.add('hidden');
+  $('afterRow').style.display='none';
+  $('listenBtn').style.display='none';
+  upd();render();
+}
+function render(){
+  drawBoard(input);
+  const tr=$('track');tr.innerHTML='';
+  for(let i=0;i<5;i++){
+    const d=document.createElement('div');
+    d.className='tk'+(!locked&&i===input.length?' now':'');
+    d.id='tk'+i;
+    const k=input[i];
+    d.innerHTML='<div class="no">'+(i+1)+'位</div><div class="sd '+(k?CLS[k]:'')+'">'+(k?SND[k]:'')+'</div>';
+    tr.appendChild(d);
+  }
+  const done=locked||input.length>=5;
+  ['padOH','padH','padC'].forEach(id=>$(id).disabled=done);
+  $('undoBtn').disabled=locked||input.length===0;
+}
+function hit(k){
+  if(locked||input.length>=5)return;
+  playSnd(k);
+  const pad=$(k==='OH'?'padOH':k==='H'?'padH':'padC');
+  pad.classList.add('hit');setTimeout(()=>pad.classList.remove('hit'),70);
+  input.push(k);render();
+  if(input.length===5)setTimeout(judge,520);
+}
+function undo(){
+  if(locked||!input.length)return;
+  input.pop();render();
+}
+function judge(){
+  locked=true;
+  const bad=new Set();
+  cur.pat.forEach((k,i)=>{if(input[i]!==k)bad.add(i);});
+  const allOk=bad.size===0;
+  // 判定マーク
+  $('jmark').className='mark '+(allOk?'maru':'batsu');
+  $('jmark').textContent=allOk?'○':'×';
+  $('judge').classList.remove('hidden');
+  allOk?pinpon():bubu();
+  render(); // パッドを無効化(トラックを再構築するので、正誤の色づけはこのあと)
+  // トラックに正誤
+  for(let i=0;i<5;i++){
+    const tk=$('tk'+i);
+    tk.classList.remove('now');
+    tk.classList.add(bad.has(i)?'wrong':'right');
+  }
+  if(allOk){
+    ok++;combo++;
+    const pts=100+Math.min(combo,10)*10;score+=pts;
+    $('fb').innerHTML='<span class="good">正解！ +'+pts+'点</span>'
+      +'<span class="note">'+cur.ex+'</span>';
+    drawBoard(cur.pat);
+  }else{
+    combo=0;
+    const rows=[];
+    bad.forEach(i=>rows.push((i+1)+'位: あなた「'+(input[i]?SND[input[i]]:'—')+'」→ 正しくは「'+SND[cur.pat[i]]+'」'));
+    $('fb').innerHTML='<span class="bad">ちがう… '+bad.size+'か所ミス</span>'
+      +'<span class="note">'+rows.join('<br>')+'<br>正しいリズム: '
+      +cur.pat.map(k=>SND[k]).join(' ')+'<br>'+cur.ex+'</span>';
+    drawBoard(cur.pat,bad); // 正しい構造式を、まちがえた炭素を赤く示して表示
+  }
+  upd();
+  $('listenBtn').style.display='';
+  $('afterRow').style.display='';
+  $('retryBtn').style.display=allOk?'none':'';
+  // 判定音のあとに正しいリズムを流す
+  setTimeout(()=>{$('judge').classList.add('hidden');playPattern(cur.pat);},allOk?900:1200);
+}
+function retry(){ // 同じ問題をもう一度
+  input=[];locked=false;
+  clearRhythm();
+  $('fb').innerHTML='';$('judge').classList.add('hidden');
+  $('afterRow').style.display='none';$('listenBtn').style.display='none';
+  render();
+}
+function nextQ(){
+  qi++;
+  if(qi>=deck.length){
+    clearRhythm();
+    $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    $('fscore').textContent=score;
+    $('facc').textContent=ok+' 問 / '+deck.length+' 問 正解';
+    return;
+  }
+  showQ();
+}
+renderKits();
+drawBoard([]);
+</script>
+</body>
+</html>
