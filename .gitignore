@@ -1,0 +1,6 @@
+# 音声の素材と中間ファイル(HTMLにBase64で埋め込み済みのため公開サイトには不要)
+Downloads/
+_voices.json
+
+# エディタ・ツールの設定
+.claude/
