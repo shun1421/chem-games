@@ -22,7 +22,15 @@ main{max-width:900px;margin:0 auto;padding:14px 12px}
 #structs button.on{border-color:var(--acc);background:var(--acc);color:#fff}
 .tgl.on{border-color:var(--amber);background:var(--amber);color:#fff}
 #stage{width:100%;height:430px;border:2px solid var(--line);border-radius:12px;background:#10222b;touch-action:none;display:block}
-#bar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+#bar,#bar2{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center}
+#bar2{padding:8px 10px;border:1.5px dashed var(--line);border-radius:12px;background:#fbfdfc}
+#bar2 .lbl{font-size:12px;font-weight:700;color:var(--mut)}
+.tgl.md.on{border-color:var(--acc);background:var(--acc);color:#fff}
+.hidden{display:none}
+#cutwrap{margin-top:10px}
+#cut{width:100%;height:300px;border:2px solid var(--line);border-radius:12px;background:#fff;display:block}
+.cuthead{font-size:12.5px;font-weight:700;color:var(--mut);margin-bottom:6px}
+@media(max-width:600px){#cut{height:250px}}
 #status{font-size:13.5px;color:var(--ink);background:#eef6f5;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px;line-height:1.7;margin-top:4px}
 #status b{color:var(--acc)}
 #info{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
@@ -44,14 +52,23 @@ sub,sup{font-size:.62em}
   <div id="structs"></div>
   <canvas id="stage"></canvas>
   <div id="bar">
+    <button class="tgl" id="tCell" onclick="toggleCell()">単位格子だけ表示</button>
     <button class="tgl" id="tModel" onclick="toggleModel()">接触モデル ⇔ 小粒子モデル</button>
-    <button class="tgl" id="tRadius" onclick="toggleRadius()">原子半径モード(4粒子を選択)</button>
-    <button class="tgl" onclick="resetSel()">選択を解除</button>
     <button class="tgl" onclick="resetView()">視点リセット</button>
   </div>
+  <div id="bar2" class="hidden">
+    <span class="lbl">モード:</span>
+    <button class="tgl md" data-m="cut" onclick="setMode('cut')">断面を見る</button>
+    <button class="tgl md" data-m="erase" onclick="setMode('erase')">粒子を消す</button>
+    <button class="tgl" onclick="resetAll()">元にもどす</button>
+  </div>
   <div id="status">粒子をタップすると、<b>となり合う粒子(最近接粒子)</b>がオレンジ色に光ります。配位数を自分の目で数えてみよう。<br>ドラッグで回転 / ホイール(ピンチ)で拡大縮小</div>
+  <div id="cutwrap" class="hidden">
+    <div class="cuthead" id="cuthead"></div>
+    <canvas id="cut"></canvas>
+  </div>
   <div id="info"></div>
-  <div class="note">※ 中央の黄色い枠が<b>単位格子</b>。そのまわり四方八方に、となりの単位格子へ続く構造をうすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。</div>
+  <div class="note" id="note">※ 中央の黄色い枠が<b>単位格子</b>。そのまわり四方八方に、となりの単位格子へ続く構造をうすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。</div>
 </div>
 </main>
 
@@ -104,6 +121,29 @@ function rhombFrame(){ // 単位格子=六角柱の1/3の菱形柱
   const e=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
   return {v,e};
 }
+// 単位格子の面(pを通り、内向き法線n)。粒子の切り取りと格子内判定に使う
+const CUBE_PLANES=[
+ {p:[0,0,0],n:[1,0,0]},{p:[1,0,0],n:[-1,0,0]},
+ {p:[0,0,0],n:[0,1,0]},{p:[0,1,0],n:[0,-1,0]},
+ {p:[0,0,0],n:[0,0,1]},{p:[0,0,1],n:[0,0,-1]}];
+const RHOMB_PLANES=[
+ {p:[0,0,0],n:[0,0,1]},{p:[0,0,HC],n:[0,0,-1]},
+ {p:[0,0,0],n:[0,1,0]},{p:[-.5,SQ3/2,0],n:[0,-1,0]},
+ {p:[0,0,0],n:[SQ3/2,.5,0]},{p:[1,0,0],n:[-SQ3/2,-.5,0]}];
+const HEX_PLANES=(function(){ // 六角柱の8面(側面6+上下2)
+  const a=[{p:[0,0,0],n:[0,0,1]},{p:[0,0,HC],n:[0,0,-1]}];
+  for(let k=0;k<6;k++){
+    const th=Math.PI/6+Math.PI/3*k, c=Math.cos(th), s=Math.sin(th);
+    a.push({p:[SQ3/2*c,SQ3/2*s,0],n:[-c,-s,0]});
+  }
+  return a;
+})();
+function planeDist(pl,p){ // 内側が正の符号付き距離
+  return (p[0]-pl.p[0])*pl.n[0]+(p[1]-pl.p[1])*pl.n[1]+(p[2]-pl.p[2])*pl.n[2];
+}
+function inPlanes(planes,p,eps){
+  return planes.every(pl=>planeDist(pl,p)>-(eps===undefined?1e-6:eps));
+}
 function inBox(p){return p.every(v=>v>-1e-6&&v<1+1e-6);}
 function inHexCell(p){
   if(p[2]<-1e-6||p[2]>HC+1e-6)return false;
@@ -115,37 +155,73 @@ function inHexCell(p){
 const ST={
  sc:{name:'単純立方格子',gen:genSC,rTouch:[.5],rSmall:[.11],col:['#7fa8bd'],
    n:'1個',coord:6,fill:'52%',rel:'2r = a',nd:1,
-   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,planes:CUBE_PLANES,viewPlanes:CUBE_PLANES,zm:1,
    ex:'立方体の頂点だけに粒子。となりの粒子とは辺にそって接する。例:ポロニウム'},
  bcc:{name:'体心立方格子',gen:genBCC,rTouch:[SQ3/4],rSmall:[.11],col:['#7fa8bd'],
    n:'2個',coord:8,fill:'68%',rel:'4r = √3 a(体対角線)',nd:SQ3/2,
-   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,planes:CUBE_PLANES,viewPlanes:CUBE_PLANES,zm:1,
    ex:'中心の粒子は8個の頂点粒子と接する。例:Na, K, Fe'},
  fcc:{name:'面心立方格子',gen:genFCC,rTouch:[SQ2/4],rSmall:[.11],col:['#7fa8bd'],
    n:'4個',coord:12,fill:'74%',rel:'4r = √2 a(面対角線)',nd:SQ2/2,
-   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,planes:CUBE_PLANES,viewPlanes:CUBE_PLANES,zm:1,
    ex:'面の中心の粒子が、面対角線にそって接する。最密構造。例:Cu, Ag, Al'},
  hcp:{name:'六方最密構造',gen:genHCP,rTouch:[.5],rSmall:[.11],col:['#7fa8bd'],
    n:'2個(六角柱の1/3)',coord:12,fill:'74%',rel:'2r = a(六角形の1辺)',nd:1,
-   center:[0,0,HC/2],frame:rhombFrame(),sub:hexFrame(),inCell:inHexCell,zm:.8,
+   center:[0,0,HC/2],frame:rhombFrame(),sub:hexFrame(),inCell:inHexCell,planes:RHOMB_PLANES,viewPlanes:HEX_PLANES,zm:.8,
    ex:'ABAB…と層が重なる最密構造(充填率は面心立方と同じ74%)。<b>太い黄枠が単位格子</b>で、点線の六角柱のちょうど1/3。六角柱全体では 12×1/6 + 2×1/2 + 3 = 6個の原子をふくむ。例:Mg, Zn'},
  nacl:{name:'塩化ナトリウム型',gen:genNaCl,rTouch:[.19,.31],rSmall:[.09,.13],col:['#9db4d8','#5aa06b'],
    n:'Na⁺4個+Cl⁻4個',coord:6,fill:'—',rel:'2(r₊ + r₋) = a',nd:.5,
-   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,zm:1,
+   center:[.5,.5,.5],frame:cubeFrame(),inCell:inBox,planes:CUBE_PLANES,viewPlanes:CUBE_PLANES,zm:1,
    ex:'Na⁺(青)とCl⁻(緑)が交互に並ぶ。どちらのイオンも反対符号のイオン6個に囲まれる(配位数6)。'},
 };
 
-let key='fcc',pts=[],touchMode=true,radiusMode=false;
-let selected=-1,neighbors=[],picked=[];
+let key='fcc',pts=[],touchMode=true;
+let cellOnly=false,mode='coord';      // 単位格子だけ表示 / モード(配位数・断面・削除)
+let selected=-1,neighbors=[],corners=[],erased=new Set();
 let yaw=.65,pitch=.42,zoom=1,dirty=true;
 let cv,ctx,W,H,DPR,downP=null,moved=0,pinchD=0;
+let cutCv,cutCtx,CW,CH;
+let interacting=false,idleTimer=null;
+function markInteract(){ // 操作中フラグ。止まったら精細に描き直す
+  interacting=true;
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>{interacting=false;dirty=true;},170);
+  dirty=true;
+}
 
 function setStruct(k){
   key=k;pts=ST[k].gen();
-  selected=-1;neighbors=[];picked=[];
+  resetAll(true);
   [...$('structs').children].forEach(b=>b.classList.toggle('on',b.dataset.k===k));
   info();dirty=true;
-  status(ST[k].ex+'<br>粒子をタップして配位数を数えてみよう。');
+  status(ST[k].ex+'<br>'+modeHint());
+}
+// 単位格子の中にある粒子か(六方最密は菱形柱で判定する)
+// 画面に出す範囲。接触モデルでは、中心が外でも球の一部が入っていれば切れ端として描く
+function inUnitCell(a){
+  const s=ST[key];
+  const r=touchMode?s.rTouch[a.t]:1e-6;
+  return inPlanes(s.viewPlanes,a.p,r);
+}
+function inCellBox(a){return inPlanes(ST[key].planes,a.p);}         // 単位格子そのもの
+// 断面モードで単位格子を切ったとき、残す側の面(手前側を取り除いて切り口を見せる)
+let cutPlane=null;
+function makeCutPlane(b){
+  const s=ST[key];
+  // 選んだ面が単位格子の外側の面なら、切っても何も減らないので切らない
+  const ds=s.frame.v.slice(0,8).map(v=>(v[0]-b.O[0])*b.n[0]+(v[1]-b.O[1])*b.n[1]+(v[2]-b.O[2])*b.n[2]);
+  const eps=1e-6;
+  if(ds.every(d=>d>-eps)||ds.every(d=>d<eps))return null;
+  // 手前側(画面のz+側)を取り除く向きに法線をそろえる
+  const nr=rotDir(b.n);
+  const n=nr[2]>0?[-b.n[0],-b.n[1],-b.n[2]]:b.n.slice();
+  return {p:b.O.slice(),n:n};
+}
+// いま画面に描く粒子か
+function shown(i){
+  if(erased.has(i))return false;
+  if(cellOnly)return inUnitCell(pts[i]);
+  return true;
 }
 function info(){
   const s=ST[key];
@@ -157,14 +233,39 @@ function info(){
 }
 function status(t){$('status').innerHTML=t;}
 function toggleModel(){touchMode=!touchMode;$('tModel').classList.toggle('on',!touchMode);dirty=true;}
-function toggleRadius(){
-  radiusMode=!radiusMode;$('tRadius').classList.toggle('on',radiusMode);
-  resetSel();
-  status(radiusMode
-   ?'<b>原子半径モード</b>:粒子を4つ選ぶと、その4点を頂点とした図形と各辺の長さ(aの何倍か)を表示します。<br>例:面心立方格子なら「頂点2つ+面心2つ」を選んで面対角線を見つけよう。'
-   :'粒子をタップすると最近接粒子がオレンジ色に光ります。');
+function toggleCell(){
+  cellOnly=!cellOnly;
+  $('tCell').classList.toggle('on',cellOnly);
+  $('bar2').classList.toggle('hidden',!cellOnly);
+  mode=cellOnly?'cut':'coord';
+  resetAll(true);
+  $('note').innerHTML=cellOnly
+    ?'※ <b>単位格子だけ</b>を表示しています。接触モデルでは、粒子は単位格子の面できれいに切り取られます。頂点の粒子は1/8、面の中心は1/2だけが単位格子に属することを確かめよう。(配位数を数えるときは、この表示を解除してください)'
+    :'※ 中央の黄色い枠が<b>単位格子</b>。そのまわり四方八方に、となりの単位格子へ続く構造をうすい粒子で表しています。単位格子の外周にある粒子は、となりの単位格子と共有されている点にも注目。';
+  status(modeHint());
+  renderModeBtns();dirty=true;
 }
-function resetSel(){selected=-1;neighbors=[];picked=[];dirty=true;}
+function setMode(m){
+  mode=m;selected=-1;neighbors=[];corners=[];cutPlane=null;
+  renderModeBtns();
+  $('cutwrap').classList.add('hidden');
+  status(modeHint());dirty=true;
+}
+function renderModeBtns(){
+  document.querySelectorAll('#bar2 .md').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+}
+function modeHint(){
+  if(!cellOnly)return '粒子をタップすると最近接粒子がオレンジ色に光ります。配位数を数えてみよう。';
+  if(mode==='cut')return '<b>断面を見る</b>:単位格子の<b>角(8つの○)</b>から4つ選ぶと、その平面で切った断面図を表示します。<br>例:面心立方格子で「向かい合う辺の4つの角」を選ぶと、面対角線にそって原子が接する様子が見えます。';
+  if(mode==='erase')return '<b>粒子を消す</b>:粒子をタップすると消えます。中を見たいときや、単位格子内の粒子の数を確かめたいときに使おう。「元にもどす」で復活します。';
+  return '粒子をタップすると最近接粒子がオレンジ色に光ります。';
+}
+function resetAll(keep){
+  selected=-1;neighbors=[];corners=[];erased=new Set();cutPlane=null;
+  $('cutwrap').classList.add('hidden');
+  if(!keep)status(modeHint());
+  dirty=true;
+}
 function resetView(){yaw=.65;pitch=.42;zoom=1;dirty=true;}
 
 // ==== 3D ====
@@ -180,6 +281,77 @@ function proj(p){
   const f=7,s=118*zoom*(ST[key].zm||1);
   const k=f/(f-p[2]);
   return {x:W/2+p[0]*s*k,y:H/2-p[1]*s*k,k,s};
+}
+function rotDir(n){return rot(n,[0,0,0]);} // 方向ベクトルの回転(平行移動なし)
+
+function hexRGB(h){const n=parseInt(h.slice(1),16);return [n>>16,(n>>8)&255,n&255];}
+// 単位格子の面で切り取った粒子を1ピクセルずつ正確に描く。
+// 画面の各点から視線を飛ばし、球と単位格子(6面)の共通部分の手前の面を求める。
+// 球面なら丸く、切り口なら平らに陰影をつけるので、切断面がそのまま見える。
+function drawCellSolid(s,C,order){
+  const w=Math.round(W*DPR),h=Math.round(H*DPR);
+  const img=ctx.getImageData(0,0,w,h),data=img.data;
+  const zbuf=new Float32Array(w*h).fill(1e9);
+  const f=7,sc=118*zoom*(s.zm||1);
+  const src=cutPlane?s.viewPlanes.concat([cutPlane]):s.viewPlanes;
+  const planes=src.map(pl=>({n:rotDir(pl.n),p:rot(pl.p,C)})); // 面も回転させる
+  const L=[-.42,.55,.72]; // 光の向き(左上手前)
+  const hasSel=selected>=0;
+  // 動かしている間は粗く描いてなめらかさを保つ(手を止めると精細に描き直す)
+  const step=interacting?Math.max(2,Math.round(2*zoom)):1;
+  for(const i of order){
+    if(!shown(i))continue;
+    const a=pts[i];
+    const c=rot(a.p,C);
+    const rw=(touchMode?s.rTouch:s.rSmall)[a.t];
+    const isSel=i===selected, isNb=neighbors.includes(i);
+    const col=hexRGB(isSel?'#d4566a':isNb?'#e8a13d':s.col[a.t]);
+    const dim=(hasSel&&!isSel&&!isNb)?.45:1; // 選択中はほかを暗く
+    const pp0=proj(c),rpix=rw*pp0.s*pp0.k*1.15;
+    const x0=Math.max(0,Math.floor((pp0.x-rpix)*DPR)),x1=Math.min(w-1,Math.ceil((pp0.x+rpix)*DPR));
+    const y0=Math.max(0,Math.floor((pp0.y-rpix)*DPR)),y1=Math.min(h-1,Math.ceil((pp0.y+rpix)*DPR));
+    for(let py=y0;py<=y1;py+=step)for(let px=x0;px<=x1;px+=step){
+      // 視線: カメラ(0,0,f) から画面の点へ
+      const dx=(px/DPR-W/2)/sc, dy=(H/2-py/DPR)/sc;
+      const Dx=dx,Dy=dy,Dz=-f;
+      const ox=-c[0],oy=-c[1],oz=f-c[2];
+      const A=Dx*Dx+Dy*Dy+Dz*Dz;
+      const B=2*(ox*Dx+oy*Dy+oz*Dz);
+      const Q=ox*ox+oy*oy+oz*oz-rw*rw;
+      const disc=B*B-4*A*Q;
+      if(disc<0)continue;
+      const sq=Math.sqrt(disc);
+      let t1=(-B-sq)/(2*A), t2=(-B+sq)/(2*A), hit=-1;
+      for(let k=0;k<planes.length;k++){       // 6面で見える区間をせばめる
+        const pl=planes[k];
+        const dn=Dx*pl.n[0]+Dy*pl.n[1]+Dz*pl.n[2];
+        const on=(0-pl.p[0])*pl.n[0]+(0-pl.p[1])*pl.n[1]+(f-pl.p[2])*pl.n[2];
+        if(Math.abs(dn)<1e-12){if(on<0){t1=1e9;break;}continue;}
+        const tt=-on/dn;
+        if(dn>0){if(tt>t1){t1=tt;hit=k;}}
+        else if(tt<t2)t2=tt;
+      }
+      if(t1>t2)continue;
+      const idx=py*w+px;
+      if(t1>=zbuf[idx])continue;
+      zbuf[idx]=t1;
+      let nx,ny,nz,flat=hit>=0;
+      if(flat){const pl=planes[hit];nx=-pl.n[0];ny=-pl.n[1];nz=-pl.n[2];}
+      else{
+        nx=(t1*Dx-c[0])/rw;ny=(t1*Dy-c[1])/rw;nz=(f+t1*Dz-c[2])/rw;
+      }
+      let diff=Math.max(0,nx*L[0]+ny*L[1]+nz*L[2]);
+      // 切り口は平らに(陰影の変化を小さく)、球面は丸く見えるように
+      let sh=flat?(.62+diff*.3):(.3+diff*.75+Math.pow(diff,20)*.5);
+      sh*=dim;
+      const cr=Math.min(255,col[0]*sh),cg=Math.min(255,col[1]*sh),cb=Math.min(255,col[2]*sh);
+      for(let qy=0;qy<step&&py+qy<=y1;qy++)for(let qx=0;qx<step&&px+qx<=x1;qx++){
+        const o=((py+qy)*w+px+qx)*4;
+        data[o]=cr;data[o+1]=cg;data[o+2]=cb;data[o+3]=255;
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
 }
 
 let screenPts=[];
@@ -201,15 +373,17 @@ function draw(){
   ctx.strokeStyle='rgba(232,161,61,.35)';ctx.lineWidth=2;
   for(const e of s.frame.e){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
   // 粒子(奥→手前)。選択中はハイライト以外を暗くして配位数を見やすく
-  const hasSel=selected>=0||picked.length>0;
+  const hasSel=selected>=0;
   const ord=pts.map((_,i)=>i).sort((a,b)=>rp[a][2]-rp[b][2]);
-  for(const i of ord){
+  if(cellOnly&&touchMode){
+    drawCellSolid(s,C,ord); // 単位格子の面で切り取って描く
+  }else for(const i of ord){
+    if(!shown(i))continue;
     const a=pts[i],p=pp[i];
     const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
     const r=rBase*p.s*p.k;
-    const inside=s.inCell(a.p);
-    const pi=picked.indexOf(i);
-    const isSel=i===selected||pi>=0, isNb=neighbors.includes(i);
+    const inside=cellOnly?true:s.inCell(a.p);
+    const isSel=i===selected, isNb=neighbors.includes(i);
     let col=s.col[a.t];
     if(isSel)col='#d4566a';
     else if(isNb)col='#e8a13d';
@@ -230,12 +404,6 @@ function draw(){
       ctx.lineWidth=2.5;ctx.strokeStyle='#fff';
       ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);ctx.stroke();
     }
-    if(pi>=0){ // 選択番号バッジ
-      ctx.globalAlpha=1;
-      ctx.fillStyle='#fff';ctx.font='800 '+Math.max(11,r*.8)+'px sans-serif';
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(String(pi+1),p.x,p.y);
-    }
     ctx.globalAlpha=1;
   }
   // 枠(手前に重ね描き)
@@ -246,28 +414,138 @@ function draw(){
   }
   ctx.strokeStyle='rgba(232,161,61,.95)';ctx.lineWidth=2.5;
   for(const e of s.frame.e){ctx.beginPath();ctx.moveTo(cp[e[0]].x,cp[e[0]].y);ctx.lineTo(cp[e[1]].x,cp[e[1]].y);ctx.stroke();}
-  // 原子半径モード:4点選択で図形
-  if(radiusMode&&picked.length===4){
-    ctx.strokeStyle='#7de3d0';ctx.lineWidth=2;
-    ctx.fillStyle='#7de3d0';ctx.font='700 12.5px sans-serif';ctx.textAlign='center';
-    for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
-      const A=pts[picked[i]].p,B=pts[picked[j]].p;
-      const d=Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2]);
-      const P=pp[picked[i]],Q=pp[picked[j]];
-      ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(Q.x,Q.y);ctx.stroke();
+  // 断面モード:単位格子の角を選べるようにマーカーを出し、4つ選んだら切断面を描く
+  if(cellOnly&&mode==='cut'){
+    if(corners.length===4){ // 切断面を半透明の面で示す
+      const poly=orderCorners(corners).map(ci=>cp[ci]);
       ctx.save();
-      ctx.fillStyle='#0f1b21';
-      const mx=(P.x+Q.x)/2,my=(P.y+Q.y)/2;
-      const label=fmtLen(d);
-      const w=ctx.measureText(label).width+8;
-      ctx.fillRect(mx-w/2,my-9,w,17);
-      ctx.fillStyle='#7de3d0';
-      ctx.fillText(label,mx,my+4);
+      ctx.beginPath();ctx.moveTo(poly[0].x,poly[0].y);
+      for(let i=1;i<poly.length;i++)ctx.lineTo(poly[i].x,poly[i].y);
+      ctx.closePath();
+      // 実際に切ったときは切り口の粒子が見えるよう、面は塗らず輪郭だけにする
+      if(!cutPlane){ctx.fillStyle='rgba(125,227,208,.22)';ctx.fill();}
+      ctx.strokeStyle='#7de3d0';ctx.lineWidth=2.5;ctx.stroke();
       ctx.restore();
     }
+    s.frame.v.forEach((v,i)=>{
+      if(s.sub&&i>7)return; // 六角柱の参考頂点は対象外
+      const q=cp[i],sel=corners.includes(i);
+      ctx.beginPath();ctx.arc(q.x,q.y,sel?9:7,0,7);
+      ctx.fillStyle=sel?'#7de3d0':'rgba(255,255,255,.25)';ctx.fill();
+      ctx.lineWidth=2;ctx.strokeStyle=sel?'#fff':'rgba(255,255,255,.6)';ctx.stroke();
+      if(sel){
+        ctx.fillStyle='#0f1b21';ctx.font='800 11px sans-serif';
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(String(corners.indexOf(i)+1),q.x,q.y);
+      }
+    });
   }
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px sans-serif';ctx.textAlign='left';
-  ctx.fillText(s.name+(s.sub?'(太い黄枠=単位格子、点線=六角柱)':'(黄色の枠が単位格子)'),10,H-12);
+  ctx.textBaseline='alphabetic';
+  ctx.fillText(s.name+(cellOnly?'(単位格子だけ)':(s.sub?'(太い黄枠=単位格子、点線=六角柱)':'(黄色の枠が単位格子)')),10,H-12);
+}
+
+// ==== 断面図 ====
+// 選んだ4つの角が同じ平面にあるか調べ、平面上の直交基底を返す
+function cutBasis(){
+  const s=ST[key],V=corners.map(i=>s.frame.v[i]);
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const norm=a=>{const L=Math.hypot(a[0],a[1],a[2]);return [a[0]/L,a[1]/L,a[2]/L];};
+  const O=V[0];
+  let n=null;
+  for(let i=1;i<4&&!n;i++)for(let j=i+1;j<4;j++){
+    const c=cross(sub(V[i],O),sub(V[j],O));
+    if(Math.hypot(c[0],c[1],c[2])>1e-6){n=norm(c);break;}
+  }
+  if(!n)return null;
+  for(const v of V)if(Math.abs(dot(sub(v,O),n))>1e-6)return null; // 同一平面でない
+  let u=sub(V[1],O);
+  if(Math.hypot(u[0],u[1],u[2])<1e-6)u=sub(V[2],O);
+  u=norm(u);
+  const w=cross(n,u);
+  return {O,n,u,w,dot,sub};
+}
+// 4つの角を平面上で凸多角形の順に並べる
+function orderCorners(cs){
+  const b=cutBasis();
+  if(!b)return cs;
+  const s=ST[key];
+  const pt=i=>{const d=b.sub(s.frame.v[i],b.O);return [b.dot(d,b.u),b.dot(d,b.w)];};
+  const c=cs.map(pt).reduce((a,p)=>[a[0]+p[0]/cs.length,a[1]+p[1]/cs.length],[0,0]);
+  return cs.slice().sort((i,j)=>{
+    const A=pt(i),B=pt(j);
+    return Math.atan2(A[1]-c[1],A[0]-c[0])-Math.atan2(B[1]-c[1],B[0]-c[0]);
+  });
+}
+function drawCut(){
+  const b=cutBasis();
+  const s=ST[key];
+  if(!b){
+    $('cuthead').textContent='この4つの角は同じ平面にありません。選び直してください。';
+    cutCtx.clearRect(0,0,CW,CH);return;
+  }
+  const ord=orderCorners(corners);
+  const to2=P=>{const d=b.sub(P,b.O);return [b.dot(d,b.u),b.dot(d,b.w)];};
+  const poly=ord.map(i=>to2(s.frame.v[i]));
+  // 断面に現れる粒子(単位格子内、消していないもの)
+  const circles=[];
+  pts.forEach((a,i)=>{
+    if(erased.has(i)||!inUnitCell(a))return;
+    const r=(touchMode?s.rTouch:s.rSmall)[a.t];
+    const d=b.dot(b.sub(a.p,b.O),b.n);
+    if(Math.abs(d)>=r-1e-9)return;
+    const q=to2(a.p);
+    circles.push({x:q[0],y:q[1],r:Math.sqrt(r*r-d*d),t:a.t});
+  });
+  // 表示範囲を決めて描画
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const ext=(x,y,r)=>{x0=Math.min(x0,x-r);x1=Math.max(x1,x+r);y0=Math.min(y0,y-r);y1=Math.max(y1,y+r);};
+  poly.forEach(p=>ext(p[0],p[1],0));
+  circles.forEach(c=>ext(c.x,c.y,c.r));
+  const pad=28;
+  const sc=Math.min((CW-pad*2)/(x1-x0||1),(CH-pad*2)/(y1-y0||1));
+  const ox=CW/2-(x0+x1)/2*sc, oy=CH/2+(y0+y1)/2*sc;
+  const X=x=>ox+x*sc, Y=y=>oy-y*sc;
+  cutCtx.clearRect(0,0,CW,CH);
+  // 断面の外枠
+  cutCtx.beginPath();
+  cutCtx.moveTo(X(poly[0][0]),Y(poly[0][1]));
+  for(let i=1;i<poly.length;i++)cutCtx.lineTo(X(poly[i][0]),Y(poly[i][1]));
+  cutCtx.closePath();
+  cutCtx.fillStyle='#eef6f5';cutCtx.fill();
+  // 枠の内側だけに粒子の断面を描く
+  cutCtx.save();cutCtx.clip();
+  circles.forEach(c=>{
+    const px=X(c.x),py=Y(c.y),pr=c.r*sc;
+    const g=cutCtx.createRadialGradient(px-pr*.3,py-pr*.35,pr*.1,px,py,pr);
+    const col=s.col[c.t];
+    g.addColorStop(0,'#fff');g.addColorStop(.35,col);g.addColorStop(1,shade(col));
+    cutCtx.beginPath();cutCtx.arc(px,py,pr,0,7);cutCtx.fillStyle=g;cutCtx.fill();
+    cutCtx.lineWidth=1.5;cutCtx.strokeStyle='rgba(27,42,51,.35)';cutCtx.stroke();
+  });
+  cutCtx.restore();
+  cutCtx.beginPath();
+  cutCtx.moveTo(X(poly[0][0]),Y(poly[0][1]));
+  for(let i=1;i<poly.length;i++)cutCtx.lineTo(X(poly[i][0]),Y(poly[i][1]));
+  cutCtx.closePath();
+  cutCtx.strokeStyle='#0e7c86';cutCtx.lineWidth=2.5;cutCtx.stroke();
+  // 辺の長さ
+  cutCtx.font='700 12.5px sans-serif';cutCtx.textAlign='center';cutCtx.textBaseline='middle';
+  for(let i=0;i<poly.length;i++){
+    const A=poly[i],B=poly[(i+1)%poly.length];
+    const L=Math.hypot(A[0]-B[0],A[1]-B[1]);
+    if(L<1e-6)continue;
+    const mx=X((A[0]+B[0])/2),my=Y((A[1]+B[1])/2);
+    const lab=fmtLen(L);
+    const w=cutCtx.measureText(lab).width+10;
+    cutCtx.fillStyle='#fff';cutCtx.fillRect(mx-w/2,my-9,w,18);
+    cutCtx.strokeStyle='#0e7c86';cutCtx.lineWidth=1;cutCtx.strokeRect(mx-w/2,my-9,w,18);
+    cutCtx.fillStyle='#0e7c86';cutCtx.fillText(lab,mx,my);
+  }
+  $('cuthead').innerHTML='断面図(切り口を正面から見たところ)&nbsp;/&nbsp;現れた粒子の断面: <b>'
+    +circles.length+'個</b>&nbsp;/&nbsp;半径と格子定数の関係: '+s.rel;
 }
 function fmtLen(d){
   const table=[[.5,'a/2'],[1,'a'],[SQ2/2,'(√2/2)a'],[SQ3/2,'(√3/2)a'],[SQ2,'√2 a'],[SQ3,'√3 a'],
@@ -282,13 +560,11 @@ function shade(hex){
 
 // ==== 近接判定 ====
 function selectAtom(i){
-  const s=ST[key];
-  if(radiusMode){
-    const pi=picked.indexOf(i);
-    if(pi>=0)picked.splice(pi,1);
-    else{if(picked.length>=4)picked.shift();picked.push(i);}
-    if(picked.length===4)status('<b>4点を結んだ図形</b>を表示中。辺の長さから、粒子が接する方向を見つけて r と a の関係式を立てよう。('+s.rel+')');
-    else status('選択中: '+picked.length+' / 4 個');
+  if(cellOnly&&mode==='erase'){ // 削除モード
+    erased.add(i);
+    const left=pts.filter((a,j)=>!erased.has(j)&&inUnitCell(a)).length;
+    status('粒子を1つ消しました。単位格子に残っている粒子: <b>'+left+'個</b><br>'
+      +'(単位格子に属する量は 頂点1/8・辺1/4・面1/2・内部1 で数えます。この構造は <b>'+ST[key].n+'</b>)');
     dirty=true;return;
   }
   selected=i;neighbors=[];
@@ -296,13 +572,35 @@ function selectAtom(i){
   let dmin=1e9;
   pts.forEach((B,j)=>{
     if(j===i)return;
+    if(cellOnly&&!shown(j))return; // 単位格子だけ表示のときは見えている粒子で数える
     if(key==='nacl'&&B.t===A.t)return; // NaClは反対符号のイオンが最近接
     const d=Math.hypot(A.p[0]-B.p[0],A.p[1]-B.p[1],A.p[2]-B.p[2]);
     if(d<dmin-1e-6){dmin=d;neighbors=[j];}
     else if(Math.abs(d-dmin)<1e-6)neighbors.push(j);
   });
   const name=key==='nacl'?(A.t===0?'Na⁺':'Cl⁻'):'この粒子';
-  status('<b>'+name+'</b>の最近接粒子(距離 '+fmtLen(dmin)+')をオレンジ色で表示。数えられた数: <b>'+neighbors.length+'個</b> / 理論値: <b>'+ST[key].coord+'個</b><br>まわりの半透明の粒子もふくめて数えるのがコツ。「小粒子モデル」に切りかえて回転させると数えやすい。');
+  status('<b>'+name+'</b>の最近接粒子(距離 '+fmtLen(dmin)+')をオレンジ色で表示。数えられた数: <b>'+neighbors.length+'個</b> / 理論値: <b>'+ST[key].coord+'個</b><br>'
+   +(cellOnly?'単位格子だけを表示しているので、格子の外にある残りの最近接粒子は見えません。「単位格子だけ表示」を解除して数えよう。'
+            :'まわりの半透明の粒子もふくめて数えるのがコツ。「小粒子モデル」に切りかえて回転させると数えやすい。'));
+  dirty=true;
+}
+// 断面モード:単位格子の角を選ぶ
+function pickCorner(i){
+  const k=corners.indexOf(i);
+  if(k>=0)corners.splice(k,1);
+  else{if(corners.length>=4)corners.shift();corners.push(i);}
+  if(corners.length===4){
+    const bb=cutBasis();
+    cutPlane=bb?makeCutPlane(bb):null;
+    $('cutwrap').classList.remove('hidden');
+    fitCut();drawCut();
+    status(cutBasis()?'切り口を <b>断面図</b> に表示しました。原子どうしが接しているところを探して、r と a の関係を確かめよう。'
+                     :'その4つの角は同じ平面にありません。選び直してください。');
+  }else{
+    cutPlane=null;
+    $('cutwrap').classList.add('hidden');
+    status('角を選択中: <b>'+corners.length+' / 4</b> 個');
+  }
   dirty=true;
 }
 
@@ -321,7 +619,7 @@ function pdown(e){
 function pmove(e){
   if(e.touches&&e.touches.length===2){
     const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    zoom=Math.max(.5,Math.min(2.6,zoom*d/pinchD));pinchD=d;dirty=true;e.preventDefault();return;
+    zoom=Math.max(.5,Math.min(2.6,zoom*d/pinchD));pinchD=d;markInteract();e.preventDefault();return;
   }
   if(!downP)return;
   const p=evP(e);
@@ -329,23 +627,35 @@ function pmove(e){
   moved+=Math.abs(dx)+Math.abs(dy);
   yaw+=dx*0.009;pitch+=dy*0.007;
   pitch=Math.max(-1.5,Math.min(1.5,pitch));
-  downP=p;dirty=true;
+  downP=p;markInteract();
   if(e.cancelable)e.preventDefault();
 }
 function pup(e){
   if(e.cancelable)e.preventDefault(); // touchend後の合成マウスイベントを抑止
   if(!downP){return;}
-  if(moved<9){ // タップ → 粒子選択(単位格子内のみ・手前優先)
+  if(moved<9){ // タップ
     const p=evP(e);
     const s=ST[key];
+    if(cellOnly&&mode==='cut'){ // 単位格子の角を選ぶ
+      let bi=-1,bd=1e9;
+      s.frame.v.forEach((v,i)=>{
+        if(s.sub&&i>7)return;
+        const q=proj(rot(v,s.center));
+        const d=(p.x-q.x)**2+(p.y-q.y)**2;
+        if(d<20*20&&d<bd){bd=d;bi=i;}
+      });
+      if(bi>=0)pickCorner(bi);
+      downP=null;return;
+    }
     let best=-1,bz=-1e9;
     pts.forEach((a,i)=>{
-      if(!s.inCell(a.p))return; // 単位格子の外の粒子は選択対象にしない
+      if(!shown(i))return;                        // 消した粒子や表示外は選べない
+      if(!cellOnly&&!s.inCell(a.p))return;        // 結晶モデルでは単位格子の中だけ選べる
       const sp=screenPts[i];if(!sp)return;
       const rBase=(touchMode?s.rTouch:s.rSmall)[a.t];
       const r=Math.max(14,rBase*sp.s*sp.k);
       if((p.x-sp.x)**2+(p.y-sp.y)**2<r*r){
-        const z=rot(a.p,ST[key].center)[2];
+        const z=rot(a.p,s.center)[2];
         if(z>bz){bz=z;best=i;}
       }
     });
@@ -353,13 +663,21 @@ function pup(e){
   }
   downP=null;
 }
-function wheel(e){zoom=Math.max(.5,Math.min(2.6,zoom*(e.deltaY<0?1.1:0.9)));dirty=true;e.preventDefault();}
+function wheel(e){zoom=Math.max(.5,Math.min(2.6,zoom*(e.deltaY<0?1.1:0.9)));markInteract();e.preventDefault();}
 
+function fitCut(){ // 断面キャンバスは表示されてから実寸が決まる
+  const r=cutCv.getBoundingClientRect();
+  CW=r.width;CH=r.height;
+  cutCv.width=CW*DPR;cutCv.height=CH*DPR;
+  cutCtx.setTransform(DPR,0,0,DPR,0,0);
+}
 window.addEventListener('load',()=>{
-  cv=$('stage');DPR=window.devicePixelRatio||1;
+  cv=$('stage');DPR=Math.min(2,window.devicePixelRatio||1); // 高精細画面でも重くなりすぎないように
   const r=cv.getBoundingClientRect();W=r.width;H=r.height;
   cv.width=W*DPR;cv.height=H*DPR;
-  ctx=cv.getContext('2d');ctx.setTransform(DPR,0,0,DPR,0,0);
+  // 切り取り描画でピクセルを読み書きするので willReadFrequently を指定する
+  ctx=cv.getContext('2d',{willReadFrequently:true});ctx.setTransform(DPR,0,0,DPR,0,0);
+  cutCv=$('cut');cutCtx=cutCv.getContext('2d');
   const sd=$('structs');
   for(const k in ST){
     const b=document.createElement('button');
