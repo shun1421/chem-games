@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>量的関係マスター | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--neon:#00e0cf;--pink:#ff5d8f;--sun:#ffc531;--grape:#7b5cff;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
+.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
+.htitle{font-weight:800;letter-spacing:.05em}
+.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
+main{max-width:680px;margin:0 auto;padding:14px 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+#play.panel{background:linear-gradient(170deg,#0f2b33 0%,#13313c 55%,#16263a 100%);border:0;color:#eaf7f6;
+ box-shadow:0 10px 30px rgba(10,30,40,.25)}
+.hidden{display:none}
+h1{font-size:22px;margin:0 0 8px}
+.desc{color:var(--mut);line-height:1.75}
+.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.85}
+.primary{display:block;width:100%;margin-top:14px;padding:15px;font-size:17px;font-weight:800;color:#fff;
+ background:linear-gradient(135deg,var(--acc),#15a39a);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #0a5d64;transition:transform .08s,box-shadow .08s}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d64}
+.primary:disabled{opacity:.4;box-shadow:none;cursor:default}
+.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
+.hint{font-size:12.5px;color:var(--mut);line-height:1.7}
+.hint code{font-family:var(--mono);background:#eef4f3;padding:1px 5px;border-radius:4px}
+
+/* ===== プレイ画面(濃色) ===== */
+.hud{display:flex;gap:8px;justify-content:space-between;align-items:center;font-size:11.5px;
+ color:#8fb6bb;margin-bottom:10px;letter-spacing:.04em}
+.hud b{display:block;font-family:var(--mono);font-size:19px;color:#fff;margin-top:1px}
+.hud .sc b{color:var(--sun);text-shadow:0 0 12px rgba(255,197,49,.5)}
+.steps{display:flex;gap:5px;margin-bottom:6px}
+.steps div{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.12);transition:all .3s}
+.steps div.done{background:linear-gradient(90deg,var(--neon),#2ee6a8);box-shadow:0 0 8px rgba(0,224,207,.6)}
+.steps div.now{background:linear-gradient(90deg,var(--sun),var(--pink));box-shadow:0 0 12px rgba(255,93,143,.7);
+ animation:bar 1.3s ease-in-out infinite}
+@keyframes bar{50%{filter:brightness(1.45)}}
+.stepname{font-size:12.5px;font-weight:800;color:var(--sun);margin-bottom:10px;letter-spacing:.05em}
+
+.eqbox{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+ padding:12px 8px;margin-bottom:10px;overflow-x:auto}
+.eq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;min-height:58px}
+.term{display:flex;flex-direction:column;align-items:center;gap:3px}
+.term .f{font-size:19px;font-weight:700;white-space:nowrap;color:#eaf7f6}
+.term.hl .f{color:var(--sun)}
+.term.ask .f{color:var(--pink)}
+.coefbtn{width:32px;height:26px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);
+ border-radius:7px;cursor:pointer;font-size:11px;line-height:1;color:var(--neon);font-weight:800;padding:0;
+ font-family:inherit;touch-action:manipulation}
+.coefbtn:active{background:rgba(0,224,207,.3)}
+.coefbtn:disabled{opacity:.25;cursor:default}
+.cf{display:flex;align-items:baseline;gap:1px}
+.cnum{font-family:var(--mono);font-size:20px;font-weight:800;min-width:16px;text-align:right;color:var(--neon)}
+.cnum.fixed{color:#8fb6bb}
+.op{font-size:18px;font-weight:700;padding:0 5px;align-self:center;color:#8fb6bb}
+
+/* ===== 表 ===== */
+.tablewrap{overflow-x:auto;margin-bottom:10px}
+table{border-collapse:separate;border-spacing:3px;width:100%;table-layout:fixed}
+th,td{padding:0;text-align:center}
+th.rowlbl,td.rowlbl{width:44px;min-width:44px;font-size:9.5px;color:#8fb6bb;font-weight:700;
+ text-align:right;padding-right:4px;line-height:1.25}
+th.col{font-size:13px;font-weight:800;color:#eaf7f6;padding-bottom:3px;white-space:nowrap}
+th.col.hl{color:var(--sun)}
+th.col.ask{color:var(--pink)}
+.cell{height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+ font-family:var(--mono);font-size:15px;font-weight:800;background:rgba(255,255,255,.07);
+ color:#5d7f86;border:1.5px solid transparent;position:relative;transition:all .25s}
+.cell.na{background:rgba(255,255,255,.03);color:#3f5b63;font-size:13px}
+.cell.given{background:linear-gradient(135deg,#e8a13d,#f7b955);color:#3d2708;
+ box-shadow:0 0 14px rgba(232,161,61,.4)}
+.cell.filled{background:linear-gradient(135deg,var(--acc),#17b3a6);color:#fff;
+ box-shadow:0 0 14px rgba(0,224,207,.35)}
+.cell.pop{animation:pop .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.cell.active{background:rgba(255,93,143,.12);color:var(--pink);border-color:var(--pink);
+ animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 6px rgba(255,93,143,.5)}50%{box-shadow:0 0 18px rgba(255,93,143,.95)}}
+.cell .q{font-size:19px}
+/* 比の入力セル */
+.ratiocell{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ratiocell .rb{width:100%;height:17px;border:0;border-radius:5px;background:rgba(255,255,255,.14);
+ color:var(--neon);font-size:9px;font-weight:800;cursor:pointer;padding:0;line-height:1;font-family:inherit;
+ touch-action:manipulation}
+.ratiocell .rb:active{background:rgba(0,224,207,.35)}
+.ratiocell .rv{font-family:var(--mono);font-size:17px;font-weight:800;color:#fff;line-height:1}
+
+.q{font-size:14.5px;line-height:1.75;margin-bottom:8px;color:#dcefee}
+.q b{color:var(--sun)}
+.q .pk{color:var(--pink)}
+.tip{font-size:11.5px;color:#8fb6bb;line-height:1.6;margin-bottom:8px}
+.tip code{font-family:var(--mono);background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px;color:var(--neon)}
+
+/* ===== 電卓 ===== */
+.calc{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:10px;margin-bottom:10px}
+.cdisp{background:#06171c;border-radius:9px;padding:8px 12px;text-align:right;margin-bottom:8px;min-height:52px;
+ display:flex;flex-direction:column;justify-content:center}
+.cdisp .sub{font-family:var(--mono);font-size:11.5px;color:#6f949b;min-height:14px}
+.cdisp .main{font-family:var(--mono);font-size:25px;font-weight:800;color:var(--neon);
+ text-shadow:0 0 14px rgba(0,224,207,.45);word-break:break-all;line-height:1.15}
+.consts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.consts button{height:36px;border:0;border-radius:9px;background:rgba(255,197,49,.16);color:var(--sun);
+ font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.consts button:active{transform:translateY(2px);background:rgba(255,197,49,.3)}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:44px;gap:6px}
+.keys button{border:0;border-radius:10px;font-family:var(--mono);font-size:18px;font-weight:800;
+ cursor:pointer;background:rgba(255,255,255,.1);color:#eaf7f6;transition:transform .06s;touch-action:manipulation}
+.keys button:active{transform:translateY(2px);background:rgba(255,255,255,.22)}
+.keys button.op{background:rgba(0,224,207,.18);color:var(--neon)}
+.keys button.fn{background:rgba(255,93,143,.18);color:var(--pink);font-size:15px}
+.keys button.eq{background:linear-gradient(135deg,#7b5cff,#9b84ff);color:#fff;grid-row:span 2}
+.keys button.zero{grid-column:span 2}
+.submit{width:100%;margin-top:7px;padding:13px;border:0;border-radius:11px;font-size:15.5px;font-weight:800;
+ color:#06171c;background:linear-gradient(135deg,var(--neon),#5ef0b6);cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #0a7a74;transition:transform .08s,box-shadow .08s}
+.submit:active{transform:translateY(3px);box-shadow:0 1px 0 #0a7a74}
+
+#fb{min-height:22px;margin-top:8px;font-size:13.5px;line-height:1.8;font-weight:700}
+#fb .good{color:#52e6b0}#fb .bad{color:#ff8fb0}
+#fb .calcline{display:block;font-weight:600;color:#cfe8e6;background:rgba(0,0,0,.25);
+ border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;margin-top:5px;font-size:13px;
+ font-family:var(--mono);line-height:1.85;white-space:pre-line}
+.act{display:block;width:100%;margin-top:9px;padding:14px;font-size:16px;font-weight:800;color:#06171c;
+ background:linear-gradient(135deg,var(--sun),#ffdb6b);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #b07f10;transition:transform .08s,box-shadow .08s}
+.act:active{transform:translateY(3px);box-shadow:0 1px 0 #b07f10}
+.act:disabled{opacity:.4;box-shadow:none;cursor:default}
+
+/* 得点ポップ・紙吹雪 */
+/* 得点ポップはスコアの数字に重ならないよう右端に出す */
+#pop{position:fixed;right:14px;top:9%;font-size:30px;font-weight:900;
+ color:var(--sun);text-shadow:0 0 22px rgba(255,197,49,.95),0 2px 6px rgba(0,0,0,.6);
+ pointer-events:none;z-index:50;opacity:0;white-space:nowrap}
+#pop.go{animation:popup 1.05s ease-out}
+@keyframes popup{0%{opacity:0;transform:scale(.4)}
+ 22%{opacity:1;transform:scale(1.12)}100%{opacity:0;transform:translateY(-52px) scale(1)}}
+.conf{position:fixed;width:9px;height:14px;pointer-events:none;z-index:49;border-radius:2px}
+@keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+.result{font-size:18px;text-align:center;line-height:2}
+.result b{font-family:var(--mono);font-size:36px;color:var(--acc)}
+.medal{font-size:46px;text-align:center;line-height:1.2}
+sub,sup{font-size:.62em}
+@media(max-width:420px){
+  .term .f{font-size:17px}.cnum{font-size:18px}
+  .cell{height:35px;font-size:13px}
+  th.col{font-size:12px}
+  th.rowlbl,td.rowlbl{width:40px;min-width:40px;font-size:9px}
+  table{border-spacing:2px}
+  .keys{grid-auto-rows:40px}.keys button{font-size:16px}
+  .cdisp .main{font-size:22px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">量的関係マスター</div>
+  <span class="chip">量的関係</span>
+</header>
+<main>
+
+<section id="start" class="panel">
+  <h1>量的関係マスター 〜表を埋めて攻略〜</h1>
+  <p class="desc">化学反応の計算は、<b>係数 → 物質量の比 → mol → 質量・体積</b> とたどれば必ず解ける。
+  5ステップで<b>表のマスを1つずつ埋めて</b>いこう。計算には電卓が使える。</p>
+  <ul class="rules">
+    <li><b>STEP 1</b> 上下ボタンで係数を合わせ、反応式を完成させる</li>
+    <li><b>STEP 2</b> 物質量の比を上下ボタンで入力する</li>
+    <li><b>STEP 3</b> 与えられた質量・体積から物質量を出す</li>
+    <li><b>STEP 4</b> 比を使って、相手の物質量を出す</li>
+    <li><b>STEP 5</b> その物質量を質量・体積になおす</li>
+  </ul>
+  <p class="hint">全3問。1ステップ正解ごとに100点、ノーミスで1問解くとボーナス100点(満点1800点)。<br>
+  原子量: H=1.0, C=12, N=14, O=16, Na=23, Mg=24, Al=27, S=32, Cl=35.5, K=39, Ca=40, Fe=56, Cu=64, Zn=65, Ag=108<br>
+  気体の体積は標準状態(22.4 L/mol)。答えは有効数字2桁でよい。</p>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="hud">
+    <div>問題<b id="qnum">1/3</b></div>
+    <div class="sc">スコア<b id="score">0</b></div>
+    <div>STEP<b id="stepnum">1/5</b></div>
+  </div>
+  <div class="steps" id="steps"></div>
+  <div class="stepname" id="stepname"></div>
+  <div class="eqbox"><div class="eq" id="eq"></div></div>
+  <div class="tablewrap" id="tablewrap"><table id="tbl"></table></div>
+  <div class="q" id="qtext"></div>
+  <div class="tip" id="tip"></div>
+  <div class="calc hidden" id="calcbox">
+    <div class="cdisp"><div class="sub" id="cexpr"></div><div class="main" id="cmain">0</div></div>
+    <div class="consts" id="consts"></div>
+    <div class="keys" id="keys"></div>
+    <button class="submit" onclick="submitCalc()">この値を答えにする</button>
+  </div>
+  <div id="fb"></div>
+  <button class="act" id="actBtn" onclick="act()"></button>
+</section>
+
+<section id="end" class="panel hidden">
+  <div class="medal" id="medal">🏆</div>
+  <h1 style="text-align:center">リザルト</h1>
+  <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <a class="ghost" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+
+// ==== 化学式 ====
+const AW={H:1.0,C:12,N:14,O:16,Na:23,Mg:24,Al:27,S:32,Cl:35.5,K:39,Ca:40,Fe:56,Cu:64,Zn:65,Ag:108};
+function atoms(f){
+  let i=0;
+  function group(){
+    const out={};
+    while(i<f.length){
+      const c=f[i];
+      if(c==='('){i++;const inner=group();const n=num();
+        for(const e in inner)out[e]=(out[e]||0)+inner[e]*n;}
+      else if(c===')'){i++;return out;}
+      else{
+        const m=/^[A-Z][a-z]?/.exec(f.slice(i));
+        if(!m)break;
+        i+=m[0].length;const n=num();
+        out[m[0]]=(out[m[0]]||0)+n;
+      }
+    }
+    return out;
+  }
+  function num(){const m=/^\d+/.exec(f.slice(i));if(!m)return 1;i+=m[0].length;return +m[0];}
+  return group();
+}
+function molarMass(f){const a=atoms(f);let m=0;for(const e in a)m+=AW[e]*a[e];return m;}
+function fmt(f){return f.replace(/(\d+)/g,'<sub>$1</sub>');}
+
+// ==== 反応データ ====
+const RX=[
+ {l:[['H2',2],['O2',1]],r:[['H2O',2]],nm:'水素の燃焼'},
+ {l:[['CH4',1],['O2',2]],r:[['CO2',1],['H2O',2]],nm:'メタンの燃焼'},
+ {l:[['Mg',2],['O2',1]],r:[['MgO',2]],nm:'マグネシウムの燃焼'},
+ {l:[['N2',1],['H2',3]],r:[['NH3',2]],nm:'アンモニアの合成'},
+ {l:[['C',1],['O2',1]],r:[['CO2',1]],nm:'炭素の燃焼'},
+ {l:[['Al',4],['O2',3]],r:[['Al2O3',2]],nm:'アルミニウムの燃焼'},
+ {l:[['Zn',1],['HCl',2]],r:[['ZnCl2',1],['H2',1]],nm:'亜鉛と塩酸'},
+ {l:[['CaCO3',1]],r:[['CaO',1],['CO2',1]],nm:'石灰石の熱分解'},
+ {l:[['C2H4',1],['O2',3]],r:[['CO2',2],['H2O',2]],nm:'エチレンの燃焼'},
+ {l:[['C3H8',1],['O2',5]],r:[['CO2',3],['H2O',4]],nm:'プロパンの燃焼'},
+ {l:[['Fe2O3',1],['CO',3]],r:[['Fe',2],['CO2',3]],nm:'酸化鉄の還元'},
+ {l:[['KClO3',2]],r:[['KCl',2],['O2',3]],nm:'塩素酸カリウムの分解'},
+ {l:[['Na',2],['H2O',2]],r:[['NaOH',2],['H2',1]],nm:'ナトリウムと水'},
+ {l:[['C2H6',2],['O2',7]],r:[['CO2',4],['H2O',6]],nm:'エタンの燃焼'},
+];
+const GAS=new Set(['H2','O2','N2','CO2','CH4','NH3','CO','Cl2','HCl','C2H4','C2H6','C3H8','H2S','SO2']);
+
+function tidy(v){return v>0&&v>=0.05&&v<=2000&&Math.abs(v*100-Math.round(v*100))<1e-9;}
+function fnum(v){
+  if(Math.abs(v-Math.round(v))<1e-9)return String(Math.round(v));
+  if(Math.abs(v*10-Math.round(v*10))<1e-9)return v.toFixed(1);
+  return v.toFixed(2);
+}
+function copyRx(x){return {l:x.l.map(t=>[t[0],t[1]]),r:x.r.map(t=>[t[0],t[1]]),nm:x.nm};}
+function makeQ(){
+  for(let t=0;t<400;t++){
+    const rx=copyRx(pick(RX));
+    const all=rx.l.concat(rx.r);
+    if(all.length<2)continue;
+    const A=rx.l[Math.floor(Math.random()*rx.l.length)];
+    const B=pick(all.filter(x=>x!==A));
+    const n=pick([0.1,0.2,0.25,0.5,1,1.5,2]);
+    const molA=A[1]*n, molB=B[1]*n;
+    if(!tidy(molA)||!tidy(molB))continue;
+    const aUnit=(GAS.has(A[0])&&Math.random()<0.7)?'L':'g';
+    const bUnit=(GAS.has(B[0])&&Math.random()<0.7)?'L':'g';
+    const aVal=aUnit==='g'?molA*molarMass(A[0]):molA*22.4;
+    const bVal=bUnit==='g'?molB*molarMass(B[0]):molB*22.4;
+    if(!tidy(aVal)||!tidy(bVal))continue;
+    return {rx,A,B,n,molA,molB,aUnit,bUnit,aVal,bVal,side:rx.l.includes(B)?'反応する':'生成する'};
+  }
+  const rx=copyRx(RX[0]);
+  return {rx,A:rx.l[0],B:rx.r[0],n:1,molA:2,molB:2,aUnit:'g',bUnit:'g',aVal:4,bVal:36,side:'生成する'};
+}
+
+// 出題セット。質量だけに偏らないよう、少なくとも1問は気体の体積を扱う
+function makeDeck(n){
+  for(let t=0;t<60;t++){
+    const d=[];for(let i=0;i<n;i++)d.push(makeQ());
+    if(d.some(q=>q.aUnit==='L'||q.bUnit==='L'))return d;
+  }
+  const d=[];for(let i=0;i<n;i++)d.push(makeQ());
+  return d;
+}
+
+// ==== 状態 ====
+let deck=[],qi=0,step=1,score=0,noMiss=true,solved=0;
+let cur=null,coef=[],ratio=[],terms=[],locked=false,justFilled=null;
+let viewStep=1; // 描画に使うステップ。stepとは別に持ち、解答後だけ先に進める
+const STEPNAMES=['係数を合わせる','物質量の比を入れる','与えられた量 → mol',
+                 '相手の mol を出す','mol → 質量・体積'];
+
+function startGame(){
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  deck=makeDeck(3);
+  qi=0;score=0;solved=0;
+  loadQ();
+}
+function loadQ(){
+  cur=deck[qi];
+  terms=cur.rx.l.map(x=>({t:x,side:'L'})).concat(cur.rx.r.map(x=>({t:x,side:'R'})));
+  coef=terms.map(()=>1);
+  ratio=terms.map(()=>1);
+  step=1;viewStep=1;noMiss=true;locked=false;justFilled=null;
+  calcReset();
+  render();
+}
+function upd(){
+  $('score').textContent=score;
+  $('qnum').textContent=(qi+1)+'/'+deck.length;
+  $('stepnum').textContent=step+'/5';
+  const st=$('steps');st.innerHTML='';
+  for(let i=1;i<=5;i++){
+    const d=document.createElement('div');
+    d.className=i<step?'done':(i===step?'now':'');
+    st.appendChild(d);
+  }
+  $('stepname').textContent='STEP '+step+' / 5 — '+STEPNAMES[step-1];
+}
+
+// ==== 反応式 ====
+function drawEq(){
+  const e=$('eq');e.innerHTML='';
+  terms.forEach((tm,i)=>{
+    if(i>0){
+      const op=document.createElement('span');op.className='op';
+      op.textContent=(tm.side==='R'&&terms[i-1].side==='L')?'→':'＋';
+      e.appendChild(op);
+    }
+    const d=document.createElement('div');
+    d.className='term'+(tm.t===cur.A?' hl':'')+(tm.t===cur.B?' ask':'');
+    const up=document.createElement('button');
+    up.className='coefbtn';up.textContent='▲';up.disabled=viewStep>1||locked;
+    up.onclick=()=>{if(locked||viewStep>1)return;if(coef[i]<9){coef[i]++;drawEq();}};
+    const cf=document.createElement('div');cf.className='cf';
+    const cn=document.createElement('span');
+    cn.className='cnum'+(viewStep>1?' fixed':'');
+    cn.textContent=(viewStep>1&&coef[i]===1)?'':coef[i];
+    const f=document.createElement('span');f.className='f';f.innerHTML=fmt(tm.t[0]);
+    cf.appendChild(cn);cf.appendChild(f);
+    const dn=document.createElement('button');
+    dn.className='coefbtn';dn.textContent='▼';dn.disabled=viewStep>1||locked;
+    dn.onclick=()=>{if(locked||viewStep>1)return;if(coef[i]>1){coef[i]--;drawEq();}};
+    if(viewStep>1){up.style.visibility='hidden';dn.style.visibility='hidden';}
+    d.appendChild(up);d.appendChild(cf);d.appendChild(dn);
+    e.appendChild(d);
+  });
+}
+
+// ==== 表 ====
+// row: 0=物質量比 1=物質量 2=質量 3=体積
+const ROWS=[['物質量比',''],['物質量','mol'],['質量','g'],['体積','L']];
+function cellState(r,ti){
+  // そのマスが「出題中」かどうか
+  const tm=terms[ti].t;
+  if(viewStep===2&&r===0)return 'active';
+  if(viewStep===3&&r===1&&tm===cur.A)return 'active';
+  if(viewStep===4&&r===1&&tm===cur.B)return 'active';
+  if(viewStep===5&&tm===cur.B&&((cur.bUnit==='g'&&r===2)||(cur.bUnit==='L'&&r===3)))return 'active';
+  return '';
+}
+function cellValue(r,ti){
+  // 確定済みの値(なければ null)
+  const tm=terms[ti].t;
+  if(r===0)return viewStep>2?String(tm[1]):null;
+  if(r===1){
+    if(tm===cur.A&&viewStep>3)return fnum(cur.molA);
+    if(tm===cur.B&&viewStep>4)return fnum(cur.molB);
+    return null;
+  }
+  const unit=r===2?'g':'L';
+  if(tm===cur.A&&cur.aUnit===unit)return fnum(cur.aVal);          // 与えられた値
+  if(tm===cur.B&&cur.bUnit===unit&&viewStep>5)return fnum(cur.bVal);
+  return null;
+}
+function drawTable(){
+  const tb=$('tbl');tb.innerHTML='';
+  if(viewStep<2){$('tablewrap').classList.add('hidden');return;}
+  $('tablewrap').classList.remove('hidden');
+  const hr=document.createElement('tr');
+  hr.appendChild(document.createElement('th')).className='rowlbl';
+  terms.forEach(tm=>{
+    const th=document.createElement('th');
+    th.className='col'+(tm.t===cur.A?' hl':'')+(tm.t===cur.B?' ask':'');
+    th.innerHTML=(tm.t[1]>1?tm.t[1]:'')+fmt(tm.t[0]);
+    hr.appendChild(th);
+  });
+  tb.appendChild(hr);
+  ROWS.forEach((rw,r)=>{
+    const tr=document.createElement('tr');
+    const lb=document.createElement('td');lb.className='rowlbl';
+    lb.innerHTML=rw[0]+'<br><span style="font-size:8.5px;opacity:.65">'+rw[1]+'</span>';
+    tr.appendChild(lb);
+    terms.forEach((tm,ti)=>{
+      const td=document.createElement('td');
+      const d=document.createElement('div');
+      const gasOK=r!==3||GAS.has(tm.t[0]);
+      const st=cellState(r,ti), v=cellValue(r,ti);
+      const isGiven=(r===2&&tm.t===cur.A&&cur.aUnit==='g')||(r===3&&tm.t===cur.A&&cur.aUnit==='L');
+      if(!gasOK){d.className='cell na';d.textContent='—';}
+      else if(viewStep===2&&r===0&&!locked){ // 比の入力(上下ボタン)
+        d.className='cell active';
+        d.innerHTML='<div class="ratiocell"><button class="rb" data-i="'+ti+'" data-d="1">▲</button>'
+          +'<span class="rv">'+ratio[ti]+'</span>'
+          +'<button class="rb" data-i="'+ti+'" data-d="-1">▼</button></div>';
+      }
+      else if(v!==null){
+        d.className='cell '+(isGiven?'given':'filled')
+          +(justFilled&&justFilled.r===r&&justFilled.ti===ti?' pop':'');
+        d.textContent=v;
+      }
+      else if(st==='active'){d.className='cell active';d.innerHTML='<span class="q">?</span>';}
+      else {d.className='cell';d.textContent='';}
+      td.appendChild(d);tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('.rb').forEach(b=>{
+    b.onclick=()=>{
+      if(locked||viewStep!==2)return;
+      const i=+b.dataset.i,dd=+b.dataset.d;
+      ratio[i]=Math.min(9,Math.max(1,ratio[i]+dd));
+      drawTable();
+    };
+  });
+}
+
+// ==== 電卓 ====
+let cAcc=null,cOp=null,cCur='0',cFresh=true,cExpr='';
+function calcReset(){cAcc=null;cOp=null;cCur='0';cFresh=true;cExpr='';drawCalcDisp();}
+function drawCalcDisp(){
+  const m=$('cmain'),x=$('cexpr');
+  if(m){m.textContent=cCur;x.textContent=cExpr;}
+}
+function calcNum(d){
+  if(cFresh){cCur=(d==='.')?'0.':d;cFresh=false;}
+  else{
+    if(d==='.'&&cCur.includes('.'))return;
+    cCur=(cCur==='0'&&d!=='.')?d:cCur+d;
+  }
+  drawCalcDisp();
+}
+function calcApply(){
+  const v=parseFloat(cCur);
+  if(cAcc===null||cOp===null)return v;
+  if(cOp==='+')return cAcc+v;
+  if(cOp==='-')return cAcc-v;
+  if(cOp==='×')return cAcc*v;
+  if(cOp==='÷')return v===0?NaN:cAcc/v;
+  return v;
+}
+function calcOp(o){
+  const r=calcApply();
+  cAcc=isNaN(r)?null:r;
+  cExpr=(cAcc===null?'':fnumCalc(cAcc))+' '+o;
+  cOp=o;cFresh=true;
+  cCur=cAcc===null?'エラー':fnumCalc(cAcc);
+  drawCalcDisp();
+}
+function calcEq(){
+  if(cOp===null){cExpr='';drawCalcDisp();return;}
+  const r=calcApply();
+  cExpr=cExpr+' '+cCur+' =';
+  cCur=isNaN(r)?'エラー':fnumCalc(r);
+  cAcc=null;cOp=null;cFresh=true;
+  drawCalcDisp();
+}
+function fnumCalc(v){
+  if(!isFinite(v))return 'エラー';
+  const r=Math.round(v*1e8)/1e8;
+  return String(r);
+}
+function calcConst(v){cCur=String(v);cFresh=false;drawCalcDisp();}
+function drawKeys(){
+  // よく使う数(何を使うかは自分で選ぶ)
+  const cs=$('consts');cs.innerHTML='';
+  let list=[];
+  if(step===3)list=[['22.4',22.4],['モル質量 '+fnum(molarMass(cur.A[0])),molarMass(cur.A[0])]];
+  else if(step===4)list=[[fmt(cur.A[0])+' の '+fnum(cur.molA)+' mol',cur.molA]];
+  else if(step===5)list=[['22.4',22.4],['モル質量 '+fnum(molarMass(cur.B[0])),molarMass(cur.B[0])]];
+  if(list.length===1)cs.style.gridTemplateColumns='1fr';else cs.style.gridTemplateColumns='1fr 1fr';
+  list.forEach(([lb,v])=>{
+    const b=document.createElement('button');
+    b.innerHTML=lb;b.onclick=()=>calcConst(v);
+    cs.appendChild(b);
+  });
+  // 電卓本体(ふつうの電卓とおなじ並び)
+  const k=$('keys');k.innerHTML='';
+  const defs=[
+    ['C','fn'],['⌫','fn'],['÷','op'],['×','op'],
+    ['7','n'],['8','n'],['9','n'],['−','op'],
+    ['4','n'],['5','n'],['6','n'],['＋','op'],
+    ['1','n'],['2','n'],['3','n'],['=','eq'],
+    ['0','zero'],['.','n'],
+  ];
+  defs.forEach(([lb,ty])=>{
+    const b=document.createElement('button');
+    b.textContent=lb;
+    b.className=(ty==='n')?'':ty;
+    b.onclick=()=>{
+      if(ty==='n'||ty==='zero')calcNum(lb);
+      else if(ty==='op')calcOp(lb==='−'?'-':(lb==='＋'?'+':lb));
+      else if(ty==='eq')calcEq();
+      else if(lb==='C')calcReset();
+      else if(lb==='⌫'){cCur=cCur.length>1?cCur.slice(0,-1):'0';cFresh=false;drawCalcDisp();}
+    };
+    k.appendChild(b);
+  });
+}
+
+// ==== 画面更新 ====
+function render(){
+  viewStep=step;
+  upd();drawEq();drawTable();
+  $('fb').innerHTML='';
+  const A=cur.A,B=cur.B,q=$('qtext'),tip=$('tip'),btn=$('actBtn'),cb=$('calcbox');
+  cb.classList.add('hidden');
+  btn.disabled=false;btn.classList.remove('hidden');
+  if(step===1){
+    q.innerHTML='<b>'+cur.rx.nm+'</b>の反応式を完成させよう。上下のボタンで<b>係数</b>を合わせる。';
+    tip.textContent='左辺と右辺で、それぞれの原子の数が同じになればOK。';
+    btn.textContent='この係数で決定';
+  }else if(step===2){
+    q.innerHTML='表の<span class="pk">「物質量比」の行</span>を埋めよう。';
+    tip.textContent='上下のボタンで各マスの数を合わせる。';
+    btn.textContent='この比で決定';
+  }else if(step===3){
+    q.innerHTML=fmt(A[0])+' を <b>'+fnum(cur.aVal)+' '+cur.aUnit+'</b> 使って反応させた。'
+      +'<span class="pk">光っているマス</span>（'+fmt(A[0])+' の物質量）を電卓で求めよう。';
+    tip.textContent='';
+    cb.classList.remove('hidden');btn.classList.add('hidden');
+  }else if(step===4){
+    q.innerHTML='<span class="pk">光っているマス</span>（'+cur.side+' '+fmt(B[0])+' の物質量）を求めよう。';
+    tip.textContent='';
+    cb.classList.remove('hidden');btn.classList.add('hidden');
+  }else{
+    q.innerHTML='<span class="pk">光っているマス</span>（'+fmt(B[0])+' の'
+      +(cur.bUnit==='g'?'質量':'体積')+'）を求めよう。';
+    tip.textContent='';
+    cb.classList.remove('hidden');btn.classList.add('hidden');
+  }
+  if(step>=3){calcReset();drawKeys();}
+}
+
+// ==== 判定 ====
+function checkCoef(){
+  const bal={};
+  terms.forEach((tm,i)=>{
+    const a=atoms(tm.t[0]),sg=tm.side==='L'?1:-1;
+    for(const e in a)bal[e]=(bal[e]||0)+sg*a[e]*coef[i];
+  });
+  const bad=Object.keys(bal).filter(e=>Math.abs(bal[e])>1e-9);
+  if(bad.length)return {ok:false,bad};
+  const g=coef.reduce((x,y)=>{while(y){[x,y]=[y,x%y];}return x;});
+  if(g>1)return {ok:false,simple:true};
+  return {ok:true};
+}
+// 相手の物質量の求め方を、物質量比の言葉で説明する
+function ratioCalc(A,B){
+  const a=A[1],b=B[1];
+  const head='物質量比　'+fmt(A[0])+' : '+fmt(B[0])+' ＝ '+a+' : '+b;
+  if(a===b)return head+'\n'+fmt(A[0])+' が '+fnum(cur.molA)+' mol なので、'
+    +fmt(B[0])+' も '+fnum(cur.molB)+' mol';
+  return head+'\n'+fmt(B[0])+' ＝ '+fnum(cur.molA)+' mol × '+b+'/'+a+' ＝ '+fnum(cur.molB)+' mol';
+}
+function near(a,b){return Math.abs(a-b)<=Math.max(Math.abs(b)*0.011,1e-9);}
+
+function submitCalc(){
+  if(locked)return;
+  const v=parseFloat(cCur);
+  if(isNaN(v)){bad('電卓に数値が出ていないよ。');return;}
+  const A=cur.A,B=cur.B;
+  if(step===3){
+    const calc=cur.aUnit==='g'
+      ? fnum(cur.aVal)+' g ÷ '+fnum(molarMass(A[0]))+' g/mol = '+fnum(cur.molA)+' mol'
+      : fnum(cur.aVal)+' L ÷ 22.4 L/mol = '+fnum(cur.molA)+' mol';
+    if(near(v,cur.molA))good('正解！',calc,{r:1,ti:terms.findIndex(t=>t.t===A)});
+    else bad('ちがう。正しくは <b>'+fnum(cur.molA)+' mol</b>',calc,{r:1,ti:terms.findIndex(t=>t.t===A)});
+  }else if(step===4){
+    const calc=ratioCalc(A,B);
+    if(near(v,cur.molB))good('正解！',calc,{r:1,ti:terms.findIndex(t=>t.t===B)});
+    else bad('ちがう。正しくは <b>'+fnum(cur.molB)+' mol</b>',calc,{r:1,ti:terms.findIndex(t=>t.t===B)});
+  }else{
+    const calc=cur.bUnit==='g'
+      ? fnum(cur.molB)+' mol × '+fnum(molarMass(B[0]))+' g/mol = '+fnum(cur.bVal)+' g'
+      : fnum(cur.molB)+' mol × 22.4 L/mol = '+fnum(cur.bVal)+' L';
+    const ti=terms.findIndex(t=>t.t===B), r=cur.bUnit==='g'?2:3;
+    if(near(v,cur.bVal))good('正解！',calc,{r,ti});
+    else bad('ちがう。正しくは <b>'+fnum(cur.bVal)+' '+cur.bUnit+'</b>',calc,{r,ti});
+  }
+}
+function act(){
+  if(locked){nextStep();return;}
+  if(step===1){
+    const r=checkCoef();
+    if(r.ok){
+      terms.forEach((tm,i)=>tm.t[1]=coef[i]);
+      good('係数が合った！','両辺で原子の数が等しくなった。');
+    }else if(r.simple)bad('原子の数は合っているが、<b>最も簡単な整数比</b>ではない。全部を割れないか確かめよう。');
+    else bad('まだ合っていない。ずれている原子: <b>'+r.bad.join('・')+'</b>');
+    return;
+  }
+  if(step===2){
+    const okAll=terms.every((tm,i)=>ratio[i]===tm.t[1]);
+    if(okAll)good('その通り！','物質量比　'+terms.map(tm=>fmt(tm.t[0])).join(' : ')
+      +' ＝ '+terms.map(tm=>tm.t[1]).join(' : '));
+    else bad('ちがうマスがある。もう一度、反応式を見て考えよう。');
+    return;
+  }
+  nextStep();
+}
+function good(msg,calc,fill){
+  locked=true;score+=100;
+  if(fill)justFilled=fill;
+  if(step===2)justFilled={r:0,ti:-1};
+  $('fb').innerHTML='<span class="good">'+msg+' +100点</span>'
+    +(calc?'<span class="calcline">'+calc+'</span>':'');
+  showPop('+100');confetti();
+  stepDone();
+}
+function bad(msg,calc,fill){
+  noMiss=false;
+  if(calc){
+    locked=true;
+    if(fill)justFilled=fill;
+    $('fb').innerHTML='<span class="bad">'+msg+'</span><span class="calcline">'+calc+'</span>';
+    stepDone();
+  }else{
+    $('fb').innerHTML='<span class="bad">'+msg+'</span>';
+  }
+}
+// 正解・不正解の確定後、表に値を入れて「次へ」を出す
+function stepDone(){
+  viewStep=step+1;             // 表に値を入れ、次に問われるマスを光らせる
+  drawTable();drawEq();
+  $('calcbox').classList.add('hidden');
+  const btn=$('actBtn');
+  btn.classList.remove('hidden');btn.disabled=false;
+  btn.textContent=step<5?'次のステップへ →':(qi<deck.length-1?'次の問題へ →':'結果を見る');
+}
+function nextStep(){
+  locked=false;justFilled=null;
+  if(step<5){step++;render();return;}
+  if(noMiss){score+=100;solved++;showPop('ノーミス +100');}
+  qi++;
+  if(qi>=deck.length){
+    $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    $('fscore').textContent=score;
+    $('facc').textContent='ノーミスで解けた問題: '+solved+' / '+deck.length+' 問';
+    $('medal').textContent=score>=1400?'🏆':score>=1000?'🥈':score>=600?'🥉':'💪';
+    return;
+  }
+  loadQ();
+}
+
+// ==== 演出 ====
+function showPop(t){
+  const p=$('pop')||(()=>{const d=document.createElement('div');d.id='pop';document.body.appendChild(d);return d;})();
+  p.textContent=t;p.classList.remove('go');void p.offsetWidth;p.classList.add('go');
+}
+function confetti(){
+  const cols=['#00e0cf','#ff5d8f','#ffc531','#7b5cff','#2ee6a8'];
+  for(let i=0;i<18;i++){
+    const d=document.createElement('div');
+    d.className='conf';
+    d.style.left=(20+Math.random()*60)+'vw';
+    d.style.top='-20px';
+    d.style.background=cols[i%cols.length];
+    d.style.animation='fall '+(1.1+Math.random()*0.9)+'s linear forwards';
+    d.style.animationDelay=(Math.random()*0.25)+'s';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),2400);
+  }
+}
+</script>
+</body>
+</html>
