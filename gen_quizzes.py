@@ -144,39 +144,8 @@ def make(fname, title, unit, desc, rules, game_js, limit=60, cols=2, accent="#0e
         f.write(html)
     print("wrote", fname)
 
-# ============ No.16 モル換算スプリント ============
-mol_js = r"""
-const SUBS=[['H<sub>2</sub>O',18],['CO<sub>2</sub>',44],['O<sub>2</sub>',32],['N<sub>2</sub>',28],
-['CH<sub>4</sub>',16],['NH<sub>3</sub>',17],['NaCl',58.5],['Al',27],['Fe',56],['C',12]];
-const NS=[0.25,0.5,1,1.5,2,2.5,3,4,5];
-function sci(n){let v=n*6.0,e=23;while(v>=10){v/=10;e++;}while(v<1&&e>20){v*=10;e--;}
-  v=Math.round(v*100)/100;return fmt(v)+'×10<sup>'+e+'</sup>';}
-function makeQ(){
-  const t=Math.floor(Math.random()*6);const s=pick(SUBS),f=s[0],M=s[1];const n=pick(NS);
-  if(t===0){const m=M*n;
-    return qnum(f+'(モル質量 '+M+' g/mol)が '+fmt(m)+' g ある。物質量は？',n,[n*2,n/2,n*10],'mol',
-      fmt(m)+' g ÷ '+M+' g/mol = '+fmt(n)+' mol');}
-  if(t===1){const m=M*n;
-    return qnum(f+'(モル質量 '+M+' g/mol)が '+fmt(n)+' mol ある。質量は？',m,[m*2,m/2,M+n],'g',
-      M+' g/mol × '+fmt(n)+' mol = '+fmt(m)+' g');}
-  if(t===2){const list=[sci(n),sci(n*2),sci(n/2),sci(n*5)].map(x=>x+' 個');
-    return finalize(f+'が '+fmt(n)+' mol ある。粒子の数は？(アボガドロ定数 6.0×10<sup>23</sup>/mol)',list,0,
-      fmt(n)+' mol × 6.0×10<sup>23</sup>/mol = '+sci(n)+' 個');}
-  if(t===3){return qnum(f+'の粒子が '+sci(n)+' 個ある。物質量は？',n,[n*2,n/2,n*10],'mol',
-      '個数 ÷ 6.0×10<sup>23</sup>/mol = '+fmt(n)+' mol');}
-  if(t===4){const v=22.4*n;
-    return qnum('標準状態で '+f+'(気体)が '+fmt(n)+' mol ある。体積は？',v,[v*2,v/2,n],'L',
-      '22.4 L/mol × '+fmt(n)+' mol = '+fmt(v)+' L');}
-  const v=22.4*n;
-  return qnum('標準状態で '+f+'(気体)が '+fmt(v)+' L ある。物質量は？',n,[n*2,n/2,v],'mol',
-    fmt(v)+' L ÷ 22.4 L/mol = '+fmt(n)+' mol');
-}
-const GAME={next:makeQ};
-"""
-make("mol-sprint.html","モル換算スプリント","物質量",
-     "質量・個数・体積・molの換算を、時間内にできるだけ多く正解しよう。",
-     ["制限時間は60秒","連続正解でボーナスが増える","気体の体積は標準状態(22.4 L/mol)で考える"],
-     mol_js, 60, 2, "#0e7c86")
+# No.16 モル換算スプリントは手書き(mol-sprint.html)に作りかえたため、
+# ここでは生成しない(再生成で上書きしないよう注意)。
 
 # ============ No.32 塩の液性ジャッジ ============
 salt_js = r"""
