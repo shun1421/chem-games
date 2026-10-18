@@ -36,7 +36,7 @@ element-match.html       … No.1  元素記号マッチング(手書き、eleme
 element-position.html    … No.2  周期表の位置あて(手書き、同上)
 stoichiometry.html       … No.18 量的関係を5ステップで解く(手書き)
 sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確に丸め、手書き)
-mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、手書き)
+mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、1〜2段階、手書き)
 sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio、手書き)
 electrolysis.html        … No.40 電気分解の手順ゲーム(手書き)
 ```

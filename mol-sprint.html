@@ -94,7 +94,12 @@ h1{font-size:22px;margin:0 0 8px}
 .blankbox{border:2.5px dashed var(--pink);border-radius:12px;padding:3px 6px;
  animation:bglow 1.1s ease-in-out infinite}
 @keyframes bglow{0%,100%{box-shadow:0 0 8px rgba(255,61,135,.5)}50%{box-shadow:0 0 22px rgba(255,61,135,1)}}
+.blankbox.wait{border-color:rgba(255,255,255,.28);animation:none}
+.blankbox.wait .qmk{color:rgba(255,255,255,.3);text-shadow:none}
 .qmk{font-size:30px;font-weight:900;color:var(--pink);text-shadow:0 0 16px var(--pink)}
+.sample .two{display:inline-block;margin-top:8px;padding:0 7px;border-radius:99px;
+ font-size:11px;font-weight:900;color:#06171c;background:var(--sun)}
+.res{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .eqs{font-size:21px;font-weight:800;color:#9aa6d4}
 .ans{font-family:var(--mono);font-size:21px;font-weight:800;color:var(--lime);
  text-shadow:0 0 16px rgba(125,255,77,.7)}
@@ -119,6 +124,7 @@ h1{font-size:22px;margin:0 0 8px}
  cursor:pointer;font-family:inherit;box-shadow:0 4px 0 #0a7a74;position:relative;z-index:6;
  transition:transform .08s,box-shadow .08s;letter-spacing:.05em}
 .nextbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #0a7a74}
+.nextbtn.hidden{display:none} /* .hidden より後に書くので打ち消される。明示的に消す */
 .nextbtn.ng{background:linear-gradient(135deg,#ff8fb0,#ffc531);box-shadow:0 4px 0 #a33a63}
 .paused .timefill{filter:grayscale(.7) brightness(.8)}
 .pausemark{font-size:10px;color:var(--neon);letter-spacing:.08em;margin-top:2px}
@@ -148,6 +154,7 @@ sub,sup{font-size:.62em}
 @media(max-width:420px){
   .qmain{font-size:18px}.val{font-size:17px}.frac .num,.frac .den{font-size:15px}
   .ans{font-size:18px}.ch .num,.ch .den{font-size:13.5px}.frac{min-width:84px}
+  .expr{gap:5px;padding:12px 6px}.mul{font-size:18px}.qmk{font-size:26px}
 }
 </style>
 </head>
@@ -165,12 +172,15 @@ sub,sup{font-size:.62em}
   消したい単位が<b>下</b>、残したい単位が<b>上</b>。60秒で何問いけるか。</p>
   <div class="sample">
     N<sub>2</sub> 4.0 mol は何 g ?<br>
-    4.0 mol × <span class="k">[ ? g / 1 mol ]</span> = ? g
+    4.0 mol × <span class="k">[ ? g / 1 mol ]</span> = ? g<br>
+    <span class="two">2段階</span> N<sub>2</sub> 56 g は標準状態で何 L ?<br>
+    56 g × <span class="k">[ 1 mol / ? g ]</span> × <span class="k">[ ? L / 1 mol ]</span> = ? L
   </div>
   <ul class="rules">
-    <li>制限時間60秒。正解100点+コンボボーナス+速answerボーナス</li>
+    <li>制限時間60秒。正解100点+コンボボーナス</li>
+    <li>mol をはさむ<b>2段階</b>の問題は +100点</li>
     <li>5問連続で正解すると <b>FEVER</b>（得点2倍）</li>
-    <li>原子量: H=1.0, C=12, N=14, O=16, Na=23, Mg=24, Al=27, S=32, Cl=35.5, Ca=40, Fe=56, Cu=64</li>
+    <li>原子量: H=1.0, He=4.0, C=12, N=14, O=16, Ne=20, Na=23, Mg=24, Al=27, S=32, Cl=35.5, Ca=40, Fe=56, Cu=64</li>
     <li>標準状態の気体 1 mol = 22.4 L、アボガドロ定数 6.0×10<sup>23</sup> /mol</li>
   </ul>
   <button class="primary" onclick="startGame()">スタート</button>
@@ -225,9 +235,11 @@ const SUB=[
 ];
 const NA='6.0×10<sup>23</sup>';
 const NS=[0.1,0.2,0.25,0.5,1.0,1.5,2.0,2.5,3.0,4.0,5.0];
+const TWO_RATE=0.35; // 2段階問題の割合
 
 function fnum(v){
-  if(Math.abs(v-Math.round(v))<1e-9)return String(Math.round(v));
+  // 1けたの値は有効数字2けたにそろえる(He のモル質量は 4 ではなく 4.0)
+  if(Math.abs(v-Math.round(v))<1e-9)return Math.abs(v)<10?v.toFixed(1):String(Math.round(v));
   if(Math.abs(v*10-Math.round(v*10))<1e-9)return v.toFixed(1);
   return v.toFixed(2);
 }
@@ -238,55 +250,103 @@ function fmol(v){ // molの量は有効数字をそろえて書く(4 → 4.0)
 function sci(v){ // 3.0×10^23 の形
   const e=Math.floor(Math.log10(Math.abs(v)));
   const m=Math.round(v/Math.pow(10,e)*10)/10;
-  return (m===1?'1.0':String(m))+'×10<sup>'+e+'</sup>';
+  return m.toFixed(1)+'×10<sup>'+e+'</sup>';
 }
 
 // ==== 問題づくり ====
-// 「与えられた量 × (上/下) = 答え」。選ぶのは分数(換算係数)
+// 「与えられた量 × 換算係数 × … = 答え」。選ぶのは分数(換算係数)。
+// 1段階(molが片側)と2段階(molを経由)の2種類をつくる。
 // 表示した数値で計算し直しても答えがぴったり合う組み合わせだけ出す
 function clean(v){return Math.abs(v*100-Math.round(v*100))<1e-9;}
+// 単位と mol を結ぶ係数(上に単位、下に1 mol)
+function factor(u,M){
+  if(u==='g')return {num:fnum(M)+' g',den:'1 mol',key:'M',numUnit:'g',denUnit:'mol'};
+  if(u==='L')return {num:'22.4 L',den:'1 mol',key:'V',numUnit:'L',denUnit:'mol'};
+  return {num:NA+' 個',den:'1 mol',key:'N',numUnit:'個',denUnit:'mol'};
+}
+function inv(f){return {num:f.den,den:f.num,key:f.key+'i',numUnit:f.denUnit,denUnit:f.numUnit};}
+function coefOf(u,M){return u==='g'?M:(u==='L'?22.4:6.0e23);}
+function unitLabel(u){return u==='n'?'個':u;}
+function showAmount(u,v){ // その単位での量の書き方
+  if(u==='mol')return fmol(v)+' mol';
+  if(u==='個')return sci(v)+' 個';
+  return fnum(v)+' '+u;
+}
+function askLabel(u){
+  if(u==='mol')return '何 mol';
+  if(u==='個')return '何個';
+  if(u==='L')return '標準状態で何 L';
+  return '何 g';
+}
 function makeQ(){
-  for(let t=0;t<200;t++){
-    const q=tryQ();
+  for(let t=0;t<300;t++){
+    const q=(Math.random()<TWO_RATE)?tryQ2():tryQ1();
     if(q)return q;
   }
-  return tryQ(true);
+  return tryQ1(true);
 }
-function tryQ(force){
-  const s=pick(SUB), M=s[1], gas=s[2];
-  const kinds=['molg','gmol','moln','nmol'].concat(gas?['molL','Lmol']:[]);
-  const kind=pick(kinds);
+// 1段階: mol ⇄ (g / L / 個)
+function tryQ1(force){
+  const s=pick(SUB),M=s[1],gas=s[2];
+  const units=['g','個'].concat(gas?['L']:[]);
+  const u=pick(units);
+  const toMol=Math.random()<0.5;      // true なら u → mol
   const n=pick(NS);
-  if(!force&&(kind==='molg'||kind==='gmol')&&!clean(n*M))return null; // 14.625 g のような半端は避ける
-  const MS=fnum(M);
-  // 正解の分数と、まぎらわしい選択肢
-  const fM ={num:MS+' g',  den:'1 mol',  key:'M'};    // モル質量(上)
-  const fMi={num:'1 mol',  den:MS+' g',  key:'Mi'};   // その逆
-  const fV ={num:'22.4 L', den:'1 mol',  key:'V'};
-  const fVi={num:'1 mol',  den:'22.4 L', key:'Vi'};
-  const fN ={num:NA+' 個', den:'1 mol',  key:'N'};
-  const fNi={num:'1 mol',  den:NA+' 個', key:'Ni'};
-  let q;
-  if(kind==='molg')q={give:fmol(n)+' mol',gu:'mol',ask:'何 g',ansV:n*M,au:'g',ok:fM,
-    pool:[fMi,fV,fN]};
-  else if(kind==='gmol')q={give:fnum(n*M)+' g',gu:'g',ask:'何 mol',ansV:n,au:'mol',ok:fMi,
-    pool:[fM,fVi,fNi]};
-  else if(kind==='molL')q={give:fmol(n)+' mol',gu:'mol',ask:'標準状態で何 L',ansV:n*22.4,au:'L',ok:fV,
-    pool:[fVi,fM,fN]};
-  else if(kind==='Lmol')q={give:fnum(n*22.4)+' L',gu:'L',ask:'何 mol',ansV:n,au:'mol',ok:fVi,
-    pool:[fV,fMi,fNi]};
-  else if(kind==='moln')q={give:fmol(n)+' mol',gu:'mol',ask:'何個',ansV:n*6.0e23,au:'個',ok:fN,
-    pool:[fNi,fM,fV],sciAns:true};
-  else q={give:sci(n*6.0e23)+' 個',gu:'個',ask:'何 mol',ansV:n,au:'mol',ok:fNi,
-    pool:[fN,fMi,fVi]};
-  q.sub=s[0];q.M=MS;
-  q.choices=shuffle([q.ok].concat(q.pool.slice(0,3)));
+  const c=coefOf(u,M), amt=n*c;
+  if(!force&&u!=='個'&&!(clean(amt)&&clean(n)))return null;
+  const f=factor(u,M), fi=inv(f);
+  const others=['g','L','個'].filter(x=>x!==u).map(x=>factor(x,M));
+  const q=toMol
+    ? {give:showAmount(u==='個'?'個':u,amt),gu:unitLabel(u),au:'mol',ansV:n,
+       chain:[fi],pools:[[f].concat(others.map(inv))]}
+    : {give:showAmount('mol',n),gu:'mol',au:unitLabel(u),ansV:amt,
+       chain:[f],pools:[[fi].concat(others)]};
+  q.ask=askLabel(q.au);
+  q.sub=s[0];q.M=fnum(M);q.two=false;
+  return finishQ(q);
+}
+// 2段階: (g / L / 個) → mol → (g / L / 個)
+function tryQ2(force){
+  const s=pick(SUB),M=s[1],gas=s[2];
+  const units=['g','個'].concat(gas?['L']:[]);
+  if(units.length<2)return null;
+  const a=pick(units);
+  const b=pick(units.filter(x=>x!==a));
+  const n=pick(NS);
+  const ca=coefOf(a,M), cb=coefOf(b,M);
+  const give=n*ca, ans=n*cb;
+  if(!force){
+    if(a!=='個'&&!clean(give))return null;
+    if(b!=='個'&&!clean(ans))return null;
+    if(!clean(n))return null;          // 途中のmolもきれいな値にする
+  }
+  const fa=factor(a,M), fb=factor(b,M);
+  const others=['g','L','個'].filter(x=>x!==a&&x!==b).map(x=>factor(x,M));
+  const q={
+    give:showAmount(unitLabel(a),give),gu:unitLabel(a),au:unitLabel(b),ansV:ans,
+    chain:[inv(fa),fb],                 // まず mol にそろえ、つぎに答えの単位へ
+    pools:[[fa,inv(fb)].concat(others.map(inv)),
+           [inv(fb),fa].concat(others)],
+    midV:n                              // 途中で出てくる mol の値
+  };
+  q.ask=askLabel(q.au);
+  q.sub=s[0];q.M=fnum(M);q.two=true;
+  return finishQ(q);
+}
+function finishQ(q){
+  q.stage=0;q.picked=[];
+  q.sciAns=(q.au==='個');
+  q.choices=q.chain.map((ok,i)=>{
+    const pool=q.pools[i].filter(f=>f.key!==ok.key);
+    return shuffle([ok].concat(pool.slice(0,3)));
+  });
   return q;
 }
 
 // ==== 状態 ====
 let cur=null,score=0,combo=0,maxCombo=0,ok=0,total=0,tLeft=0,timer=null,locked=false;
 let paused=false; // 答え合わせの演出中は時間を止める
+let strikeT=null; // 約分の線を引くタイマー(次の問題へ急いだときに持ち越さない)
 let missed=[];
 const LIMIT=60;
 
@@ -324,27 +384,61 @@ function markUnit(text,unit,id){
   if(i<0)return text;
   return text.slice(0,i)+'<span class="unit" id="'+id+'">'+unit+'</span>'+text.slice(i+unit.length);
 }
-// 式を描く。stage: 'ask'=?のまま / 'show'=選んだ分数を入れて約分を見せる
-function drawExpr(stage,chosen){
+// 式を描く。選んだ分数を左から順に並べ、全部そろったら答えと約分を見せる
+function drawExpr(){
   const e=$('expr');e.innerHTML='';
   const gv=document.createElement('span');gv.className='val';
-  gv.innerHTML=markUnit(cur.give,cur.gu,'u1');
+  gv.innerHTML=markUnit(cur.give,cur.gu,'u0');
   e.appendChild(gv);
-  const m=document.createElement('span');m.className='mul';m.textContent='×';e.appendChild(m);
-  if(stage==='ask'){
-    const box=document.createElement('div');box.className='blankbox';
-    box.innerHTML='<span class="qmk">?</span>';
-    e.appendChild(box);
-  }else{
-    const fr=document.createElement('div');fr.className='frac';
-    fr.innerHTML='<span class="num">'+chosen.num.replace(/(\d[\d.]*|'+NA+')\s/,'$1 ')+'</span>'
-      +'<span class="bar"></span><span class="den">'+markUnit(chosen.den,cur.gu,'den')+'</span>';
-    e.appendChild(fr);
-    const eq=document.createElement('span');eq.className='eqs';eq.textContent='=';e.appendChild(eq);
-    const an=document.createElement('span');an.className='ans pop';
-    an.innerHTML=(cur.sciAns?sci(cur.ansV):(cur.au==='mol'?fmol(cur.ansV):fnum(cur.ansV)))+' '+cur.au;
-    e.appendChild(an);
+  const done=cur.picked.length===cur.chain.length;
+  for(let i=0;i<cur.chain.length;i++){
+    const m=document.createElement('span');m.className='mul';m.textContent='×';e.appendChild(m);
+    if(i<cur.picked.length){
+      const f=cur.picked[i];
+      const fr=document.createElement('div');fr.className='frac';
+      // 分母は1つ前に出てきた単位と打ち消し合う
+      const prevU=(i===0)?cur.gu:cur.chain[i-1].numUnit;
+      fr.innerHTML='<span class="num" id="num'+i+'">'+f.num+'</span>'
+        +'<span class="bar"></span>'
+        +'<span class="den">'+markUnit(f.den,prevU,'den'+i)+'</span>';
+      e.appendChild(fr);
+    }else{
+      const box=document.createElement('div');
+      box.className='blankbox'+(i===cur.picked.length?'':' wait');
+      box.innerHTML='<span class="qmk">?</span>';
+      e.appendChild(box);
+    }
   }
+  if(done){ // 「= 答え」は折り返しで離れないよう1つのかたまりにする
+    const res=document.createElement('span');res.className='res';
+    res.innerHTML='<span class="eqs">=</span><span class="ans pop">'+showAmount(cur.au,cur.ansV)+'</span>';
+    e.appendChild(res);
+  }
+}
+// 消える単位に線を引く(与えられた量の単位・各分母・途中の分子)
+function strikeUnits(){
+  const u0=$('u0');if(u0)u0.classList.add('gone');
+  for(let i=0;i<cur.chain.length;i++){
+    const d=$('den'+i);if(d)d.classList.add('gone');
+    if(i<cur.chain.length-1){ // 途中で出てくる分子の単位も消える
+      const n=$('num'+i);
+      if(n){
+        const u=cur.chain[i].numUnit;
+        n.innerHTML=markUnit(n.textContent,u,'numu'+i);
+        const t=$('numu'+i);if(t)t.classList.add('gone');
+      }
+    }
+  }
+}
+function drawChoices(){
+  const c=$('choices');c.innerHTML='';
+  cur.choices[cur.stage].forEach(f=>{
+    const b=document.createElement('button');
+    b.className='ch';
+    b.innerHTML='<span class="num">'+f.num+'</span><span class="bar"></span><span class="den">'+f.den+'</span>';
+    b.onclick=()=>answer(f,b);
+    c.appendChild(b);
+  });
 }
 function goNext(){ // 「次の問題へ」で時間を再開する
   if(tLeft<=0){finish();return;}
@@ -355,55 +449,59 @@ function goNext(){ // 「次の問題へ」で時間を再開する
   nextQ();
 }
 function nextQ(){
+  clearTimeout(strikeT);   // 前の問題の約分演出を新しい式に持ち越さない
   locked=false;
   cur=makeQ();
-  $('qsub').textContent='つぎの量を変換しよう';
+  $('qsub').textContent=cur.two?'2段階！ mol をはさんで変換しよう':'つぎの量を変換しよう';
   $('qmain').innerHTML=cur.sub+' <span class="hl">'+cur.give+'</span> は'+cur.ask+' ?';
   $('fb').innerHTML='';
   $('nextBtn').classList.add('hidden');
-  drawExpr('ask');
-  const c=$('choices');c.innerHTML='';
-  cur.choices.forEach(f=>{
-    const b=document.createElement('button');
-    b.className='ch';
-    b.innerHTML='<span class="num">'+f.num+'</span><span class="bar"></span><span class="den">'+f.den+'</span>';
-    b.onclick=()=>answer(f,b);
-    c.appendChild(b);
-  });
+  drawExpr();drawChoices();
 }
 function answer(f,btn){
-  if(locked)return;locked=true;total++;
-  const correct=f.key===cur.ok.key;
+  if(locked)return;
+  const ok0=cur.chain[cur.stage];
+  const correct=f.key===ok0.key;
+  const last=cur.stage===cur.chain.length-1;
+  if(correct&&!last){                   // 途中の段は、時間を止めずにつぎへ
+    cur.picked.push(ok0);cur.stage++;
+    drawExpr();drawChoices();
+    $('fb').innerHTML='<span class="good">いいぞ！ これで mol になった。つぎは '+cur.au+' へ</span>';
+    const fl=$('flash');fl.className='';void fl.offsetWidth;fl.classList.add('ok');
+    return;
+  }
+  locked=true;total++;
   [...$('choices').children].forEach((b,i)=>{
     b.disabled=true;
-    if(cur.choices[i].key===cur.ok.key)b.classList.add('correct');
+    if(cur.choices[cur.stage][i].key===ok0.key)b.classList.add('correct');
     else if(b===btn)b.classList.add('wrong');
   });
-  drawExpr('show',cur.ok);
-  // 約分の演出(消える単位に線を引く)
-  setTimeout(()=>{
-    const u1=$('u1'),den=$('den');
-    if(u1)u1.classList.add('gone');
-    if(den)den.classList.add('gone');
-  },120);
+  // 残りを正解で埋めて式を完成させる
+  while(cur.picked.length<cur.chain.length)cur.picked.push(cur.chain[cur.picked.length]);
+  drawExpr();
+  clearTimeout(strikeT);strikeT=setTimeout(strikeUnits,120);
   const fl=$('flash');fl.className='';void fl.offsetWidth;
   if(correct){
     ok++;combo++;maxCombo=Math.max(maxCombo,combo);
     const fever=combo>=5;
     let pts=100+Math.min(combo,10)*10;
+    if(cur.two)pts+=100;               // 2段階はボーナス
     if(fever)pts*=2;
     score+=pts;
     fl.classList.add('ok');
-    $('fb').innerHTML='<span class="good">正解！ +'+pts+'点'+(fever?'（FEVER 2倍）':'')+'</span>'
-      +'<span class="sub">'+cur.gu+' どうしが約分されて '+cur.au+' が残る</span>';
+    $('fb').innerHTML='<span class="good">正解！ +'+pts+'点'
+      +(cur.two?'（2段階ボーナス）':'')+(fever?'（FEVER 2倍）':'')+'</span>'
+      +'<span class="sub">'+(cur.two?(cur.gu+'・mol が次々に約分されて '):(cur.gu+' どうしが約分されて '))
+      +cur.au+' が残る</span>';
     showPop('+'+pts);confetti(fever?26:14);
   }else{
     combo=0;
     missed.push(cur.sub+' '+cur.give+' → '+cur.ask);
     fl.classList.add('ng');
     $('play').classList.add('shake');setTimeout(()=>$('play').classList.remove('shake'),340);
-    $('fb').innerHTML='<span class="ng">ちがう！ 正しくは '+cur.ok.num+' / '+cur.ok.den+'</span>'
-      +'<span class="sub">消したい '+cur.gu+' を下に、残したい '+cur.au+' を上に置く</span>';
+    $('fb').innerHTML='<span class="ng">ちがう！ 正しくは '+ok0.num+' / '+ok0.den+'</span>'
+      +'<span class="sub">消したい '+(cur.stage===0?cur.gu:'mol')+' を下に、'
+      +'残したい '+(last?cur.au:'mol')+' を上に置く</span>';
   }
   upd();
   // 約分の様子をじっくり見られるよう、時間を止めてボタン待ちにする
@@ -416,7 +514,7 @@ function answer(f,btn){
   nb.textContent=(tLeft<=0?'結果を見る →':'次の問題へ →');
 }
 function finish(){
-  clearInterval(timer);locked=true;paused=false;
+  clearInterval(timer);clearTimeout(strikeT);locked=true;paused=false;
   $('play').classList.remove('paused');
   $('pausemark').classList.add('off');
   $('nextBtn').classList.add('hidden');
