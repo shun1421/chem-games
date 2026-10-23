@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>過不足ある反応 〜何が残る？〜 | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--teal:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+.hidden{display:none}
+sub,sup{font-size:.62em}
+
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;
+ border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:20}
+.back{color:var(--teal);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
+.htitle{font-size:16px;font-weight:900;letter-spacing:.04em;flex:1}
+.chip{font-size:11px;font-weight:700;color:var(--teal);border:1px solid var(--teal);
+ border-radius:999px;padding:2px 10px;white-space:nowrap}
+
+main{max-width:620px;margin:0 auto;padding:14px 12px 40px}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 14px}
+h1{font-size:19px;margin:0 0 10px;letter-spacing:.03em}
+.desc{font-size:13.5px;line-height:1.85;color:var(--ink);margin:0 0 12px}
+.desc b{color:var(--teal)}
+.note{margin:14px 0 0;font-size:12.5px;color:var(--mut);line-height:2}
+.primary{display:block;width:100%;margin-top:16px;padding:15px;font-size:16px;font-weight:900;
+ color:#fff;background:var(--teal);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #0a5d65;transition:transform .08s,box-shadow .08s;letter-spacing:.06em}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d65}
+.primary:disabled{background:#b6c6c5;box-shadow:0 4px 0 #9aacab;cursor:default}
+.primary.hidden{display:none} /* .hidden より後に書くので明示的に打ち消す */
+
+/* 見本の表(スタート画面) */
+.demo{border:1px solid var(--line);border-radius:10px;overflow:hidden;font-family:var(--mono);
+ font-size:11.5px;background:#fafcfb}
+.demo div{display:grid;grid-template-columns:56px 1fr 1fr 1fr;border-bottom:1px solid var(--line)}
+.demo div:last-child{border-bottom:0}
+.demo span{padding:5px 4px;text-align:center;border-left:1px solid var(--line)}
+.demo span:first-child{border-left:0;color:var(--mut);text-align:left;padding-left:7px}
+.demo .hd span{font-weight:800;background:#eef4f3}
+.demo .mk{color:var(--amber);font-weight:800}
+.demo .au{color:var(--ok);font-weight:800}
+.cap{margin:7px 0 0;font-size:11.5px;color:var(--mut);text-align:center}
+.cap .mk{color:var(--amber)}.cap .au{color:var(--ok)}
+
+/* プレイ画面 */
+.topbar{display:flex;align-items:center;justify-content:space-between;font-size:12px;
+ color:var(--mut);font-weight:700;margin-bottom:8px}
+.topbar b{color:var(--ink);font-size:15px;margin-left:3px}
+.pips{display:flex;gap:4px}
+.pip{width:9px;height:9px;border-radius:50%;background:#dde6e5}
+.pip.done{background:var(--ok)}.pip.now{background:var(--amber)}
+.rxname{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.06em}
+.eq{font-size:18px;font-weight:800;text-align:center;margin:4px 0 12px;line-height:1.5}
+.eq .ar{color:var(--teal);margin:0 7px}
+
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+table{border-collapse:separate;border-spacing:3px;margin:0 auto;table-layout:fixed}
+th,td{padding:0}
+th.rowlbl,td.rowlbl{width:54px}
+th.col{width:58px;font-size:12px;font-weight:800;padding:3px 1px;line-height:1.3;
+ border-bottom:2px solid var(--line)}
+td.rowlbl{font-size:11px;color:var(--mut);font-weight:700;text-align:left;line-height:1.25}
+.cell{height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+ font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:-.02em}
+.cell.given{background:#eef4f3;color:var(--mut)}
+.cell.zero{background:#f6f8f8;color:#a9b8b7}
+.cell.input{background:#fff;border:1.6px dashed #adc8c5;cursor:pointer;color:var(--ink)}
+.cell.input.sel{border:2px solid var(--teal);background:#f0fafa;
+ box-shadow:0 0 0 3px rgba(14,124,134,.16)}
+.cell.ok{background:#e4f5ed;border:1.6px solid var(--ok);color:var(--ok)}
+.cell.wait{background:#f7f9f9;border:1.5px dashed #e3ebea;color:#bdcac9}
+.cell.rv{background:#e4f5ed;border:1.6px solid var(--ok);color:var(--ok);
+ animation:rvpop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes rvpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.cell.bad{background:#fde8ec;border:1.6px solid var(--bad);color:var(--bad);animation:nope .4s}
+@keyframes nope{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cell .sg{color:var(--mut);margin-right:1px;font-weight:700}
+.cell.ok .sg{color:var(--ok)}
+.cell .cur{display:inline-block;width:1px;height:15px;background:var(--teal);
+ margin-left:1px;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* 残るのは？ */
+.ask{margin-top:14px;font-size:13px;font-weight:800}
+.picks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px}
+.pk{padding:11px 3px;font-size:13px;font-weight:800;font-family:inherit;color:var(--ink);
+ background:#fff;border:1.6px solid var(--line);border-radius:10px;cursor:pointer;line-height:1.3}
+.pk.sel{border-color:var(--teal);background:#eaf6f6;color:var(--teal)}
+.pk.ok{border-color:var(--ok);background:#e4f5ed;color:var(--ok)}
+.pk.bad{border-color:var(--bad);background:#fde8ec;color:var(--bad);animation:nope .4s}
+
+/* テンキー */
+.padlbl{margin-top:14px;font-size:11.5px;color:var(--mut);font-weight:700;text-align:center;min-height:17px}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:46px;gap:6px;margin-top:5px}
+.pad button{font-size:18px;font-weight:800;font-family:var(--mono);color:var(--ink);
+ background:#fff;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+ transition:transform .06s,background .1s;touch-action:manipulation}
+.pad button:active{transform:translateY(2px);background:#eef4f3}
+.pad .fn{font-family:inherit;font-size:14px;color:var(--teal);font-weight:900}
+.pad .w2{grid-column:span 2}
+.pad.hidden{display:none} /* .hidden より後に書くので明示的に打ち消す */
+
+#fb{min-height:22px;margin-top:10px;font-size:13px;font-weight:800;text-align:center;line-height:1.7}
+#fb .ng{color:var(--bad)}#fb .go{color:var(--ok)}
+#fb .tip{display:block;font-size:12px;font-weight:700;color:var(--amber);margin-top:2px}
+
+/* 解説 */
+.ex{margin-top:12px;background:#f7fbfa;border:1.5px solid var(--line);border-left:4px solid var(--teal);
+ border-radius:10px;padding:11px 12px;font-size:12.5px;line-height:1.95}
+.ex h3{margin:0 0 5px;font-size:12px;color:var(--teal);letter-spacing:.08em}
+.ex .num{font-family:var(--mono);font-weight:800}
+.ex .win{color:var(--bad);font-weight:800}
+
+/* リザルト */
+.medal{font-size:46px;text-align:center}
+.fs{text-align:center;font-size:30px;font-weight:900;color:var(--teal);margin:4px 0 2px}
+.fsub{text-align:center;font-size:12.5px;color:var(--mut);line-height:1.9}
+.fmiss{margin-top:12px;font-size:12.5px;color:var(--mut);line-height:1.8;
+ background:#f7fbfa;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+
+@media(max-width:400px){
+  th.col{width:54px;font-size:11px}
+  .cell{height:35px;font-size:12px}
+  th.rowlbl,td.rowlbl{width:48px}
+  td.rowlbl{font-size:10px}
+  .eq{font-size:16px}
+  .pad{grid-auto-rows:43px}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">過不足ある反応</div>
+  <span class="chip">物質量</span>
+</header>
+<main>
+
+<section id="start" class="panel">
+  <h1>過不足ある反応 〜何が残る？〜</h1>
+  <p class="desc">CaCO<sub>3</sub> 0.30 mol に HCl 0.40 mol を加える。<br>
+  先になくなるのはどっち？ 残るのは何 mol？</p>
+  <div class="demo">
+    <div class="hd"><span></span><span>CaCO<sub>3</sub></span><span>2HCl</span><span>CO<sub>2</sub></span></div>
+    <div><span>反応前</span><span>0.30</span><span>0.40</span><span>0</span></div>
+    <div><span>変化</span><span class="mk">−0.20</span><span class="mk">−0.40</span><span class="mk">＋0.20</span></div>
+    <div><span>反応後</span><span class="au">0.10</span><span class="au">0</span><span class="au">0.20</span></div>
+  </div>
+  <p class="cap"><b class="mk">オレンジ</b>をうめる。<b class="au">緑</b>は正解すると出る。</p>
+  <p class="note">符号は入力せずに、反応する物質量および生成する物質量の値のみを入力しよう。<br>
+  問題は全部で5問。間違えても何度も挑戦！（やり直した分だけ、スコアは減少します）</p>
+  <button class="primary" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="topbar">
+    <div>第<b id="qno">1</b>問 / 5</div>
+    <div class="pips" id="pips"></div>
+    <div>スコア<b id="score">0</b></div>
+  </div>
+  <div class="rxname" id="rxname"></div>
+  <div class="eq" id="eq"></div>
+  <div class="tablewrap"><table id="tbl"></table></div>
+
+  <div class="ask">未反応で残るのはどれ？</div>
+  <div class="picks" id="picks"></div>
+
+  <div class="padlbl" id="padlbl"></div>
+  <div class="pad" id="pad"></div>
+
+  <button class="primary" id="submit" onclick="submit()" disabled>解答する</button>
+  <div id="fb"></div>
+  <div class="ex hidden" id="ex"></div>
+  <button class="primary hidden" id="nextBtn" onclick="nextQ()">次の問題へ →</button>
+</section>
+
+<section id="end" class="panel hidden">
+  <div class="medal" id="medal">🏆</div>
+  <div class="fs" id="fscore">0</div>
+  <div class="fsub">満点500点中 ／ 一発正解 <b id="fperfect">0</b> 問</div>
+  <div class="fmiss" id="fmiss"></div>
+  <button class="primary" onclick="startGame()">もう一度</button>
+  <button class="primary" style="background:#fff;color:var(--teal);box-shadow:0 4px 0 #cfdedd;border:1.5px solid var(--line)"
+    onclick="location.href='index.html'">一覧にもどる</button>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+// 化学式の数字を下付きにする(Cu(NO3)2 → Cu(NO₃)₂)
+function fmt(s){return s.replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>')}
+function co(n){return n>1?n:''}
+
+// ==== 反応データ ====
+// l:反応物 r:生成物 [化学式,係数]。反応物はかならず2つ(過不足を考えるため)
+const RX=[
+ {nm:'塩酸と水酸化ナトリウムの中和',l:[['NaOH',1],['HCl',1]],r:[['NaCl',1],['H2O',1]]},
+ {nm:'亜鉛と塩酸',               l:[['Zn',1],['HCl',2]],  r:[['ZnCl2',1],['H2',1]]},
+ {nm:'石灰石と塩酸',             l:[['CaCO3',1],['HCl',2]],r:[['CaCl2',1],['H2O',1],['CO2',1]]},
+ {nm:'メタンの燃焼',             l:[['CH4',1],['O2',2]],  r:[['CO2',1],['H2O',2]]},
+ {nm:'銅と硝酸銀水溶液',         l:[['Cu',1],['AgNO3',2]],r:[['Cu(NO3)2',1],['Ag',2]]},
+ {nm:'水素の燃焼',               l:[['H2',2],['O2',1]],   r:[['H2O',2]]},
+ {nm:'マグネシウムの燃焼',       l:[['Mg',2],['O2',1]],   r:[['MgO',2]]},
+ {nm:'アンモニアの合成',         l:[['N2',1],['H2',3]],   r:[['NH3',2]]},
+ {nm:'アルミニウムと塩素',       l:[['Al',2],['Cl2',3]],  r:[['AlCl3',2]]},
+ {nm:'酸化鉄の還元',             l:[['Fe2O3',1],['CO',3]],r:[['Fe',2],['CO2',3]]},
+];
+const MAXT=30;   // 1.50 mol まで。これを超える値は出さない
+const SETN=5;
+
+// 物質量はすべて 0.05 mol を1目盛(tick)とする整数で持ち、誤差なく計算する
+function tv(t){return (t*5/100).toFixed(2);}      // 0.30 の形
+function tv0(t){return t===0?'0':tv(t);}          // 0 は「0」と書く
+
+// ==== 問題づくり ====
+// 反応の進みを xi、余るほうの余分を 係数×k にすると、
+// 「物質量 ÷ 係数」がいつも 0.05 の倍数になり、割り算がきれいに出る
+function makeQ(rx){
+  const a=rx.l[0][1], b=rx.l[1][1];
+  for(let t=0;t<300;t++){
+    const xi=2+Math.floor(Math.random()*7);   // 反応の進み 0.10〜0.40
+    const k=1+Math.floor(Math.random()*3);    // 余りのぶん
+    const rnd=Math.random();
+    const mode=rnd<0.14?'just':(rnd<0.57?'A':'B');  // A:Aが不足 B:Bが不足 just:ちょうど
+    const preA=a*(xi+(mode==='B'?k:0));
+    const preB=b*(xi+(mode==='A'?k:0));
+    let mx=Math.max(preA,preB);
+    rx.r.forEach(x=>{mx=Math.max(mx,x[1]*xi)});
+    if(mx>MAXT)continue;
+    return build({rx,xi,mode,preA,preB});
+  }
+  return build({rx,xi:2,mode:'A',preA:a*2,preB:b*3});
+}
+function build(q){
+  const rx=q.rx;
+  q.terms=rx.l.map(t=>({t,side:'l'})).concat(rx.r.map(t=>({t,side:'r'})));
+  q.pre =q.terms.map((tm,i)=>tm.side==='l'?(i===0?q.preA:q.preB):0);
+  q.chg =q.terms.map(tm=>tm.t[1]*q.xi);
+  q.post=q.terms.map((tm,i)=>tm.side==='l'?q.pre[i]-q.chg[i]:q.chg[i]);
+  // 残るのは 不足していないほうの反応物。ちょうどならどちらも残らない
+  q.ans=q.mode==='A'?1:(q.mode==='B'?0:2);
+  q.attempts=0;
+  q.val =q.terms.map(()=>'');      // 入力させるのは「変化」の行だけ
+  q.lock=q.terms.map(()=>false);
+  q.badm=q.terms.map(()=>false);
+  q.sel=0;q.done=false;            // done: 正解して「反応後」が出たか
+  q.pickSel=-1;q.pickLock=false;q.pickBad=false;
+  return q;
+}
+// 5問セット。1問目は係数比1:1のやさしい反応、どこかに係数2以上の反応物を必ず入れる
+function makeDeck(){
+  const easy=RX.filter(x=>x.l[0][1]===1&&x.l[1][1]===1);
+  const rest=shuffle(RX.filter(x=>!easy.includes(x))).slice(0,SETN-1);
+  if(!rest.some(x=>x.l[0][1]>1||x.l[1][1]>1)){
+    rest[rest.length-1]=pick(RX.filter(x=>x.l[0][1]>1||x.l[1][1]>1));
+  }
+  return [pick(easy)].concat(rest).map(makeQ);
+}
+
+// ==== 状態 ====
+let deck=[],qi=0,cur=null,score=0,perfect=0,missed=[];
+
+function startGame(){
+  deck=makeDeck();qi=0;score=0;perfect=0;missed=[];
+  $('score').textContent=0;
+  $('start').classList.add('hidden');$('end').classList.add('hidden');
+  $('play').classList.remove('hidden');
+  loadQ();
+}
+function loadQ(){
+  cur=deck[qi];
+  $('qno').textContent=qi+1;
+  $('rxname').textContent=cur.rx.nm;
+  $('ex').classList.add('hidden');
+  $('nextBtn').classList.add('hidden');
+  $('submit').classList.remove('hidden');
+  $('pad').classList.remove('hidden');$('padlbl').classList.remove('hidden');
+  $('fb').innerHTML='';
+  drawPips();drawEq();drawTable();drawPicks();drawPad();updSubmit();
+  window.scrollTo(0,0);
+}
+function drawPips(){
+  const p=$('pips');p.innerHTML='';
+  for(let i=0;i<SETN;i++){
+    const d=document.createElement('div');
+    d.className='pip'+(i<qi?' done':(i===qi?' now':''));
+    p.appendChild(d);
+  }
+}
+function drawEq(){
+  const rx=cur.rx;
+  const side=l=>l.map(t=>co(t[1])+fmt(t[0])).join(' ＋ ');
+  $('eq').innerHTML=side(rx.l)+'<span class="ar">→</span>'+side(rx.r);
+}
+
+// ==== 表 ====
+const ROWLBL=['反応前','変化','反応後'];
+function drawTable(){
+  const tb=$('tbl');tb.innerHTML='';
+  const hr=document.createElement('tr');
+  const th0=document.createElement('th');th0.className='rowlbl';
+  th0.innerHTML='<span style="font-size:9.5px;color:#8fa3a2">mol</span>';
+  hr.appendChild(th0);
+  cur.terms.forEach(tm=>{
+    const th=document.createElement('th');th.className='col';
+    th.innerHTML=co(tm.t[1])+fmt(tm.t[0]);
+    hr.appendChild(th);
+  });
+  tb.appendChild(hr);
+
+  for(let r=0;r<3;r++){
+    const tr=document.createElement('tr');
+    const lb=document.createElement('td');lb.className='rowlbl';
+    lb.innerHTML=(r===2&&!cur.done)
+      ?'反応後<br><span style="font-size:8.5px;opacity:.6">正解で表示</span>':ROWLBL[r];
+    tr.appendChild(lb);
+    cur.terms.forEach((tm,c)=>{
+      const td=document.createElement('td');
+      const d=document.createElement('div');
+      if(r===0){                               // 反応前は出題ずみ
+        if(tm.side==='l'){d.className='cell given';d.textContent=tv(cur.pre[c]);}
+        else{d.className='cell zero';d.textContent='0';}
+      }else if(r===1){                         // 入力させるのは変化の行だけ
+        const sign=tm.side==='l'?'−':'＋';
+        if(cur.lock[c]){
+          d.className='cell ok';
+          d.innerHTML='<span class="sg">'+sign+'</span>'+cur.val[c];
+        }else{
+          const on=(cur.sel===c);
+          d.className='cell input'+(on?' sel':'')+(cur.badm[c]?' bad':'');
+          d.innerHTML='<span class="sg">'+sign+'</span>'+(cur.val[c]||'')
+            +(on?'<span class="cur"></span>':'');
+          d.onclick=()=>{cur.sel=c;drawTable();};
+        }
+      }else{                                   // 反応後は正解してから開く
+        if(cur.done){d.className='cell rv';d.textContent=tv0(cur.post[c]);}
+        else{d.className='cell wait';d.textContent='—';}
+      }
+      td.appendChild(d);tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  }
+  const tm=cur.terms[cur.sel];
+  $('padlbl').innerHTML=allLocked()?'':
+    '入力中： 変化 の '+co(tm.t[1])+fmt(tm.t[0]);
+}
+function allLocked(){
+  return cur.lock.every(v=>v)&&cur.pickLock;
+}
+
+// ==== 残るのは？ ====
+function drawPicks(){
+  const p=$('picks');p.innerHTML='';
+  const labels=[fmt(cur.terms[0].t[0]),fmt(cur.terms[1].t[0]),'どちらも<br>残らない'];
+  labels.forEach((lb,i)=>{
+    const b=document.createElement('button');
+    b.className='pk'+(cur.pickLock&&i===cur.ans?' ok':'')
+      +(!cur.pickLock&&cur.pickSel===i?' sel':'')
+      +(cur.pickBad&&cur.pickSel===i?' bad':'');
+    b.innerHTML=lb;
+    if(!cur.pickLock)b.onclick=()=>{cur.pickSel=i;cur.pickBad=false;drawPicks();updSubmit();};
+    p.appendChild(b);
+  });
+}
+
+// ==== テンキー ====
+const KEYS=[['7'],['8'],['9'],['⌫','fn'],['4'],['5'],['6'],['C','fn'],
+            ['1'],['2'],['3'],['次 →','fn'],['0','w2'],['.','w2']];
+function drawPad(){
+  const p=$('pad');p.innerHTML='';
+  KEYS.forEach(k=>{
+    const b=document.createElement('button');
+    b.className=(k[1]||'');b.textContent=k[0];
+    b.onclick=()=>key(k[0]);
+    p.appendChild(b);
+  });
+}
+function key(k){
+  if(allLocked())return;
+  const c=cur.sel;
+  if(cur.lock[c]){nextCell();return;}
+  let v=cur.val[c];
+  if(k==='C')v='';
+  else if(k==='⌫')v=v.slice(0,-1);
+  else if(k==='次 →'){nextCell();return;}
+  else if(k==='.'){ if(v.indexOf('.')<0)v=(v===''?'0':v)+'.'; }
+  else { if(v.replace('.','').length<4)v+=k; }
+  cur.val[c]=v;
+  cur.badm[c]=false;
+  drawTable();updSubmit();
+}
+// 未入力・未確定のマスを順に回る
+function nextCell(){
+  const n=cur.terms.length;
+  for(let s=1;s<=n;s++){
+    const c=(cur.sel+s)%n;
+    if(!cur.lock[c]){cur.sel=c;drawTable();return;}
+  }
+}
+function updSubmit(){
+  const filled=cur.val.every((v,c)=>cur.lock[c]||v!=='');
+  const picked=cur.pickLock||cur.pickSel>=0;
+  $('submit').disabled=!(filled&&picked);
+}
+
+// ==== 採点 ====
+function near(s,t){const v=parseFloat(s);return isFinite(v)&&Math.abs(v-t*0.05)<1e-6;}
+function submit(){
+  cur.attempts++;
+  let wrong=0;
+  for(let c=0;c<cur.terms.length;c++){
+    if(cur.lock[c])continue;
+    if(near(cur.val[c],cur.chg[c])){
+      cur.lock[c]=true;
+      cur.val[c]=tv0(cur.chg[c]);          // 0.3 → 0.30 と書きそろえる
+    }else{cur.badm[c]=true;wrong++;}
+  }
+  if(!cur.pickLock){
+    if(cur.pickSel===cur.ans)cur.pickLock=true;
+    else{cur.pickBad=true;wrong++;}
+  }
+  drawTable();drawPicks();
+  if(wrong===0){clear();return;}
+  // まちがえたマスは少し見せてから消す
+  const fb=$('fb');
+  fb.innerHTML='<span class="ng">'+wrong+'か所ちがう。赤いところをもう一度。</span>'
+    +(cur.attempts>=2?'<span class="tip">ヒント: 物質量を<b>係数で割って</b>比べると、どちらが先になくなるかが見える</span>':'');
+  setTimeout(()=>{
+    for(let c=0;c<cur.terms.length;c++)
+      if(cur.badm[c]){cur.badm[c]=false;cur.val[c]='';}
+    if(cur.pickBad){cur.pickBad=false;cur.pickSel=-1;}
+    // 最初の未確定マスにカーソルを戻す
+    for(let c=0;c<cur.terms.length;c++)
+      if(!cur.lock[c]){cur.sel=c;break;}
+    drawTable();drawPicks();updSubmit();
+  },800);
+  updSubmit();
+}
+function clear(){
+  cur.done=true;                           // ここで「反応後」の行が開く
+  const pts=cur.attempts===1?100:(cur.attempts===2?60:30);
+  score+=pts;
+  if(cur.attempts===1)perfect++;
+  else missed.push(cur.rx.nm);
+  $('score').textContent=score;
+  $('fb').innerHTML='<span class="go">正解！ +'+pts+'点'
+    +(cur.attempts===1?'（一発正解）':'（'+cur.attempts+'回目）')+'</span>';
+  $('submit').classList.add('hidden');
+  $('pad').classList.add('hidden');$('padlbl').classList.add('hidden');  // 解説に場所をゆずる
+  showEx();
+  const nb=$('nextBtn');
+  nb.classList.remove('hidden');
+  nb.textContent=(qi===SETN-1?'結果を見る →':'次の問題へ →');
+  drawTable();
+}
+function showEx(){
+  const A=cur.terms[0].t,B=cur.terms[1].t;
+  const a=A[1],b=B[1];
+  const dA=cur.preA/a, dB=cur.preB/b;        // 係数で割った値(tick)
+  const lim=cur.mode==='A'?A:(cur.mode==='B'?B:null);
+  let s='<h3>考え方</h3>';
+  s+='① 物質量を<b>係数で割って</b>比べる<br>';
+  s+='<span class="num">'+fmt(A[0])+'： '+tv(cur.preA)+' ÷ '+a+' ＝ '+tv(dA)+'</span><br>';
+  s+='<span class="num">'+fmt(B[0])+'： '+tv(cur.preB)+' ÷ '+b+' ＝ '+tv(dB)+'</span><br>';
+  if(lim){
+    s+='② 小さいほうの <span class="win">'+fmt(lim[0])+'</span> が先になくなる。'
+      +'反応の進みは <span class="num">'+tv(cur.xi)+'</span><br>';
+  }else{
+    s+='② 値が等しいので<span class="win">ちょうど反応</span>し、どちらも残らない。'
+      +'反応の進みは <span class="num">'+tv(cur.xi)+'</span><br>';
+  }
+  s+='③ 変化は 係数 × '+tv(cur.xi)+'。'+fmt(A[0])+' は '
+    +'<span class="num">'+a+' × '+tv(cur.xi)+' ＝ '+tv(cur.chg[0])+'</span> 減る<br>';
+  const ex=cur.ans===2?null:cur.terms[cur.ans].t;
+  if(ex){
+    const i=cur.ans;
+    s+='④ 残るのは <span class="win">'+fmt(ex[0])+'</span>： '
+      +'<span class="num">'+tv(cur.pre[i])+' − '+tv(cur.chg[i])+' ＝ '+tv(cur.post[i])+'</span>';
+  }else{
+    s+='④ 反応物はどちらも <span class="num">0</span> になる';
+  }
+  $('ex').innerHTML=s;
+  $('ex').classList.remove('hidden');
+}
+function nextQ(){
+  qi++;
+  if(qi>=SETN){finish();return;}
+  loadQ();
+}
+function finish(){
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;
+  $('fperfect').textContent=perfect;
+  $('medal').textContent=score>=500?'👑':score>=400?'🏆':score>=280?'🥈':score>=180?'🥉':'💪';
+  const m=[...new Set(missed)];
+  $('fmiss').innerHTML=m.length
+    ?'つまずいた反応: '+m.join(' / ')+'<br>もう一度、係数で割って比べるところから確かめよう。'
+    :'全問いちどで正解。過不足の見きわめは完璧だ。';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

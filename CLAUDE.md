@@ -35,6 +35,7 @@ gas-sim.html             … No.50 気体分子運動シミュレータ(理想/�
 element-match.html       … No.1  元素記号マッチング(手書き、elemental-master-118由来)
 element-position.html    … No.2  周期表の位置あて(手書き、同上)
 stoichiometry.html       … No.18 量的関係を5ステップで解く(手書き)
+excess-reagent.html      … No.19 過不足ある反応(反応前/変化/反応後の表+テンキー、手書き)
 sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確に丸め、手書き)
 mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、1〜2段階、手書き)
 sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio、手書き)
