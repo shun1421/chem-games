@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>化学式タワー 〜10体のモンスターを討伐せよ〜 | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--teal:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace;--cell:38px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+sub{font-size:.62em;line-height:0}
+.fx{display:inline-block;white-space:nowrap}
+
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;
+ border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:30}
+.back{color:var(--teal);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
+.htitle{font-size:16px;font-weight:900;letter-spacing:.04em;flex:1}
+.chip{font-size:11px;font-weight:700;color:var(--teal);border:1px solid var(--teal);
+ border-radius:999px;padding:2px 10px;white-space:nowrap}
+
+main{max-width:560px;margin:0 auto;padding:12px 10px 36px}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:14px 12px}
+h1{font-size:19px;margin:0 0 10px;letter-spacing:.03em;line-height:1.45}
+.desc{font-size:13.5px;line-height:1.9;margin:0 0 12px}
+.desc b{color:var(--teal)}
+.note{margin:14px 0 0;font-size:12.5px;color:var(--mut);line-height:2}
+.primary{display:block;width:100%;margin-top:14px;padding:15px;font-size:16px;font-weight:900;
+ color:#fff;background:var(--teal);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #0a5d65;transition:transform .08s,box-shadow .08s;letter-spacing:.06em}
+.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d65}
+.ghost{background:#fff;color:var(--teal);box-shadow:0 4px 0 #cfdedd;border:1.5px solid var(--line)}
+
+/* 上の帯 */
+.topbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:700}
+.topbar b{color:var(--ink);font-size:15px;margin-left:3px}
+.hearts{font-size:16px;letter-spacing:1px;flex:1;text-align:center}
+.hearts span{color:var(--bad);transition:transform .2s}
+.hearts .off{opacity:.22;filter:grayscale(1)}
+.hearts .crack{animation:crack .5s}
+@keyframes crack{0%{transform:scale(1.5)}60%{transform:scale(.8) rotate(14deg)}100%{transform:scale(1)}}
+.mute{background:none;border:0;font-size:15px;cursor:pointer;padding:0 2px;line-height:1}
+.dots{display:flex;gap:3px;justify-content:center;margin:7px 0 4px}
+.dot{width:7px;height:7px;border-radius:50%;background:#dde6e5}
+.dot.done{background:var(--ok)}.dot.now{background:var(--amber)}.dot.lost{background:var(--bad)}
+.dot.boss{width:10px;height:10px;margin-top:-1px}
+
+/* モンスターの舞台 */
+.stage{position:relative;height:210px;margin:2px -12px 0;overflow:hidden;
+ background:linear-gradient(180deg,#eef5f4 0%,#e2eeec 72%,#d6e5e2 100%)}
+.stage::after{content:'';position:absolute;left:0;right:0;bottom:0;height:22px;
+ background:repeating-linear-gradient(90deg,#cfe0dd 0 14px,#c6d9d6 14px 28px)}
+.stage.panic{animation:panic .5s ease-in-out infinite}
+@keyframes panic{0%,100%{background:linear-gradient(180deg,#eef5f4,#e2eeec)}
+ 50%{background:linear-gradient(180deg,#ffe3e8,#ffd0d9)}}
+.bubble{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;
+ background:#fff;border:2px solid var(--ink);border-radius:12px;padding:6px 13px;
+ font-size:15px;font-weight:900;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+.bubble:after{content:'';position:absolute;left:50%;bottom:-9px;margin-left:-7px;
+ border:7px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.lvtag{position:absolute;left:9px;top:8px;z-index:4;font-size:10px;font-weight:900;
+ letter-spacing:.12em;color:var(--mut)}
+.lvtag.boss{color:#8b3fd6}
+.mon{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:104px;z-index:3}
+.mon svg{display:block;width:100%;filter:drop-shadow(0 5px 0 rgba(27,42,51,.14))}
+.mon.boss{width:120px}
+.mon.drop{animation:drop .62s cubic-bezier(.3,1.5,.5,1)}
+@keyframes drop{0%{transform:translate(-50%,-230px)}70%{transform:translate(-50%,10px)}
+ 85%{transform:translate(-50%,-8px)}100%{transform:translate(-50%,0)}}
+.mon.idle{animation:idle 2.4s ease-in-out infinite}
+@keyframes idle{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-6px)}}
+.mon.hurt{animation:hurt .42s}
+@keyframes hurt{0%,100%{transform:translate(-50%,0)}
+ 20%{transform:translate(-62%,0) rotate(-7deg)}60%{transform:translate(-38%,0) rotate(7deg)}}
+.mon.burst{animation:burst .5s forwards}
+@keyframes burst{0%{transform:translate(-50%,0) scale(1)}
+ 35%{transform:translate(-50%,0) scale(1.28);filter:brightness(2.4)}
+ 100%{transform:translate(-50%,0) scale(.25);opacity:0}}
+.mon.atk{animation:atk .4s}
+@keyframes atk{0%,100%{transform:translate(-50%,0) scale(1)}
+ 45%{transform:translate(-50%,36px) scale(1.18)}}
+.shot{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;
+ font-family:var(--mono);font-size:21px;font-weight:900;color:var(--teal);
+ text-shadow:0 0 10px rgba(14,124,134,.5);animation:shot .42s ease-in forwards}
+@keyframes shot{0%{bottom:16px;opacity:1}100%{bottom:96px;opacity:0;transform:translateX(-50%) scale(1.5)}}
+.pt{position:absolute;width:9px;height:9px;border-radius:2px;z-index:6;
+ left:50%;bottom:72px;animation:pburst .72s ease-out forwards}
+@keyframes pburst{to{transform:translate(var(--dx),var(--dy)) rotate(260deg) scale(.2);opacity:0}}
+.slay{position:absolute;left:0;right:0;top:78px;text-align:center;z-index:7;
+ font-size:30px;font-weight:900;color:var(--ok);letter-spacing:.12em;
+ text-shadow:0 2px 0 #fff,0 0 18px rgba(46,158,107,.6);animation:slay .9s forwards}
+@keyframes slay{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.2);opacity:1}
+ 75%{transform:scale(1);opacity:1}100%{transform:scale(1.05);opacity:0}}
+.countdown{position:absolute;left:0;right:0;top:62px;text-align:center;z-index:8;pointer-events:none;
+ font-family:var(--mono);font-size:76px;font-weight:900;color:var(--bad);opacity:0;
+ text-shadow:0 0 22px rgba(212,86,106,.7)}
+.countdown.go{animation:cd 1s ease-out forwards}
+@keyframes cd{0%{transform:scale(2);opacity:0}25%{opacity:.6}100%{transform:scale(.8);opacity:0}}
+.lvbanner{position:absolute;left:0;right:0;top:90px;text-align:center;z-index:9;
+ font-size:26px;font-weight:900;letter-spacing:.2em;color:var(--amber);
+ text-shadow:0 2px 0 #fff,0 0 16px rgba(232,161,61,.7);animation:lvb 1.2s forwards}
+@keyframes lvb{0%{transform:translateX(-120%);opacity:0}25%{transform:translateX(0);opacity:1}
+ 75%{transform:translateX(0);opacity:1}100%{transform:translateX(120%);opacity:0}}
+
+/* 解答欄 */
+.ansrow{display:flex;align-items:stretch;gap:8px;margin-top:10px}
+.answer{flex:1;min-width:0;min-height:60px;display:flex;align-items:center;justify-content:center;
+ background:#fbfdfd;border:2px solid var(--line);border-radius:12px;padding:6px 10px;
+ font-family:var(--mono);font-size:27px;font-weight:900;letter-spacing:.01em;word-break:break-all}
+.answer.ng{border-color:var(--bad);background:#fde8ec;animation:nope .4s}
+.answer.go{border-color:var(--ok);background:#e4f5ed;color:var(--ok)}
+@keyframes nope{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.answer .ph{font-family:inherit;font-size:13px;font-weight:700;color:#aebdbc;letter-spacing:.06em}
+.sticky{position:sticky;top:47px;z-index:20;background:var(--card);padding-bottom:5px}
+.tbar{height:9px;border-radius:99px;background:#dde6e5;overflow:hidden;margin-top:8px}
+.tfill{height:100%;background:linear-gradient(90deg,var(--teal),var(--ok));transition:width .1s linear}
+.tfill.warn{background:linear-gradient(90deg,#ff7a45,var(--bad))}
+
+/* ミニ周期表 */
+.ptwrap{margin-top:10px}
+.ptgrid{display:grid;grid-template-columns:repeat(2,1fr) 11px repeat(6,1fr);gap:3px}
+.ptgap{}
+.gl{font-size:9px;color:var(--mut);font-weight:700;text-align:center;line-height:1.1}
+.el{height:var(--cell);border:1.5px solid var(--line);border-radius:7px;background:#fff;
+ font-family:var(--mono);font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;
+ padding:0;touch-action:manipulation;transition:transform .06s,background .1s}
+.el:active{transform:translateY(2px);background:#e4f2f1}
+.el.hot{background:#e8f4f3;border-color:#9ccdcb}
+.el.blank{border:none;background:transparent;cursor:default}
+.otherlbl{font-size:10px;color:var(--mut);font-weight:700;margin:9px 0 4px;letter-spacing:.08em}
+.other{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+
+/* キー */
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:9px}
+.keys button{height:40px;border:1.5px solid var(--line);border-radius:8px;background:#fff;
+ font-family:var(--mono);font-size:16px;font-weight:800;color:var(--ink);cursor:pointer;
+ touch-action:manipulation;transition:transform .06s,background .1s;padding:0}
+.keys button:active{transform:translateY(2px);background:#eef4f3}
+.keys .fn{font-family:inherit;font-size:12px;color:var(--teal);font-weight:900}
+.keys .par{color:var(--amber)}
+.go{flex:0 0 78px;width:78px;margin-top:0;padding:0;font-size:15px;letter-spacing:.1em;
+ line-height:1.25;white-space:nowrap}
+
+/* リザルト */
+.medal{font-size:46px;text-align:center}
+.fs{text-align:center;font-size:32px;font-weight:900;color:var(--teal);margin:4px 0 2px}
+.fsub{text-align:center;font-size:12.5px;color:var(--mut);line-height:1.9}
+.fmiss{margin-top:12px;font-size:12.5px;color:var(--mut);line-height:1.9;
+ background:#f7fbfa;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fmiss b{font-family:var(--mono);color:var(--ink)}
+
+@media(max-width:360px){:root{--cell:34px}.el{font-size:13px}.answer{font-size:23px}
+ .go{flex-basis:70px;width:70px;font-size:14px}}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">化学式タワー</div>
+  <span class="chip">化学結合</span>
+</header>
+<main>
+
+<section id="start" class="panel">
+  <h1>化学式タワー<br>〜10体のモンスターを討伐せよ〜</h1>
+  <p class="desc">モンスターが物質の名前を言ってくる。<br>
+  周期表から<b>元素記号を順に押して</b>化学式を組み、討伐しろ。</p>
+  <div class="answer"><span class="fx">Ca(OH)<sub>2</sub></span></div>
+  <p class="note">Ca → ( → O → H → ) → 2 の順に押す。数が1のときは数字を押さない。<br>
+  全10問、3問ごとに強くなる。1問25秒、ライフは3つ。</p>
+  <button class="primary" onclick="startGame()">タワーに入る</button>
+</section>
+
+<section id="play" class="panel hidden">
+  <div class="topbar">
+    <div>第<b id="qno">1</b>問/10</div>
+    <div class="hearts" id="hearts"></div>
+    <div>スコア<b id="score">0</b></div>
+    <button class="mute" id="mute" onclick="toggleMute()" title="音">🔊</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="stage" id="stage">
+    <div class="lvtag" id="lvtag"></div>
+    <div class="bubble" id="bubble"></div>
+    <div class="mon" id="mon"></div>
+  </div>
+  <div class="sticky">
+    <div class="ansrow">
+      <div class="answer" id="answer"></div>
+      <button class="primary go" id="go" onclick="judge()">決定</button>
+    </div>
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+  </div>
+
+  <div class="ptwrap">
+    <div class="ptgrid" id="gl"></div>
+    <div class="ptgrid" id="pt" style="margin-top:3px"></div>
+    <div class="otherlbl">そのほかの元素</div>
+    <div class="other" id="other"></div>
+    <div class="keys" id="keys"></div>
+  </div>
+</section>
+
+<section id="end" class="panel hidden">
+  <div class="medal" id="medal">🏆</div>
+  <div class="fs" id="fscore">0</div>
+  <div class="fsub"><b id="fslay">0</b> 体 討伐 ／ <span id="fmsg"></span></div>
+  <div class="fmiss" id="fmiss"></div>
+  <button class="primary" onclick="startGame()">もう一度いどむ</button>
+  <button class="primary ghost" onclick="location.href='index.html'">一覧にもどる</button>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
+
+// ==== 出題データ ====
+// レベル1→4。3問ごとに1段階あがり、10問目だけレベル4(ボス)
+const DB=[
+ [ // Lv1 単体と、2種類の元素でできた物質
+  ['水素','H2'],['酸素','O2'],['窒素','N2'],['塩素','Cl2'],
+  ['水','H2O'],['塩化ナトリウム','NaCl'],['二酸化炭素','CO2'],['一酸化炭素','CO'],
+  ['塩化水素','HCl'],['フッ化水素','HF'],['硫化水素','H2S'],['アンモニア','NH3'],
+  ['メタン','CH4'],['二酸化硫黄','SO2'],['二酸化窒素','NO2'],['一酸化窒素','NO'],
+  ['酸化マグネシウム','MgO'],['酸化カルシウム','CaO'],['酸化銅(Ⅱ)','CuO'],['酸化亜鉛','ZnO'],
+  ['硫化鉄(Ⅱ)','FeS'],['塩化カリウム','KCl'],['ヨウ化カリウム','KI'],['塩化銀','AgCl'],
+ ],
+ [ // Lv2 添字つき。酸・塩基・塩の基本
+  ['塩化カルシウム','CaCl2'],['塩化マグネシウム','MgCl2'],['酸化ナトリウム','Na2O'],
+  ['酸化アルミニウム','Al2O3'],['酸化鉄(Ⅲ)','Fe2O3'],['酸化銀','Ag2O'],
+  ['酸化マンガン(Ⅳ)','MnO2'],['三酸化硫黄','SO3'],['過酸化水素','H2O2'],
+  ['水酸化ナトリウム','NaOH'],['水酸化カリウム','KOH'],
+  ['硫酸','H2SO4'],['硝酸','HNO3'],['炭酸','H2CO3'],['リン酸','H3PO4'],
+  ['炭酸カルシウム','CaCO3'],['炭酸ナトリウム','Na2CO3'],['炭酸水素ナトリウム','NaHCO3'],
+  ['硫酸ナトリウム','Na2SO4'],['硫酸銅(Ⅱ)','CuSO4'],['硫酸カルシウム','CaSO4'],
+  ['硫酸バリウム','BaSO4'],
+  ['硝酸ナトリウム','NaNO3'],['硝酸カリウム','KNO3'],['硝酸銀','AgNO3'],
+  ['塩化アンモニウム','NH4Cl'],['次亜塩素酸ナトリウム','NaClO'],
+ ],
+ [ // Lv3 かっこが要るもの、炭素をふくむ酸
+  ['水酸化カルシウム','Ca(OH)2'],['水酸化バリウム','Ba(OH)2'],['水酸化マグネシウム','Mg(OH)2'],
+  ['水酸化銅(Ⅱ)','Cu(OH)2'],['水酸化亜鉛','Zn(OH)2'],['水酸化アルミニウム','Al(OH)3'],
+  ['水酸化鉄(Ⅲ)','Fe(OH)3'],
+  ['硝酸銅(Ⅱ)','Cu(NO3)2'],['硝酸カルシウム','Ca(NO3)2'],['硝酸バリウム','Ba(NO3)2'],
+  ['酢酸','CH3COOH'],['硝酸アンモニウム','NH4NO3'],
+ ],
+ [ // Lv4 ボス
+  ['硫酸アルミニウム','Al2(SO4)3'],['硫酸アンモニウム','(NH4)2SO4'],['リン酸カルシウム','Ca3(PO4)2'],
+  ['二クロム酸カリウム','K2Cr2O7'],['過マンガン酸カリウム','KMnO4'],['炭酸水素カルシウム','Ca(HCO3)2'],
+  ['硫酸鉄(Ⅲ)','Fe2(SO4)3'],['シュウ酸','(COOH)2'],
+ ],
+];
+// ミニ周期表(典型元素だけ。族の位置はそのまま)
+const GROUPS=['1','2','13','14','15','16','17','18'];
+const PT=[
+ ['H' ,null,null,null,null,null,null,'He'],
+ ['Li','Be','B' ,'C' ,'N' ,'O' ,'F' ,'Ne'],
+ ['Na','Mg','Al','Si','P' ,'S' ,'Cl','Ar'],
+ ['K' ,'Ca',null,null,null,null,'Br','Kr'],
+];
+const OTHER=['Fe','Cu','Zn','Ag','I','Ba','Mn','Cr','Pb','Sn'];
+const KEYS=[['(','par'],[')','par'],['2',''],['3',''],['4',''],
+            ['5',''],['6',''],['7',''],['⌫','fn'],['消す','fn']];
+const LIMIT=25.0, LIVES=3;
+
+// モンスターの色(レベルごと)
+const PAL=[
+ {b:'#5ec7a8',d:'#2b8f66',e:'#143b2c'},
+ {b:'#5aa9e6',d:'#2f6fb5',e:'#13304f'},
+ {b:'#e8a13d',d:'#b8731d',e:'#4a2e07'},
+ {b:'#9b6bd6',d:'#653a9e',e:'#2b1247'},
+];
+function monsterSVG(lv,boss){
+  const p=PAL[lv-1], horns=lv;
+  let h='';
+  for(let i=0;i<horns;i++){
+    const x=60+(i-(horns-1)/2)*(horns>2?22:26);
+    h+='<path d="M'+(x-9)+',22 L'+x+',-8 L'+(x+9)+',22 Z" fill="'+p.d+'"/>';
+  }
+  // 口。レベルが上がるとギザギザの牙になる
+  const mouth=lv>=3
+    ? '<path d="M42,78 l9,12 l9,-12 l9,12 l9,-12" fill="none" stroke="'+p.e
+      +'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>'
+    : '<path d="M44,78 q16,14 32,0" fill="none" stroke="'+p.e
+      +'" stroke-width="4" stroke-linecap="round"/>';
+  const body='M60,10 C94,10 110,36 110,64 L110,88'
+    +' q-10,10 -20,0 q-10,10 -20,0 q-10,10 -20,0 q-10,10 -20,0 q-10,10 -20,0'
+    +' L10,64 C10,36 26,10 60,10 Z';
+  return '<svg viewBox="0 -16 120 136" xmlns="http://www.w3.org/2000/svg">'
+    +h
+    +'<path d="'+body+'" fill="'+p.b+'" stroke="'+p.d+'" stroke-width="3" stroke-linejoin="round"/>'
+    +'<ellipse cx="43" cy="52" rx="13" ry="15" fill="#fff"/>'
+    +'<ellipse cx="77" cy="52" rx="13" ry="15" fill="#fff"/>'
+    +'<circle cx="46" cy="56" r="7" fill="'+p.e+'"/>'
+    +'<circle cx="80" cy="56" r="7" fill="'+p.e+'"/>'
+    +(boss?'<path d="M30,34 L56,44 M90,34 L64,44" stroke="'+p.e
+      +'" stroke-width="4" stroke-linecap="round"/>':'')
+    +mouth
+    +'</svg>';
+}
+
+// ==== 音 ====
+let actx=null,muted=false;
+function ac(){
+  if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(C)actx=new C();}
+  return actx;
+}
+function tone(freq,dur,type,vol,slide){
+  if(muted)return;const c=ac();if(!c)return;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type||'square';o.frequency.setValueAtTime(freq,c.currentTime);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,c.currentTime+dur);
+  g.gain.setValueAtTime(vol||0.07,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
+  o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+dur);
+}
+function noise(dur,vol){
+  if(muted)return;const c=ac();if(!c)return;
+  const n=Math.floor(c.sampleRate*dur),buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource(),g=c.createGain();
+  s.buffer=buf;g.gain.value=vol||0.14;s.connect(g);g.connect(c.destination);s.start();
+}
+const sfx={
+  tap :()=>tone(880,0.04,'square',0.04),
+  tick:()=>tone(1200,0.07,'square',0.06),
+  hit :()=>{tone(180,0.12,'sawtooth',0.1,60);noise(0.18,0.1);},
+  boom:()=>{noise(0.42,0.2);tone(140,0.35,'sawtooth',0.08,40);},
+  win :()=>{[660,880,1320].forEach((f,i)=>setTimeout(()=>tone(f,0.13,'triangle',0.09),i*80));},
+  drop:()=>tone(320,0.16,'triangle',0.07,120),
+  over:()=>{[440,330,220,165].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'sawtooth',0.08),i*150));},
+};
+function toggleMute(){muted=!muted;$('mute').textContent=muted?'🔇':'🔊';}
+
+// ==== 状態 ====
+let deck=[],qi=0,cur=null,lives=0,score=0,slain=0,tokens=[],missed=[];
+let tLeft=0,timer=null,lastSec=-1,locked=true,missedAt=[],cdT=null;
+
+function makeDeck(){
+  const d=[];
+  for(let lv=1;lv<=3;lv++)shuffle(DB[lv-1].slice()).slice(0,3)
+    .forEach(q=>d.push({nm:q[0],f:q[1],lv:lv}));
+  const b=pick(DB[3]);d.push({nm:b[0],f:b[1],lv:4});
+  return d;
+}
+function startGame(){
+  ac();                                  // 最初のタップで音を使えるようにする
+  deck=makeDeck();qi=0;lives=LIVES;score=0;slain=0;missed=[];missedAt=[];
+  $('start').classList.add('hidden');$('end').classList.add('hidden');
+  $('play').classList.remove('hidden');
+  $('score').textContent=0;
+  buildPad();drawHearts();loadQ();
+  window.scrollTo(0,0);
+}
+
+// ==== 入力パッド ====
+function buildPad(){
+  const gl=$('gl');gl.innerHTML='';
+  GROUPS.forEach((g,i)=>{
+    if(i===2)gl.appendChild(ptgap());
+    const d=document.createElement('div');d.className='gl';d.textContent=g;gl.appendChild(d);
+  });
+  const pt=$('pt');pt.innerHTML='';
+  PT.forEach(row=>row.forEach((s,i)=>{
+    if(i===2)pt.appendChild(ptgap());
+    const b=document.createElement('button');
+    if(!s){b.className='el blank';b.disabled=true;}
+    else{b.className='el';b.textContent=s;b.onclick=()=>push(s);}
+    pt.appendChild(b);
+  }));
+  const ot=$('other');ot.innerHTML='';
+  OTHER.forEach(s=>{
+    const b=document.createElement('button');b.className='el hot';b.textContent=s;
+    b.onclick=()=>push(s);ot.appendChild(b);
+  });
+  const ks=$('keys');ks.innerHTML='';
+  KEYS.forEach(k=>{
+    const b=document.createElement('button');b.className=k[1];b.textContent=k[0];
+    b.onclick=k[0]==='⌫'?back:(k[0]==='消す'?clearAll:()=>push(k[0]));
+    ks.appendChild(b);
+  });
+}
+function ptgap(){const d=document.createElement('div');d.className='ptgap';return d;}
+function push(t){
+  if(locked)return;
+  if(tokens.join('').length>14)return;      // 暴走防止
+  tokens.push(t);sfx.tap();drawAnswer();
+}
+function back(){if(locked)return;tokens.pop();sfx.tap();drawAnswer();}
+function clearAll(){if(locked)return;tokens=[];sfx.tap();drawAnswer();}
+function fmtTokens(ts){
+  return ts.map(t=>/^[0-9]$/.test(t)?'<sub>'+t+'</sub>':t).join('');
+}
+function drawAnswer(){
+  const a=$('answer');a.className='answer';
+  a.innerHTML=tokens.length?'<span class="fx">'+fmtTokens(tokens)+'</span>'
+    :'<span class="ph">元素記号を順に押す</span>';
+}
+
+// ==== 出題 ====
+function drawHearts(){
+  let s='';
+  for(let i=0;i<LIVES;i++)s+='<span class="'+(i<lives?'':'off')+'">♥</span>';
+  $('hearts').innerHTML=s;
+}
+function drawDots(){
+  const d=$('dots');d.innerHTML='';
+  for(let i=0;i<10;i++){
+    const e=document.createElement('div');
+    e.className='dot'+(i===9?' boss':'')+(i<qi?(missedAt[i]?' lost':' done'):(i===qi?' now':''));
+    d.appendChild(e);
+  }
+}
+function loadQ(){
+  cur=deck[qi];tokens=[];locked=false;
+  $('qno').textContent=qi+1;
+  drawDots();drawAnswer();
+  const boss=cur.lv===4;
+  const m=$('mon');
+  m.className='mon'+(boss?' boss':'');
+  m.innerHTML=monsterSVG(cur.lv,boss);
+  void m.offsetWidth;m.classList.add('drop');
+  setTimeout(()=>{m.classList.remove('drop');m.classList.add('idle');},620);
+  sfx.drop();
+  $('bubble').textContent=cur.nm+' の化学式は？';
+  const tag=$('lvtag');
+  tag.className='lvtag'+(boss?' boss':'');
+  tag.textContent=boss?'★ BOSS ★':'LEVEL '+cur.lv;
+  // 3問ごとのレベルアップ表示
+  if(qi>0&&cur.lv!==deck[qi-1].lv)banner(boss?'B O S S':'LEVEL '+cur.lv);
+  tLeft=LIMIT;lastSec=-1;
+  killCountdown();
+  $('stage').classList.remove('panic');
+  drawTime();
+  clearInterval(timer);
+  timer=setInterval(tick,100);
+}
+function banner(txt){
+  const b=document.createElement('div');b.className='lvbanner';b.textContent=txt;
+  $('stage').appendChild(b);setTimeout(()=>b.remove(),1200);
+}
+function tick(){
+  if(locked)return;
+  tLeft-=0.1;
+  if(tLeft<=0){tLeft=0;drawTime();timeUp();return;}
+  drawTime();
+  const s=Math.ceil(tLeft);
+  if(tLeft<=5){
+    $('stage').classList.add('panic');
+    if(s!==lastSec){lastSec=s;sfx.tick();countdown(s);}
+  }
+}
+function countdown(n){
+  killCountdown();
+  const c=document.createElement('div');c.id='cdn';c.className='countdown';
+  c.textContent=n;$('stage').appendChild(c);
+  void c.offsetWidth;c.classList.add('go');
+  cdT=setTimeout(killCountdown,980);
+}
+function killCountdown(){
+  clearTimeout(cdT);
+  const c=$('cdn');if(c)c.remove();
+}
+function drawTime(){
+  const f=$('tfill');
+  f.style.width=(tLeft/LIMIT*100)+'%';
+  f.classList.toggle('warn',tLeft<=5);
+}
+
+// ==== 判定 ====
+function judge(){
+  if(locked||!tokens.length)return;
+  if(tokens.join('')===cur.f)win();
+  else{
+    $('answer').className='answer ng';
+    sfx.hit();attacked();
+    setTimeout(()=>{tokens=[];drawAnswer();},420);
+  }
+}
+function win(){
+  locked=true;clearInterval(timer);
+  killCountdown();
+  $('stage').classList.remove('panic');
+  $('answer').className='answer go';
+  const pts=100*cur.lv+Math.floor(tLeft)*10;
+  score+=pts;slain++;
+  $('score').textContent=score;
+  sfx.win();
+  // 式が飛んでいってモンスターに当たる
+  const st=$('stage');
+  const sh=document.createElement('div');sh.className='shot';sh.innerHTML=fmtTokens(tokens);
+  st.appendChild(sh);setTimeout(()=>sh.remove(),430);
+  const m=$('mon');
+  setTimeout(()=>{
+    m.classList.remove('idle');m.classList.add('hurt');
+    setTimeout(()=>{
+      m.classList.remove('hurt');m.classList.add('burst');
+      sfx.boom();particles();
+      const s=document.createElement('div');s.className='slay';s.textContent='討伐！ +'+pts;
+      st.appendChild(s);setTimeout(()=>s.remove(),900);
+    },420);
+  },380);
+  setTimeout(next,1700);
+}
+function particles(){
+  const st=$('stage'),cols=['#e8a13d','#2e9e6b','#0e7c86','#d4566a','#9b6bd6','#fff'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');p.className='pt';
+    const a=Math.random()*Math.PI*2,r=50+Math.random()*80;
+    p.style.setProperty('--dx',(Math.cos(a)*r)+'px');
+    p.style.setProperty('--dy',(-Math.sin(a)*r)+'px');
+    p.style.background=cols[i%cols.length];
+    p.style.animationDelay=(Math.random()*0.1)+'s';
+    st.appendChild(p);setTimeout(()=>p.remove(),880);
+  }
+}
+// モンスターの反撃でライフが1つ減る
+function attacked(){
+  lives--;
+  const m=$('mon');m.classList.remove('idle');m.classList.add('atk');
+  setTimeout(()=>{m.classList.remove('atk');if(!locked)m.classList.add('idle');},400);
+  const hs=$('hearts').children;
+  if(hs[lives]){hs[lives].className='off crack';}
+  setTimeout(drawHearts,500);
+  if(lives<=0){
+    locked=true;clearInterval(timer);
+    missedAt[qi]=true;missed.push(cur.nm+' … '+cur.f);
+    sfx.over();
+    setTimeout(()=>finish(false),900);
+  }
+}
+function timeUp(){
+  locked=true;clearInterval(timer);
+  killCountdown();
+  $('stage').classList.remove('panic');
+  attacked();
+  if(lives<=0)return;                      // ライフ0なら attacked() が終了させる
+  missedAt[qi]=true;missed.push(cur.nm+' … '+cur.f);
+  showAns();
+  setTimeout(next,1700);
+}
+// 時間切れのときは正解を見せる
+function showAns(){
+  const a=$('answer');a.className='answer ng';
+  a.innerHTML='<span style="font-size:13px;font-weight:700;color:#8b9a99;margin-right:8px">正解</span>'
+    +'<span class="fx">'+fmtTokens(splitF(cur.f))+'</span>';
+}
+// 'Ca(OH)2' → ['Ca','(','O','H',')','2']
+function splitF(f){
+  const out=[];
+  for(let i=0;i<f.length;i++){
+    const c=f[i];
+    if(/[A-Z]/.test(c)&&/[a-z]/.test(f[i+1]||'')){out.push(c+f[i+1]);i++;}
+    else out.push(c);
+  }
+  return out;
+}
+function next(){
+  qi++;
+  if(qi>=10){finish(true);return;}
+  loadQ();
+}
+function finish(cleared){
+  clearInterval(timer);locked=true;
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  $('fscore').textContent=score;
+  $('fslay').textContent=slain;
+  $('fmsg').textContent=cleared
+    ?(slain===10?'タワー制覇！':'最上階に到達')
+    :'ライフが尽きた…';
+  $('medal').textContent=slain===10?'👑':slain>=8?'🏆':slain>=5?'🥈':slain>=3?'🥉':'💀';
+  const m=[...new Set(missed)];
+  $('fmiss').innerHTML=m.length
+    ?'取りこぼし: <b>'+m.join('</b> / <b>')+'</b>'
+    :'ノーミス。全10体を一撃で討伐した。';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

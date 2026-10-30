@@ -29,6 +29,7 @@ oxidation-number.html    … No.36 酸化数(12択グリッド)   ← 同上
 lewis-builder.html       … No.4  電子式→分子合成(canvas物理、手書き)
 crystal-classify.html    … No.6  結晶分類+質問推理(手書き)
 ion-formula.html         … No.10 イオン式・組成式(手書き、ion_learning-game由来)
+formula-tower.html       … No.11 物質名→化学式(ミニ周期表を押して組立、SVGモンスター、手書き)
 polarity-3d.html         … No.8  3D極性判定(自作3D投影、手書き)
 lattice-viewer.html      … No.14 結晶格子3D教材(自作3D投影、手書き)
 gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体、手書き)
