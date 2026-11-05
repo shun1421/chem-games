@@ -291,7 +291,6 @@ canvas{width:100%;height:100%;display:block}
       <label class="fld"><span>時間</span> <input id="hT" type="number" min="1" max="100000" value="150"><span class="unit">s</span></label>
     </div>
     <div class="warn" id="hwarn"></div>
-    <button class="big" onclick="hRun()">計算する</button>
 
     <div class="eqbox">
       <div class="ttl">速度式と速度定数（430 ℃ の実験値）</div>
@@ -756,11 +755,12 @@ function hEq(a,b,c,k1,k2){
   if(!good.length)return null;
   return good.sort((p,q)=>Math.abs(p)-Math.abs(q))[0];
 }
-function hRun(){
+function hRun(norm){
   const a=fnum('hH',0,100,1), b=fnum('hI',0,100,1), c=fnum('hHI',0,100,0);
   const k1=K1_430, k2=K2_430;
   const T=fnum('hT',1,100000,150);
-  $('hH').value=a;$('hI').value=b;$('hHI').value=c;$('hT').value=T;
+  // 打っているとちゅうに値を書きもどすと入力できなくなるので、確定したときだけ直す
+  if(norm!==false){$('hH').value=a;$('hI').value=b;$('hHI').value=c;$('hT').value=T;}
   let w='';
   if(a+b+c<=0)w='はじめの濃度がすべて0です。';
   $('hwarn').textContent=w;
@@ -831,7 +831,7 @@ function hDraw(){
     legend($('hLeg'),[{c:'#2e9e6b',t:'正反応 v₁＝k₁[H₂][I₂]'},{c:'#e8a13d',t:'逆反応 v₂＝k₂[HI]²'}]);
   }
 }
-['hH','hI','hHI','hT'].forEach(id=>{$(id).onchange=hRun;});
+['hH','hI','hHI','hT'].forEach(id=>{$(id).oninput=()=>hRun(false);$(id).onchange=()=>hRun(true);});
 // 平衡定数を、表に出ている平衡時の濃度から計算する
 function hCalcK(){
   const d=H.data,el=$('hKwork');
