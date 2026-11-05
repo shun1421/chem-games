@@ -41,6 +41,7 @@ sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確
 mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、1〜2段階、手書き)
 sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio、手書き)
 electrolysis.html        … No.40 電気分解の手順ゲーム(手書き)
+equilibrium-travel.html  … No.64 太平洋トラベラー(日本⇌アメリカの人の移動で平衡を体感。実戦/シミュレーション/H2+I2の3モード、canvasグラフ自作、手書き)
 ```
 
 ## デザイントークン(全ページ共通)

@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>太平洋トラベラー 〜日本 ⇌ アメリカで平衡を実感〜 | 化学ゲームラボ</title>
+<style>
+:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
+--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;--pur:#8a6bbf;
+--jp:#d4566a;--us:#3e77b6;
+--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+sub{font-size:.62em;line-height:0}
+sup{font-size:.62em;line-height:0}
+
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;
+ border-bottom:3px solid var(--pur);position:sticky;top:0;z-index:30}
+.back{color:var(--pur);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
+.htitle{font-size:16px;font-weight:900;letter-spacing:.04em;flex:1}
+.chip{font-size:11px;font-weight:700;color:var(--pur);border:1px solid var(--pur);
+ border-radius:999px;padding:2px 10px;white-space:nowrap}
+
+main{max-width:1120px;margin:0 auto;padding:10px 10px 40px}
+
+/* タブ */
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:10px 6px;font-size:13px;font-weight:900;font-family:inherit;
+ color:var(--mut);background:#fff;border:1.5px solid var(--line);border-radius:11px;cursor:pointer;
+ letter-spacing:.03em}
+.tabs button.on{background:var(--pur);border-color:var(--pur);color:#fff;
+ box-shadow:0 3px 0 #6b4fa0}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.pane{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px}
+.ph{font-size:11px;font-weight:900;color:var(--pur);letter-spacing:.12em;margin:0 0 7px}
+.ph.sp{margin-top:14px}
+
+/* 入力 */
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.fld{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mut);font-weight:700;
+ background:#f7fbfa;border:1.5px solid var(--line);border-radius:9px;padding:5px 9px}
+.fld input{width:58px;border:0;background:transparent;font-family:var(--mono);font-size:15px;
+ font-weight:800;color:var(--ink);text-align:right;padding:0;-moz-appearance:textfield}
+.fld input::-webkit-outer-spin-button,.fld input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.fld.jp{border-color:#eec2ca}.fld.us{border-color:#bfd3ea}
+.unit{font-size:10px;color:var(--mut)}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+.seg button{border:0;background:#fff;padding:6px 13px;font-size:11.5px;font-weight:800;color:var(--mut);
+ cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--pur);color:#fff}
+
+/* ルーレット */
+.dir{font-size:12px;font-weight:900;margin:10px 0 6px;display:flex;align-items:center;gap:7px}
+.dir b{font-family:var(--mono);font-size:14px}
+.dir.jp{color:var(--jp)}.dir.us{color:var(--us)}
+.dir .ar{font-size:15px}
+.cards{display:flex;flex-wrap:wrap;gap:6px;min-height:66px;align-content:flex-start}
+.card{width:62px;height:62px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+ font-family:var(--mono);font-size:24px;font-weight:900;border:2px solid;position:relative;
+ background:#fff;transition:transform .12s}
+.card.jp{border-color:var(--jp);color:var(--jp);background:#fdeef1}
+.card.us{border-color:var(--us);color:var(--us);background:#eaf1f9}
+.card.spin{opacity:.72;transform:scale(.96)}
+.card.pop{animation:pop .3s}
+@keyframes pop{0%{transform:scale(1.22)}60%{transform:scale(.94)}100%{transform:scale(1)}}
+.card .bdg{position:absolute;top:-7px;right:-6px;width:21px;height:21px;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-family:inherit}
+.card .bdg.go{background:var(--ok)}
+.card.no{opacity:.34;filter:grayscale(.7)}
+.big{display:block;width:100%;margin-top:12px;padding:14px;font-size:16px;font-weight:900;
+ color:#fff;background:var(--pur);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
+ box-shadow:0 4px 0 #6b4fa0;letter-spacing:.08em}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 #6b4fa0}
+.big[disabled]{opacity:.5;cursor:default;box-shadow:0 4px 0 #6b4fa0}
+.big.sub{background:#fff;color:var(--pur);border:1.5px solid var(--pur);box-shadow:0 4px 0 #ddd3ef}
+
+/* 記録 */
+.rec{margin-top:11px;background:#f7f4fc;border:1.5px solid #ddd3ef;border-radius:11px;padding:10px}
+.rec .lb{font-size:11.5px;font-weight:800;color:var(--mut);margin-bottom:7px}
+.recrow{display:flex;gap:6px;align-items:center}
+.stp{width:40px;height:40px;border:1.5px solid var(--line);background:#fff;border-radius:9px;
+ font-size:19px;font-weight:900;color:var(--pur);cursor:pointer;font-family:inherit;padding:0}
+.recrow input{flex:1;min-width:0;height:40px;border:1.5px solid var(--line);border-radius:9px;
+ font-family:var(--mono);font-size:20px;font-weight:900;text-align:center;color:var(--ink);
+ background:#fff;-moz-appearance:textfield}
+.recrow input::-webkit-outer-spin-button,.recrow input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.go{height:40px;padding:0 16px;border:0;border-radius:9px;background:var(--ok);color:#fff;
+ font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap}
+.moved{font-size:13px;font-weight:800;line-height:1.9}
+.moved .n{font-family:var(--mono);font-size:17px}
+
+/* 状態表示 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.st{background:#f7fbfa;border:1.5px solid var(--line);border-radius:11px;padding:7px 4px;text-align:center}
+.st .k{font-size:10px;color:var(--mut);font-weight:800;letter-spacing:.06em}
+.st .v{font-family:var(--mono);font-size:23px;font-weight:900;line-height:1.25}
+.st.jp{border-color:#eec2ca;background:#fdeef1}.st.jp .v{color:var(--jp)}
+.st.us{border-color:#bfd3ea;background:#eaf1f9}.st.us .v{color:var(--us)}
+
+/* グラフ */
+.cwrap{position:relative;width:100%;height:290px}
+canvas{width:100%;height:100%;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:6px;
+ font-size:11.5px;font-weight:800;color:var(--mut)}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:5px;
+ vertical-align:middle}
+.legend i.d{height:0;border-top:3px dotted}
+.note{font-size:11.5px;color:var(--mut);line-height:1.95;margin:9px 0 0}
+.note b{color:var(--ink)}
+.eqbox{margin-top:10px;background:#f7f4fc;border:1.5px solid #ddd3ef;border-radius:11px;padding:9px 11px;
+ font-size:12px;line-height:2;color:var(--mut)}
+.eqbox b{font-family:var(--mono);color:var(--ink);font-size:13.5px}
+.eqbox .ttl{font-size:10.5px;font-weight:900;color:var(--pur);letter-spacing:.1em}
+.row2{display:flex;gap:7px;margin-top:9px}
+.row2 button{flex:1;padding:9px;font-size:12.5px;font-weight:800;font-family:inherit;color:var(--mut);
+ background:#fff;border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
+.warn{font-size:11.5px;color:var(--bad);font-weight:800;margin-top:7px;min-height:1px}
+
+/* 平衡定数の計算 */
+.kcalc{margin-top:10px}
+.kbtn{width:100%;padding:12px;font-size:15px;font-weight:900;font-family:inherit;color:#fff;
+ background:var(--ok);border:0;border-radius:11px;cursor:pointer;box-shadow:0 4px 0 #237a52;
+ letter-spacing:.06em}
+.kbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #237a52}
+.kwork{margin-top:9px;background:#eef8f3;border:1.5px solid #b9e0cd;border-radius:11px;padding:11px 12px}
+.kl{display:grid;grid-template-columns:1.5em 1.4em 1fr;align-items:baseline;
+ font-family:var(--mono);font-size:14.5px;font-weight:800;line-height:2.05}
+.kl .sym{font-weight:900}
+.kl.ans>div:last-child{font-size:21px;color:var(--ok)}
+.kcap{font-size:11px;color:var(--mut);font-weight:700;line-height:1.85;margin-top:7px}
+.kcap b{color:var(--ink)}
+
+/* 量的関係の表 */
+.qt{margin-top:11px;border:1.5px solid var(--line);border-radius:11px;overflow:hidden;background:#fff}
+.res .qt{grid-column:1/-1;margin-top:0}
+.qr{display:grid;grid-template-columns:5.2em 1fr 1fr 1fr;align-items:center;
+ font-family:var(--mono);font-size:15px;font-weight:800;text-align:center}
+.qr>div{padding:8px 2px;border-top:1px solid var(--line);white-space:nowrap}
+.qr.qh{background:#f7fbfa;font-family:inherit;font-size:11.5px;color:var(--mut);font-weight:900}
+.qr.qh>div{border-top:0;padding:6px 2px}
+.qr .rh{font-family:inherit;font-size:11.5px;font-weight:900;color:var(--mut);background:#f7fbfa;
+ text-align:left;padding-left:9px}
+.qr.ch>div{color:var(--amber)}
+.qr.ch .rh{color:var(--mut)}
+.qr.eq>div{color:var(--ok);font-size:16px}
+.qr.eq .rh{color:var(--mut);font-size:11.5px}
+
+/* 結果テーブル */
+.res{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rc{background:#f7fbfa;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px}
+.rc .k{font-size:10.5px;color:var(--mut);font-weight:800;line-height:1.7}
+.rc .v{font-family:var(--mono);font-size:17px;font-weight:900}
+.rc.jp{border-color:#eec2ca}.rc.jp .v{color:var(--jp)}
+.rc.us{border-color:#bfd3ea}.rc.us .v{color:var(--us)}
+.rc.ok2{border-color:#b9e0cd}.rc.ok2 .v{color:var(--ok)}
+
+.mute{background:none;border:0;font-size:15px;cursor:pointer;padding:0 2px;line-height:1}
+.hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.hd .t{font-size:13px;font-weight:900;flex:1}
+
+@media(max-width:860px){
+ .split{grid-template-columns:1fr}
+ .cwrap{height:240px}
+ .card{width:54px;height:54px;font-size:21px}
+}
+@media(max-width:380px){
+ .card{width:50px;height:50px;font-size:19px;border-radius:10px}
+ .fld input{width:50px}
+}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html">‹ 一覧</a>
+  <div class="htitle">太平洋トラベラー</div>
+  <span class="chip">化学平衡</span>
+</header>
+<main>
+
+<div class="tabs">
+  <button class="on" id="tb0" onclick="setTab(0)">実戦</button>
+  <button id="tb1" onclick="setTab(1)">シミュレーション</button>
+  <button id="tb2" onclick="setTab(2)">H<sub>2</sub>+I<sub>2</sub>⇌2HI</button>
+</div>
+
+<!-- ===================== 実戦モード ===================== -->
+<section id="sec0" class="split">
+  <div class="pane">
+    <div class="hd"><div class="t">ルーレット</div>
+      <button class="mute" id="mute" onclick="toggleMute()" title="音">🔊</button></div>
+    <div class="ctrl">
+      <label class="fld">参加人数 <input id="gN" type="number" min="2" max="60" value="24"><span class="unit">人</span></label>
+      <label class="fld jp">日→米 <input id="gR1" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
+      <label class="fld us">米→日 <input id="gR2" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
+      <span class="seg" id="gmode">
+        <button class="on" data-v="in">人数を入力</button><button data-v="auto">自動で追跡</button>
+      </span>
+    </div>
+    <div class="warn" id="gwarn"></div>
+    <p class="note" style="margin:6px 0 0">参加人数・枚数・記録のしかたを変えると、記録は最初からになる。</p>
+
+    <div class="dir jp"><span class="ar">日本 → アメリカ</span><b id="gL1">3</b>枚</div>
+    <div class="cards" id="gC1"></div>
+    <div class="dir us"><span class="ar">アメリカ → 日本</span><b id="gL2">3</b>枚</div>
+    <div class="cards" id="gC2"></div>
+
+    <button class="big" id="gSpin" onclick="gSpin()">まわす</button>
+
+    <div class="rec hidden" id="gRec">
+      <div class="lb" id="gRecLb">いま アメリカ にいる人数は？</div>
+      <div class="recrow" id="gRecIn">
+        <button class="stp" onclick="gBump(-1)">−</button>
+        <input id="gUs" type="number" min="0" value="0">
+        <button class="stp" onclick="gBump(1)">＋</button>
+        <button class="go" onclick="gRecord()">記録</button>
+      </div>
+      <div class="moved hidden" id="gMoved"></div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="hd"><div class="t">各国の人数</div></div>
+    <div class="stats">
+      <div class="st"><div class="k">試行回数</div><div class="v" id="gT">0</div></div>
+      <div class="st jp"><div class="k">日本</div><div class="v" id="gJ">24</div></div>
+      <div class="st us"><div class="k">アメリカ</div><div class="v" id="gA">0</div></div>
+    </div>
+    <div class="cwrap"><canvas id="gCv"></canvas></div>
+    <div class="legend">
+      <span><i style="background:#d4566a"></i>日本（実測）</span>
+      <span><i style="background:#3e77b6"></i>アメリカ（実測）</span>
+      <span><i class="d" style="border-color:#b9b2c7"></i>理論値</span>
+    </div>
+    <div class="row2">
+      <button onclick="gUndo()">1つ戻す</button>
+      <button onclick="gReset()">最初から</button>
+    </div>
+    <p class="note">全員が<b>日本</b>からスタート。呼ばれた番号の人は、<b>その向きの国にいるときだけ</b>移動する。</p>
+  </div>
+</section>
+
+<!-- ===================== シミュレーション ===================== -->
+<section id="sec1" class="split hidden">
+  <div class="pane">
+    <div class="hd"><div class="t">条件</div></div>
+    <div class="ctrl">
+      <label class="fld">参加人数 <input id="sN" type="number" min="2" max="5000" value="600"><span class="unit">人</span></label>
+      <label class="fld">試行回数 <input id="sT" type="number" min="5" max="400" value="60"><span class="unit">回</span></label>
+    </div>
+    <div class="ph sp">はじめにいる人数</div>
+    <div class="ctrl">
+      <label class="fld jp">日本 <input id="sJ0" type="number" min="0" max="5000" value="600"><span class="unit">人</span></label>
+      <label class="fld us">アメリカ <input id="sA0" type="number" min="0" max="5000" value="0"><span class="unit">人</span></label>
+    </div>
+    <div class="ph sp">ルーレットで表示する枚数</div>
+    <div class="ctrl">
+      <label class="fld jp"><span>日→米 r<sub>1</sub></span> <input id="sR1" type="number" min="1" max="500" value="50"><span class="unit">枚</span></label>
+      <label class="fld us"><span>米→日 r<sub>2</sub></span> <input id="sR2" type="number" min="1" max="500" value="50"><span class="unit">枚</span></label>
+    </div>
+    <div class="warn" id="swarn"></div>
+    <button class="big" onclick="sRun()">シミュレーション実行</button>
+
+    <div class="res" id="sRes"></div>
+  </div>
+
+  <div class="pane">
+    <div class="hd"><div class="t" id="sGt">各国の人数</div>
+      <span class="seg" id="sgraph">
+        <button class="on" data-v="0">人数</button><button data-v="1">移動人数</button><button data-v="2">見かけ</button>
+      </span></div>
+    <div class="cwrap"><canvas id="sCv"></canvas></div>
+    <div class="legend" id="sLeg"></div>
+  </div>
+</section>
+
+<!-- ===================== H2 + I2 ===================== -->
+<section id="sec2" class="split hidden">
+  <div class="pane">
+    <div class="hd"><div class="t">H<sub>2</sub> ＋ I<sub>2</sub> ⇌ 2HI</div></div>
+    <div class="ph">はじめの濃度 (mol/L)</div>
+    <div class="ctrl">
+      <label class="fld"><span>[H<sub>2</sub>]<sub>0</sub></span> <input id="hH" type="number" min="0" max="100" step="0.1" value="1.0"></label>
+      <label class="fld"><span>[I<sub>2</sub>]<sub>0</sub></span> <input id="hI" type="number" min="0" max="100" step="0.1" value="1.0"></label>
+      <label class="fld"><span>[HI]<sub>0</sub></span> <input id="hHI" type="number" min="0" max="100" step="0.1" value="0"></label>
+    </div>
+    <div class="ph sp">グラフにえがく時間</div>
+    <div class="ctrl">
+      <label class="fld"><span>時間</span> <input id="hT" type="number" min="1" max="100000" value="150"><span class="unit">s</span></label>
+    </div>
+    <div class="warn" id="hwarn"></div>
+    <button class="big" onclick="hRun()">計算する</button>
+
+    <div class="eqbox">
+      <div class="ttl">速度式と速度定数（430 ℃ の実験値）</div>
+      正反応 v<sub>1</sub>＝k<sub>1</sub>[H<sub>2</sub>][I<sub>2</sub>]　　k<sub>1</sub>＝<b>8.7×10<sup>−2</sup></b> L/(mol·s)<br>
+      逆反応 v<sub>2</sub>＝k<sub>2</sub>[HI]<sup>2</sup>　　k<sub>2</sub>＝<b>1.6×10<sup>−3</sup></b> L/(mol·s)
+    </div>
+    <div class="res" id="hRes"></div>
+    <div class="kcalc">
+      <button class="kbtn" onclick="hCalcK()">平衡定数を計算する</button>
+      <div class="kwork hidden" id="hKwork"></div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="hd"><div class="t" id="hGt">濃度の変化</div>
+      <span class="seg" id="hgraph">
+        <button class="on" data-v="0">濃度</button><button data-v="1">反応速度</button>
+      </span></div>
+    <div class="cwrap"><canvas id="hCv"></canvas></div>
+    <div class="legend" id="hLeg"></div>
+    <p class="note">正反応と逆反応の速度が等しくなったところで、濃度は見かけ上かわらなくなる（平衡状態）。</p>
+  </div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function iv(id,def){const v=parseFloat($(id).value);return isFinite(v)?v:def;}
+function num(id,min,max,def){let v=Math.round(iv(id,def));v=clamp(v,min,max);$(id).value=v;return v;}
+function fnum(id,min,max,def){let v=iv(id,def);v=clamp(v,min,max);return v;}
+
+// ===== 効果音 =====
+let AC=null,muted=false;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){AC=null;}}return AC;}
+function beep(f,d,type,g0){
+  if(muted)return;const c=ac();if(!c)return;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type||'square';o.frequency.value=f;
+  g.gain.setValueAtTime(g0||0.05,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+  o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d);
+}
+const sfx={
+  tick(){beep(680+Math.random()*180,0.03,'square',0.025);},
+  stop(){beep(880,0.09,'triangle',0.06);},
+  fix(){[660,880,1180].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'triangle',0.06),i*70));},
+  rec(){beep(520,0.1,'sine',0.07);setTimeout(()=>beep(780,0.13,'sine',0.06),90);}
+};
+function toggleMute(){muted=!muted;$('mute').textContent=muted?'🔇':'🔊';}
+
+// ===== タブ =====
+let tab=0;
+function setTab(i){
+  tab=i;
+  for(let k=0;k<3;k++){
+    $('sec'+k).classList.toggle('hidden',k!==i);
+    $('tb'+k).classList.toggle('on',k===i);
+  }
+  redraw();
+  window.scrollTo(0,0);
+}
+
+// ===== グラフ描画 =====
+function niceStep(span,target){
+  if(!(span>0))return 1;
+  const raw=span/target,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;
+  return (f<1.5?1:f<3?2:f<7?5:10)*p;
+}
+function fmtTick(v,step){
+  if(step>=1)return String(Math.round(v));
+  const d=Math.min(4,Math.max(0,Math.ceil(-Math.log10(step))));
+  return v.toFixed(d);
+}
+// cfg:{xs, series:[{c,data,dash,w}], ymin,ymax, xlab,ylab, intX}
+function drawChart(cv,cfg){
+  const w=cv.clientWidth,h=cv.clientHeight;
+  if(w<10||h<10)return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,w,h);
+  if(!cfg||!cfg.xs||!cfg.xs.length){
+    g.fillStyle='#aebdbc';g.font='700 13px sans-serif';g.textAlign='center';
+    g.fillText('ここにグラフが出ます',w/2,h/2);return;
+  }
+  const L=46,R=12,T=12,B=30;
+  const pw=w-L-R,ph=h-T-B;
+  const xs=cfg.xs;
+  let x0=xs[0],x1=xs[xs.length-1];if(x1<=x0)x1=x0+1;
+  let y0=cfg.ymin||0,y1=cfg.ymax;
+  if(!(y1>y0))y1=y0+1;
+  const X=v=>L+(v-x0)/(x1-x0)*pw, Y=v=>T+ph-(v-y0)/(y1-y0)*ph;
+  // 目もり
+  g.strokeStyle='#e7eeed';g.lineWidth=1;
+  g.fillStyle='#8fa0a5';g.font='600 10px sans-serif';
+  const ys=niceStep(y1-y0,4);
+  g.textAlign='right';g.textBaseline='middle';
+  for(let v=Math.ceil(y0/ys)*ys;v<=y1+1e-9;v+=ys){
+    const y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();
+    g.fillText(fmtTick(v,ys),L-6,y);
+  }
+  let xst=niceStep(x1-x0,5);
+  if(cfg.intX)xst=Math.max(1,Math.round(xst));
+  g.textAlign='center';g.textBaseline='top';
+  for(let v=Math.ceil(x0/xst)*xst;v<=x1+1e-9;v+=xst){
+    const x=X(v);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();
+    g.fillText(fmtTick(v,xst),x,T+ph+6);
+  }
+  // 軸
+  g.strokeStyle='#c3d0cf';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(L,T);g.lineTo(L,T+ph);g.lineTo(L+pw,T+ph);g.stroke();
+  // 系列
+  cfg.series.forEach(s=>{
+    if(!s.data||!s.data.length)return;
+    g.strokeStyle=s.c;g.lineWidth=s.w||2.2;
+    g.setLineDash(s.dash||[]);
+    g.lineJoin='round';g.beginPath();
+    let on=false;
+    for(let i=0;i<s.data.length&&i<xs.length;i++){
+      const v=s.data[i];
+      if(v==null||!isFinite(v)){on=false;continue;}
+      const x=X(xs[i]),y=Y(clamp(v,y0,y1));
+      if(!on){g.moveTo(x,y);on=true;}else g.lineTo(x,y);
+    }
+    g.stroke();g.setLineDash([]);
+    if(s.data.filter(v=>v!=null&&isFinite(v)).length===1){
+      const i=s.data.findIndex(v=>v!=null&&isFinite(v));
+      g.fillStyle=s.c;g.beginPath();g.arc(X(xs[i]),Y(s.data[i]),3.4,0,7);g.fill();
+    }
+  });
+  // 軸ラベル
+  g.fillStyle='#8fa0a5';g.font='700 10px sans-serif';
+  g.textAlign='right';g.textBaseline='bottom';
+  if(cfg.xlab)g.fillText(cfg.xlab,w-4,h-2);
+  g.textAlign='left';g.textBaseline='top';
+  if(cfg.ylab)g.fillText(cfg.ylab,2,0);
+}
+function legend(el,items){
+  el.innerHTML=items.map(it=>'<span><i class="'+(it.d?'d':'')+'" style="'+
+    (it.d?'border-color:'+it.c:'background:'+it.c)+'"></i>'+it.t+'</span>').join('');
+}
+
+// ===== 共通: 重複しない乱数 =====
+function sampleUnique(N,k){
+  k=Math.min(k,N);
+  const got={},out=[];
+  while(out.length<k){
+    const n=1+Math.floor(Math.random()*N);
+    if(!got[n]){got[n]=1;out.push(n);}
+  }
+  return out;
+}
+// 理論曲線: J(t+1)=J(1-r1/N)+A*r2/N
+function theory(N,r1,r2,J0,T){
+  const J=[J0],A=[N-J0];
+  for(let t=1;t<=T;t++){
+    const j=J[t-1],a=A[t-1];
+    const nj=j-r1*j/N+r2*a/N;
+    J.push(nj);A.push(N-nj);
+  }
+  return {J:J,A:A};
+}
+
+/* =======================================================
+   実戦モード
+   ======================================================= */
+const G={N:24,r1:3,r2:3,mode:'in',where:null,hist:[],nums1:[],nums2:[],spinning:false,pend:false};
+
+function gSetup(reset){
+  const N=num('gN',2,60,24);
+  const r1=num('gR1',1,10,3), r2=num('gR2',1,10,3);
+  let warn='';
+  if(r1+r2>N){warn='枚数の合計が参加人数より多い。重ならない番号が足りません。';}
+  $('gwarn').textContent=warn;
+  const changed=(N!==G.N||r1!==G.r1||r2!==G.r2);
+  G.N=N;G.r1=r1;G.r2=r2;
+  $('gL1').textContent=r1;$('gL2').textContent=r2;
+  if(reset||changed)gReset();
+}
+function gReset(){
+  G.where=new Uint8Array(G.N+1);      // 0=日本 1=アメリカ
+  G.hist=[{j:G.N,a:0,m1:0,m2:0}];
+  G.nums1=[];G.nums2=[];G.pend=false;
+  $('gC1').innerHTML='';$('gC2').innerHTML='';
+  $('gRec').classList.add('hidden');
+  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
+  gPaint();
+}
+function gUndo(){
+  if(G.hist.length<2)return;
+  G.hist.pop();
+  if(G.mode==='auto'){ // 自動モードは状態が戻せないので入力値から作り直す
+    const h=G.hist[G.hist.length-1];
+    G.where=new Uint8Array(G.N+1);
+    for(let i=1;i<=h.a;i++)G.where[i]=1;
+  }
+  G.pend=false;$('gRec').classList.add('hidden');
+  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
+  gPaint();
+}
+function gCards(el,nums,cls,spin){
+  el.innerHTML='';
+  nums.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='card '+cls+(spin?' spin':'');
+    d.textContent=n;el.appendChild(d);
+  });
+}
+function gSpin(){
+  if(G.spinning)return;
+  if(G.pend){return;}
+  if(G.r1+G.r2>G.N)return;
+  G.spinning=true;$('gSpin').disabled=true;
+  $('gRec').classList.add('hidden');
+  const c1=$('gC1'),c2=$('gC2');
+  gCards(c1,new Array(G.r1).fill(0),'jp',true);
+  gCards(c2,new Array(G.r2).fill(0),'us',true);
+  const all=[...c1.children,...c2.children];
+  let n=0;
+  const iv=setInterval(()=>{
+    all.forEach(e=>{e.textContent=1+Math.floor(Math.random()*G.N);});
+    if(n++%2===0)sfx.tick();
+  },55);
+  setTimeout(()=>{
+    clearInterval(iv);
+    const pick=sampleUnique(G.N,G.r1+G.r2);
+    G.nums1=pick.slice(0,G.r1);G.nums2=pick.slice(G.r1);
+    gCards(c1,G.nums1,'jp',false);gCards(c2,G.nums2,'us',false);
+    [...c1.children,...c2.children].forEach(e=>e.classList.add('pop'));
+    sfx.fix();
+    G.spinning=false;G.pend=true;
+    gAfterSpin();
+  },1150);
+}
+function gAfterSpin(){
+  const last=G.hist[G.hist.length-1];
+  $('gRec').classList.remove('hidden');
+  if(G.mode==='auto'){
+    // 試行前の状態で判定してから、まとめて動かす
+    const snap=G.where.slice();
+    let m1=0,m2=0;
+    const c1=$('gC1').children,c2=$('gC2').children;
+    G.nums1.forEach((x,i)=>{
+      const ok=snap[x]===0;
+      if(ok){G.where[x]=1;m1++;}
+      gBadge(c1[i],ok);
+    });
+    G.nums2.forEach((x,i)=>{
+      const ok=snap[x]===1;
+      if(ok){G.where[x]=0;m2++;}
+      gBadge(c2[i],ok);
+    });
+    const j=last.j-m1+m2, a=last.a+m1-m2;
+    G.hist.push({j:j,a:a,m1:m1,m2:m2});
+    G.pend=false;
+    $('gRecIn').classList.add('hidden');
+    const mv=$('gMoved');mv.classList.remove('hidden');
+    mv.innerHTML='日本 → アメリカ <span class="n" style="color:var(--jp)">'+m1+'</span> 人　／　'
+      +'アメリカ → 日本 <span class="n" style="color:var(--us)">'+m2+'</span> 人<br>'
+      +'<span style="color:var(--mut);font-weight:700">✈ のついた人だけが動いた（その国にいた人）</span>';
+    $('gRecLb').textContent='この試行で動いた人';
+    $('gSpin').disabled=false;
+    sfx.rec();
+    gPaint();
+  }else{
+    $('gRecIn').classList.remove('hidden');
+    $('gMoved').classList.add('hidden');
+    $('gRecLb').textContent='いま アメリカ にいる人数は？（数えて入力）';
+    $('gUs').value=last.a;
+    $('gUs').max=G.N;
+    $('gSpin').textContent='記録してから、まわす';
+  }
+}
+function gBadge(el,ok){
+  if(!el)return;
+  if(ok){const b=document.createElement('span');b.className='bdg go';b.textContent='✈';el.appendChild(b);}
+  else el.classList.add('no');
+}
+function gBump(d){
+  const v=clamp(Math.round(iv('gUs',0))+d,0,G.N);
+  $('gUs').value=v;
+}
+function gRecord(){
+  if(!G.pend)return;
+  const a=clamp(Math.round(iv('gUs',0)),0,G.N);
+  const last=G.hist[G.hist.length-1];
+  const j=G.N-a;
+  G.hist.push({j:j,a:a,m1:Math.max(0,last.j-j),m2:Math.max(0,last.a-a)});
+  // 入力モードでも番号の所在をだいたい合わせておく（戻す用）
+  G.where=new Uint8Array(G.N+1);
+  for(let i=1;i<=a;i++)G.where[i]=1;
+  G.pend=false;
+  $('gRec').classList.add('hidden');
+  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
+  sfx.rec();
+  gPaint();
+}
+function gPaint(){
+  const h=G.hist,last=h[h.length-1];
+  $('gT').textContent=h.length-1;
+  $('gJ').textContent=last.j;
+  $('gA').textContent=last.a;
+  gDraw();
+}
+function gDraw(){
+  const h=G.hist;
+  const xs=h.map((_,i)=>i);
+  const th=theory(G.N,G.r1,G.r2,h[0].j,Math.max(h.length-1,8));
+  const xs2=th.J.map((_,i)=>i);
+  const allx=xs2.length>xs.length?xs2:xs;
+  const pad=v=>{const o=v.slice();while(o.length<allx.length)o.push(null);return o;};
+  drawChart($('gCv'),{
+    xs:allx,ymin:0,ymax:G.N,intX:true,xlab:'試行回数',ylab:'人数',
+    series:[
+      {c:'#b9b2c7',data:pad(th.J),dash:[3,3],w:1.8},
+      {c:'#b9b2c7',data:pad(th.A),dash:[3,3],w:1.8},
+      {c:'#d4566a',data:pad(h.map(x=>x.j)),w:2.6},
+      {c:'#3e77b6',data:pad(h.map(x=>x.a)),w:2.6}
+    ]
+  });
+}
+$('gmode').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('gmode').children].forEach(x=>x.classList.toggle('on',x===b));
+  G.mode=b.dataset.v;
+  gReset();
+};
+['gN','gR1','gR2'].forEach(id=>{$(id).onchange=()=>gSetup(false);});
+
+/* =======================================================
+   シミュレーション
+   ======================================================= */
+const S={data:null,view:0};
+function sRun(){
+  let N=num('sN',2,5000,1000);
+  const T=num('sT',5,400,60);
+  let J0=num('sJ0',0,5000,N), A0=num('sA0',0,5000,0);
+  if(J0+A0!==N){ // 合計を参加人数に合わせる
+    if(J0>N){J0=N;$('sJ0').value=J0;}
+    A0=N-J0;$('sA0').value=A0;
+  }
+  const r1=num('sR1',1,500,3), r2=num('sR2',1,500,3);
+  let w='';
+  if(r1>N||r2>N)w='枚数が参加人数より多い。';
+  else if(r1+r2>N)w='枚数の合計が参加人数より多いので、重ならない番号が足りません。';
+  $('swarn').textContent=w;
+  if(r1>N||r2>N)return;
+
+  // 本番と同じやり方: 1〜N から重複なく r1+r2 個ひく
+  const where=new Uint8Array(N+1);
+  for(let i=J0+1;i<=N;i++)where[i]=1;
+  const J=[J0],A=[A0],M1=[null],M2=[null],NET=[null];
+  const take=Math.min(r1+r2,N);
+  for(let t=1;t<=T;t++){
+    const pick=sampleUnique(N,take);
+    const l1=pick.slice(0,Math.min(r1,take)),l2=pick.slice(Math.min(r1,take));
+    const snap=where.slice();
+    let m1=0,m2=0;
+    l1.forEach(x=>{if(snap[x]===0){where[x]=1;m1++;}});
+    l2.forEach(x=>{if(snap[x]===1){where[x]=0;m2++;}});
+    J.push(J[t-1]-m1+m2);A.push(A[t-1]+m1-m2);
+    M1.push(m1);M2.push(m2);NET.push(m1-m2);
+  }
+  const th=theory(N,r1,r2,J0,T);
+  const tM1=[null],tM2=[null],tNET=[null];
+  for(let t=1;t<=T;t++){
+    const a=r1*th.J[t-1]/N, b=r2*th.A[t-1]/N;
+    tM1.push(a);tM2.push(b);tNET.push(a-b);
+  }
+  S.data={N:N,T:T,r1:r1,r2:r2,J:J,A:A,M1:M1,M2:M2,NET:NET,th:th,tM1:tM1,tM2:tM2,tNET:tNET};
+
+  const need=Math.ceil(3*N/(r1+r2));
+  if(!w&&T<need)$('swarn').textContent='試行回数が少なめ。平衡まで届かせるには '+need+' 回くらい必要。';
+  // 終盤の平均（後ろ3割）
+  const s0=Math.max(1,Math.floor(T*0.7));
+  const avg=arr=>{let s=0,n=0;for(let i=s0;i<=T;i++){if(arr[i]!=null){s+=arr[i];n++;}}return n?s/n:0;};
+  $('sRes').innerHTML=
+    '<div class="rc jp"><div class="k">最後の3割の平均　日本</div><div class="v">'+avg(J).toFixed(1)+' 人</div></div>'
+   +'<div class="rc us"><div class="k">最後の3割の平均　アメリカ</div><div class="v">'+avg(A).toFixed(1)+' 人</div></div>'
+   +'<div class="rc ok2"><div class="k">最後の3割の移動人数　日→米</div><div class="v">'+avg(M1).toFixed(2)+' 人</div></div>'
+   +'<div class="rc ok2"><div class="k">最後の3割の移動人数　米→日</div><div class="v">'+avg(M2).toFixed(2)+' 人</div></div>';
+  sDraw();
+}
+function smooth(arr,w){
+  const out=[];
+  for(let i=0;i<arr.length;i++){
+    if(arr[i]==null){out.push(null);continue;}
+    let s=0,n=0;
+    for(let k=Math.max(0,i-w);k<=Math.min(arr.length-1,i+w);k++){
+      if(arr[k]!=null){s+=arr[k];n++;}
+    }
+    out.push(n?s/n:null);
+  }
+  return out;
+}
+function sDraw(){
+  const d=S.data;
+  if(!d){drawChart($('sCv'),null);legend($('sLeg'),[]);return;}
+  const xs=d.J.map((_,i)=>i);
+  if(S.view===0){
+    $('sGt').textContent='各国の人数';
+    drawChart($('sCv'),{xs:xs,ymin:0,ymax:d.N,intX:true,xlab:'試行回数',ylab:'人数',
+      series:[{c:'#b9b2c7',data:d.th.J,dash:[3,3],w:1.8},
+              {c:'#b9b2c7',data:d.th.A,dash:[3,3],w:1.8},
+              {c:'#d4566a',data:d.J,w:2.4},{c:'#3e77b6',data:d.A,w:2.4}]});
+    legend($('sLeg'),[{c:'#d4566a',t:'日本'},{c:'#3e77b6',t:'アメリカ'},{c:'#b9b2c7',t:'理論値',d:1}]);
+  }else if(S.view===1){
+    $('sGt').textContent='実際に移動した人数';
+    const w=Math.max(2,Math.round(d.T*0.04));
+    const mx=Math.max(1,d.r1,d.r2,...d.M1.filter(v=>v!=null),...d.M2.filter(v=>v!=null));
+    drawChart($('sCv'),{xs:xs,ymin:0,ymax:mx*1.1,intX:true,xlab:'試行回数',ylab:'人数',
+      series:[{c:'#f3bfc7',data:d.M1,w:1.1},{c:'#aecae6',data:d.M2,w:1.1},
+              {c:'#d4566a',data:smooth(d.M1,w),w:2.4},{c:'#3e77b6',data:smooth(d.M2,w),w:2.4},
+              {c:'#6f6683',data:d.tM1,dash:[4,3],w:1.8},
+              {c:'#6f6683',data:d.tM2,dash:[4,3],w:1.8}]});
+    legend($('sLeg'),[{c:'#d4566a',t:'日本→アメリカ'},{c:'#3e77b6',t:'アメリカ→日本'},
+      {c:'#cfd8d7',t:'うすい線＝1回ごとの実測'},{c:'#6f6683',t:'理論値',d:1}]);
+  }else{
+    $('sGt').textContent='見かけの移動人数';
+    const w=Math.max(2,Math.round(d.T*0.04));
+    const vs=d.NET.filter(v=>v!=null);
+    const mx=Math.max(1,...vs.map(Math.abs));
+    drawChart($('sCv'),{xs:xs,ymin:-mx*1.15,ymax:mx*1.15,intX:true,xlab:'試行回数',ylab:'人数',
+      series:[{c:'#cfd8d7',data:xs.map(()=>0),w:1.4},
+              {c:'#cdc3de',data:d.NET,w:1.1},
+              {c:'#8a6bbf',data:smooth(d.NET,w),w:2.4},
+              {c:'#6f6683',data:d.tNET,dash:[4,3],w:1.8}]});
+    legend($('sLeg'),[{c:'#8a6bbf',t:'日→米 − 米→日'},{c:'#cdc3de',t:'うすい線＝1回ごとの実測'},
+      {c:'#6f6683',t:'理論値',d:1}]);
+  }
+}
+$('sgraph').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('sgraph').children].forEach(x=>x.classList.toggle('on',x===b));
+  S.view=+b.dataset.v;sDraw();
+};
+
+/* =======================================================
+   H2 + I2 ⇌ 2HI
+   ======================================================= */
+// 有効数字4けたの文字列（0 はそのまま）
+function sig4(v){
+  if(Math.abs(v)<1e-12)return '0';
+  return Number(v.toPrecision(4)).toPrecision(4);
+}
+// 430 ℃（約700 K）の実験値
+const K1_430=8.7e-2, K2_430=1.6e-3;
+const H={data:null,view:0};
+// 平衡時の反応進行度 x: k1(a-x)(b-x) = k2(c+2x)^2
+function hEq(a,b,c,k1,k2){
+  const A=k1-4*k2, B=-k1*(a+b)-4*k2*c, C=k1*a*b-k2*c*c;
+  const lo=-c/2, hi=Math.min(a,b);
+  const ok=x=>x>=lo-1e-9&&x<=hi+1e-9;
+  let xs=[];
+  if(Math.abs(A)<1e-12){ if(Math.abs(B)>1e-12)xs=[-C/B]; }
+  else{
+    const D=B*B-4*A*C;
+    if(D>=0){const s=Math.sqrt(D);xs=[(-B+s)/(2*A),(-B-s)/(2*A)];}
+  }
+  const good=xs.filter(ok);
+  if(!good.length)return null;
+  return good.sort((p,q)=>Math.abs(p)-Math.abs(q))[0];
+}
+function hRun(){
+  const a=fnum('hH',0,100,1), b=fnum('hI',0,100,1), c=fnum('hHI',0,100,0);
+  const k1=K1_430, k2=K2_430;
+  const T=fnum('hT',1,100000,150);
+  $('hH').value=a;$('hI').value=b;$('hHI').value=c;$('hT').value=T;
+  let w='';
+  if(a+b+c<=0)w='はじめの濃度がすべて0です。';
+  $('hwarn').textContent=w;
+  $('hKwork').classList.add('hidden');
+  if(a+b+c<=0){H.data=null;hDraw();return;}
+
+  // d x/dt = k1(a-x)(b-x) - k2(c+2x)^2   （x: 反応の進み）
+  const f=x=>k1*(a-x)*(b-x)-k2*Math.pow(c+2*x,2);
+  const xe=hEq(a,b,c,k1,k2);
+  const lo=-c/2, hi0=Math.min(a,b);
+  // 反応が速いほど刻みを細かく（RK4が発散しないように）
+  const rate=k1*(a+b+c)+4*k2*(c+2*hi0)+1e-9;
+  const dtMax=0.2/rate;
+  const PTS=400, frame=T/PTS, CAP=4000;
+  const xs=[0],H2=[a],I2=[b],HI=[c],V1=[k1*a*b],V2=[k2*c*c];
+  let x=0;
+  for(let i=1;i<=PTS;i++){
+    let rem=frame,guard=0;
+    while(rem>1e-15&&guard<CAP){
+      const h=Math.min(rem,dtMax);
+      const q1=f(x), q2=f(x+h/2*q1), q3=f(x+h/2*q2), q4=f(x+h*q3);
+      x+=h/6*(q1+2*q2+2*q3+q4);
+      if(!isFinite(x)){x=xe==null?0:xe;rem=0;break;}
+      x=clamp(x,lo,hi0);
+      rem-=h;guard++;
+    }
+    // 刻みが足りないほど速い反応＝この時点ではとっくに平衡
+    if(rem>1e-12&&xe!=null)x=xe;
+    const h2=a-x,i2=b-x,hi=c+2*x;
+    xs.push(i*frame);H2.push(h2);I2.push(i2);HI.push(hi);
+    V1.push(k1*h2*i2);V2.push(k2*hi*hi);
+  }
+  H.data={xs:xs,H2:H2,I2:I2,HI:HI,V1:V1,V2:V2,a:a,b:b,c:c,k1:k1,k2:k2,T:T,
+          eq:xe==null?null:{H2:a-xe,I2:b-xe,HI:c+2*xe}};
+  const f3=sig4;
+  const sg=v=>(v>0?'+':v<0?'−':'')+sig4(Math.abs(v));
+  const eq=H.data.eq;
+  if(eq==null){$('hRes').innerHTML='';hDraw();return;}
+  // グラフの右端でまだ平衡に届いていないときは知らせる
+  if(Math.abs(HI[HI.length-1]-eq.HI)>0.02*Math.max(eq.HI,1e-6))
+    $('hwarn').textContent='この時間ではまだ平衡に届かない。時間をのばすとグラフが平らになる。';
+  $('hRes').innerHTML=
+    '<div class="qt">'
+     +'<div class="qr qh"><div>mol/L</div><div>H<sub>2</sub></div><div>I<sub>2</sub></div><div>2HI</div></div>'
+     +'<div class="qr"><div class="rh">反応前</div><div>'+f3(a)+'</div><div>'+f3(b)+'</div><div>'+f3(c)+'</div></div>'
+     +'<div class="qr ch"><div class="rh">変化量</div><div>'+sg(-xe)+'</div><div>'+sg(-xe)+'</div><div>'+sg(2*xe)+'</div></div>'
+     +'<div class="qr eq"><div class="rh">平衡時</div><div>'+f3(eq.H2)+'</div><div>'+f3(eq.I2)+'</div><div>'+f3(eq.HI)+'</div></div>'
+    +'</div>';
+  hDraw();
+}
+function hDraw(){
+  const d=H.data;
+  if(!d){drawChart($('hCv'),null);legend($('hLeg'),[]);return;}
+  if(H.view===0){
+    $('hGt').textContent='濃度の変化';
+    const mx=Math.max(...d.H2,...d.I2,...d.HI)*1.12;
+    // [H2]と[I2]が同じだと重なるので、H2を太く描いて下からのぞかせる
+    const ser=[{c:'#3e77b6',data:d.H2,w:4.4},{c:'#8a6bbf',data:d.I2,w:2.2},{c:'#d4566a',data:d.HI,w:2.6}];
+    if(d.eq)ser.unshift({c:'#cfd8d7',data:d.xs.map(()=>d.eq.HI),dash:[3,3],w:1.4});
+    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/L',series:ser});
+    legend($('hLeg'),[{c:'#3e77b6',t:'H₂'},{c:'#8a6bbf',t:'I₂'},{c:'#d4566a',t:'HI'},
+      {c:'#cfd8d7',t:'HIの平衡濃度',d:1}]);
+  }else{
+    $('hGt').textContent='反応速度の変化';
+    const mx=Math.max(...d.V1,...d.V2)*1.12||1;
+    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/(L·s)',
+      series:[{c:'#2e9e6b',data:d.V1,w:2.4},{c:'#e8a13d',data:d.V2,w:2.4}]});
+    legend($('hLeg'),[{c:'#2e9e6b',t:'正反応 v₁＝k₁[H₂][I₂]'},{c:'#e8a13d',t:'逆反応 v₂＝k₂[HI]²'}]);
+  }
+}
+['hH','hI','hHI','hT'].forEach(id=>{$(id).onchange=hRun;});
+// 平衡定数を、表に出ている平衡時の濃度から計算する
+function hCalcK(){
+  const d=H.data,el=$('hKwork');
+  if(!d||!d.eq){el.classList.add('hidden');return;}
+  const h2=Number(sig4(d.eq.H2)),i2=Number(sig4(d.eq.I2)),hi=Number(sig4(d.eq.HI));
+  el.classList.remove('hidden');
+  if(h2<=0||i2<=0){
+    el.innerHTML='<div class="kcap">平衡のときに H<sub>2</sub> か I<sub>2</sub> が残っていないので、'
+      +'この条件では計算できない。</div>';
+    return;
+  }
+  const num=Number((hi*hi).toPrecision(4)), den=Number((h2*i2).toPrecision(4));
+  const K=num/den;
+  const line=(l,r,cls)=>'<div class="kl '+(cls||'')+'"><div class="sym">'+l+'</div><div>＝</div><div>'+r+'</div></div>';
+  el.innerHTML=
+     line('K','[HI]<sup>2</sup> ／ ( [H<sub>2</sub>] × [I<sub>2</sub>] )')
+    +line('','('+sig4(hi)+')<sup>2</sup> ／ ( '+sig4(h2)+' × '+sig4(i2)+' )')
+    +line('',sig4(num)+' ／ '+sig4(den))
+    +line('',(K<10?K.toFixed(2):K.toFixed(1)),'ans')
+    +'<div class="kcap">上の表の<b>平衡時</b>の濃度（mol/L）を代入した。'
+    +'分子と分母で単位が約分されるので、この反応の K に単位はつかない。</div>';
+}
+$('hgraph').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('hgraph').children].forEach(x=>x.classList.toggle('on',x===b));
+  H.view=+b.dataset.v;hDraw();
+};
+
+// ===== 初期化 =====
+function redraw(){
+  if(tab===0)gDraw();
+  else if(tab===1)sDraw();
+  else hDraw();
+}
+let rz=null;
+window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120);});
+gSetup(true);
+sRun();
+hRun();
+setTab(0);
+</script>
+</body>
+</html>
