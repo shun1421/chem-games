@@ -85,6 +85,8 @@ sub,sup{font-size:.62em}
 
 <script>
 const $=id=>document.getElementById(id);
+// 一覧ページに「使った」印を出すための記録(保存できない環境では何もしない)
+try{localStorage.setItem('chemgames:gas-sim:seen','1');}catch(e){}
 const R=8.3e3;              // Pa·L/(K·mol)
 const A=5.5e5, B=0.031;     // 水のファンデルワールス定数 a[Pa·L²/mol²], b[L/mol]
 

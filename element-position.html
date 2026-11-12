@@ -50,6 +50,9 @@ h2{font-size:18px;margin:0 0 8px;text-align:center}
 .result{font-size:18px;text-align:center;line-height:2;font-weight:800}
 .result b{font-family:var(--mono);font-size:30px;color:var(--acc)}
 @media(max-width:600px){:root{--cell:27px}.cell{font-size:9px}.cell.correct-fill{font-size:10px}}
+/* 自己ベスト */
+.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
+.best.new{color:#e8a13d}
 </style>
 </head>
 <body>
@@ -90,6 +93,27 @@ h2{font-size:18px;margin:0 0 8px;text-align:center}
 
 <script>
 const $=id=>document.getElementById(id);
+
+// ==== 自己ベスト(localStorage。保存できない環境では記録なしで動く) ====
+function showBest(score,sub,unit){
+  const key='chemgames:element-position:best'+(sub?':'+sub:'');
+  let el=document.getElementById('best');
+  if(!el){
+    el=document.createElement('div');el.id='best';
+    const a=document.getElementById('fstats');
+    (a.closest('p,div')||a).insertAdjacentElement('afterend',el);
+  }
+  el.className='best';el.textContent='';
+  let prev=null;
+  try{
+    const v=parseInt(localStorage.getItem(key),10);if(isFinite(v))prev=v;
+    if(prev===null||score>prev)localStorage.setItem(key,String(score));
+  }catch(e){return;}
+  const u=unit||'点';
+  if(prev===null)el.textContent='はじめての記録';
+  else if(score>prev){el.className='best new';el.textContent='自己ベスト更新！（これまで '+prev+u+'）';}
+  else el.textContent='自己ベスト '+prev+u;
+}
 const rawData=[
  "H,1,1,1,1","He,2,18,1,1","Li,3,1,2,1","Be,4,2,2,1","B,5,13,2,1","C,6,14,2,1","N,7,15,2,1","O,8,16,2,1","F,9,17,2,1","Ne,10,18,2,1",
  "Na,11,1,3,1","Mg,12,2,3,1","Al,13,13,3,1","Si,14,14,3,1","P,15,15,3,1","S,16,16,3,1","Cl,17,17,3,1","Ar,18,18,3,1",
@@ -186,6 +210,7 @@ function showResult(){
     if(c){c.textContent=el.s;c.classList.add('correct-fill');}
   });
   $('fstats').innerHTML='10問中 <b>'+correct+'</b> 問正解！';
+  showBest(correct,'lv'+level,'問');
 }
 </script>
 </body>

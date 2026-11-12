@@ -32,27 +32,36 @@ a.tile:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(27,42,51,.12)
 .sym{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--c,var(--teal));line-height:1.1}
 .nm{font-size:15.5px;font-weight:800;margin-top:4px}
 .ds{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.55;min-height:36px}
+.rec{display:inline-block;margin:8px 0 0 6px;font-size:11px;font-weight:800;color:#b97a16;white-space:nowrap}
+.rec.seen{color:var(--mut)}
+.prog{color:var(--mut);font-size:12.5px;margin-top:6px;font-weight:700;min-height:1.4em}
+.prog b{color:var(--teal);font-family:var(--mono);font-size:15px}
+.clr{margin-top:10px;font-family:inherit;font-size:11.5px;color:var(--mut);background:none;border:0;
+ text-decoration:underline;cursor:pointer;padding:4px}
 .kind{display:inline-block;margin-top:8px;font-size:11px;border:1px solid var(--c,var(--teal));color:var(--c,var(--teal));border-radius:999px;padding:1px 9px;font-weight:700}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:24px;border-top:1px solid var(--line);line-height:1.9}
 footer .credit{display:inline-block;margin-top:10px;padding:4px 16px;font-size:12.5px;font-weight:700;letter-spacing:.06em;
  color:var(--teal);border:1px solid var(--line);border-radius:999px;background:#fff}
 footer .credit .flask{margin-right:4px}
 sub,sup{font-size:.62em}
+.hidden{display:none}
 </style>
 </head>
 <body>
 <header>
   <h1><span class="flask">⌬</span> 化学ゲームラボ</h1>
   <div class="tag">遊んで身につく高校化学 — 全24アプリ / スマホ対応</div>
+  <div class="prog" id="prog"></div>
 </header>
 <main id="list"></main>
 <footer>化学ゲームラボ | ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。<br>
-<span class="credit"><span class="flask">⌬</span>制作: 鹿児島中央高校 福永</span></footer>
+<span class="credit"><span class="flask">⌬</span>制作: 鹿児島中央高校 福永</span><br>
+<button class="clr hidden" id="clr" onclick="clearRecords()">この端末の記録を消す</button></footer>
 <script>
 const UNITS=[
  {t:'元素と周期表',c:'var(--teal)',games:[
   {no:1,f:'element-match.html',sym:'118',nm:'元素マッチング',ds:'元素名⇄元素記号のペアをタップで消していく40秒勝負。基本20〜全118元素の3レベル。',k:'タイムアタック'},
-  {no:2,f:'element-position.html',sym:'⊞',nm:'ポジションマスター',ds:'周期表の光ったマスに入る元素を4択で当てる。族と周期の感覚を体で覚える。',k:'クイズ'},
+  {no:2,f:'element-position.html',bu:'問',sym:'⊞',nm:'ポジションマスター',ds:'周期表の光ったマスに入る元素を4択で当てる。族と周期の感覚を体で覚える。',k:'クイズ'},
  ]},
  {t:'物質の構成・化学結合',c:'var(--teal)',games:[
   {no:4,f:'lewis-builder.html',sym:'e·',nm:'分子ビルダー',ds:'電子式を組み立てて原子をゲット。漂う原子をドラッグして分子を合成!',k:'アクション'},
@@ -107,11 +116,56 @@ for(const u of UNITS){
     const a=document.createElement('a');
     a.className='tile';a.href=gm.f;a.style.setProperty('--c',u.c);
     a.innerHTML='<span class="no">No.'+gm.no+'</span><div class="sym">'+gm.sym+'</div>'+
-     '<div class="nm">'+gm.nm+'</div><div class="ds">'+gm.ds+'</div><span class="kind">'+gm.k+'</span>';
+     '<div class="nm">'+gm.nm+'</div><div class="ds">'+gm.ds+'</div><span class="kind">'+gm.k+'</span>'+
+     '<span class="rec"></span>';
+    a.dataset.g=gm.f.replace('.html','');a.dataset.u=gm.bu||'点';
     g.appendChild(a);
   }
   main.appendChild(g);
 }
+
+// ==== 各ゲームが localStorage に残した記録をタイルに出す(読めない環境では何も出さない) ====
+const PRE='chemgames:';
+function readRec(name){
+  let best=null,seen=false;
+  try{
+    const p=PRE+name+':';
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||k.indexOf(p)!==0)continue;
+      const r=k.slice(p.length);
+      if(r==='seen')seen=true;
+      else if(r==='best'||r.indexOf('best:')===0){   // レベル別・モード別はいちばん高いもの
+        const v=parseInt(localStorage.getItem(k),10);
+        if(isFinite(v)&&(best===null||v>best))best=v;
+      }
+    }
+  }catch(e){}
+  return {best:best,seen:seen};
+}
+function paintRecords(){
+  let done=0,all=0;
+  document.querySelectorAll('a.tile').forEach(a=>{
+    all++;
+    const r=readRec(a.dataset.g),el=a.querySelector('.rec');
+    if(r.best!==null){el.className='rec';el.textContent='★ ベスト '+r.best+a.dataset.u;done++;}
+    else if(r.seen){el.className='rec seen';el.textContent='✓ 使った';done++;}
+    else{el.className='rec';el.textContent='';}
+  });
+  document.getElementById('prog').innerHTML=done?'<b>'+done+'</b> / '+all+' 本にチャレンジ済み':'';
+  document.getElementById('clr').classList.toggle('hidden',!done);
+}
+function clearRecords(){
+  if(!confirm('この端末に保存した自己ベストなどの記録をすべて消します。よろしいですか？'))return;
+  try{
+    const ks=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf(PRE)===0)ks.push(k);}
+    ks.forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+  paintRecords();
+}
+// ゲームから「戻る」で帰ってきたときも描きなおす
+window.addEventListener('pageshow',paintRecords);
 </script>
 </body>
 </html>

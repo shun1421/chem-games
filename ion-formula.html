@@ -80,6 +80,9 @@ h1{font-size:22px;margin:0 0 8px}
 .mistake-ans{font-size:.95rem;font-weight:700;color:#7c2c3e}
 .mistake-ans sub{font-size:.6em;vertical-align:sub}
 sub,sup{font-size:.62em}
+/* 自己ベスト */
+.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
+.best.new{color:#e8a13d}
 </style>
 </head>
 <body>
@@ -386,10 +389,32 @@ function nextQuestion(){
   renderQuestion();
 }
 
+// ==== 自己ベスト(localStorage。保存できない環境では記録なしで動く) ====
+function showBest(score,sub,unit){
+  const key='chemgames:ion-formula:best'+(sub?':'+sub:'');
+  let el=document.getElementById('best');
+  if(!el){
+    el=document.createElement('div');el.id='best';
+    const a=document.getElementById('final-score');
+    (a.closest('p,div')||a).insertAdjacentElement('afterend',el);
+  }
+  el.className='best';el.textContent='';
+  let prev=null;
+  try{
+    const v=parseInt(localStorage.getItem(key),10);if(isFinite(v))prev=v;
+    if(prev===null||score>prev)localStorage.setItem(key,String(score));
+  }catch(e){return;}
+  const u=unit||'点';
+  if(prev===null)el.textContent='はじめての記録';
+  else if(score>prev){el.className='best new';el.textContent='自己ベスト更新！（これまで '+prev+u+'）';}
+  else el.textContent='自己ベスト '+prev+u;
+}
+
 function showResults(){
   showScreen('result-screen');
   const avgTime=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
   document.getElementById('final-score').textContent=score;
+  showBest(score);
   document.getElementById('stat-correct').textContent=`${correctCount}/15`;
   document.getElementById('stat-streak').textContent=maxStreak;
   document.getElementById('stat-time').textContent=`${avgTime}s`;

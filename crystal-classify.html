@@ -45,6 +45,9 @@ button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:1
 .result{font-size:18px;text-align:center;line-height:2}
 .result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
 sub,sup{font-size:.62em}
+/* 自己ベスト */
+.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
+.best.new{color:#e8a13d}
 </style>
 </head>
 <body>
@@ -91,6 +94,27 @@ sub,sup{font-size:.62em}
 
 <script>
 const $=id=>document.getElementById(id);
+
+// ==== 自己ベスト(localStorage。保存できない環境では記録なしで動く) ====
+function showBest(score,sub,unit){
+  const key='chemgames:crystal-classify:best'+(sub?':'+sub:'');
+  let el=document.getElementById('best');
+  if(!el){
+    el=document.createElement('div');el.id='best';
+    const a=document.getElementById('fscore');
+    (a.closest('p,div')||a).insertAdjacentElement('afterend',el);
+  }
+  el.className='best';el.textContent='';
+  let prev=null;
+  try{
+    const v=parseInt(localStorage.getItem(key),10);if(isFinite(v))prev=v;
+    if(prev===null||score>prev)localStorage.setItem(key,String(score));
+  }catch(e){return;}
+  const u=unit||'点';
+  if(prev===null)el.textContent='はじめての記録';
+  else if(score>prev){el.className='best new';el.textContent='自己ベスト更新！（これまで '+prev+u+'）';}
+  else el.textContent='自己ベスト '+prev+u;
+}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
 const TYPES=['イオン結晶','分子結晶','共有結合の結晶','金属結晶'];
 // t: 0 ion / 1 mol / 2 cov / 3 metal
@@ -133,7 +157,7 @@ function startGame(){
     $('tfill').style.width=(tLeft/120*100)+'%';},100);
 }
 function finish(){clearInterval(timer);$('play').classList.add('hidden');$('end').classList.remove('hidden');
-  $('fscore').textContent=score;$('facc').textContent=ok+' 問 / '+total+' 問';}
+  $('fscore').textContent=score;showBest(score);$('facc').textContent=ok+' 問 / '+total+' 問';}
 function upd(){$('score').textContent=score;$('combo').textContent=combo;}
 
 function next(){

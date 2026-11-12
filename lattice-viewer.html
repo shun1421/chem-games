@@ -77,6 +77,8 @@ sub,sup{font-size:.62em}
 
 <script>
 const $=id=>document.getElementById(id);
+// 一覧ページに「使った」印を出すための記録(保存できない環境では何もしない)
+try{localStorage.setItem('chemgames:lattice-viewer:seen','1');}catch(e){}
 const SQ2=Math.SQRT2, SQ3=Math.sqrt(3);
 const HC=Math.sqrt(8/3); // 六方最密のc軸の高さ(a=1基準, c/a≒1.633)
 

@@ -44,6 +44,9 @@ h1{font-size:22px;margin:0 0 8px}
 @keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .result{font-size:18px;text-align:center;line-height:2}
 .result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
+/* 自己ベスト */
+.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
+.best.new{color:#e8a13d}
 </style>
 </head>
 <body>
@@ -85,6 +88,27 @@ h1{font-size:22px;margin:0 0 8px}
 
 <script>
 const $=id=>document.getElementById(id);
+
+// ==== 自己ベスト(localStorage。保存できない環境では記録なしで動く) ====
+function showBest(score,sub,unit){
+  const key='chemgames:element-match:best'+(sub?':'+sub:'');
+  let el=document.getElementById('best');
+  if(!el){
+    el=document.createElement('div');el.id='best';
+    const a=document.getElementById('fscore');
+    (a.closest('p,div')||a).insertAdjacentElement('afterend',el);
+  }
+  el.className='best';el.textContent='';
+  let prev=null;
+  try{
+    const v=parseInt(localStorage.getItem(key),10);if(isFinite(v))prev=v;
+    if(prev===null||score>prev)localStorage.setItem(key,String(score));
+  }catch(e){return;}
+  const u=unit||'点';
+  if(prev===null)el.textContent='はじめての記録';
+  else if(score>prev){el.className='best new';el.textContent='自己ベスト更新！（これまで '+prev+u+'）';}
+  else el.textContent='自己ベスト '+prev+u;
+}
 const ALL=[
  {n:1,s:"H",m:"水素",l:1},{n:2,s:"He",m:"ヘリウム",l:1},{n:3,s:"Li",m:"リチウム",l:1},{n:4,s:"Be",m:"ベリリウム",l:1},{n:5,s:"B",m:"ホウ素",l:1},{n:6,s:"C",m:"炭素",l:1},{n:7,s:"N",m:"窒素",l:1},{n:8,s:"O",m:"酸素",l:1},{n:9,s:"F",m:"フッ素",l:1},{n:10,s:"Ne",m:"ネオン",l:1},{n:11,s:"Na",m:"ナトリウム",l:1},{n:12,s:"Mg",m:"マグネシウム",l:1},{n:13,s:"Al",m:"アルミニウム",l:1},{n:14,s:"Si",m:"ケイ素",l:1},{n:15,s:"P",m:"リン",l:1},{n:16,s:"S",m:"硫黄",l:1},{n:17,s:"Cl",m:"塩素",l:1},{n:18,s:"Ar",m:"アルゴン",l:1},{n:19,s:"K",m:"カリウム",l:1},{n:20,s:"Ca",m:"カルシウム",l:1},
  {n:24,s:"Cr",m:"クロム",l:2},{n:25,s:"Mn",m:"マンガン",l:2},{n:26,s:"Fe",m:"鉄",l:2},{n:27,s:"Co",m:"コバルト",l:2},{n:28,s:"Ni",m:"ニッケル",l:2},{n:29,s:"Cu",m:"銅",l:2},{n:30,s:"Zn",m:"亜鉛",l:2},{n:35,s:"Br",m:"臭素",l:2},{n:47,s:"Ag",m:"銀",l:2},{n:48,s:"Cd",m:"カドミウム",l:2},{n:50,s:"Sn",m:"スズ",l:2},{n:53,s:"I",m:"ヨウ素",l:2},{n:56,s:"Ba",m:"バリウム",l:2},{n:78,s:"Pt",m:"白金",l:2},{n:79,s:"Au",m:"金",l:2},{n:80,s:"Hg",m:"水銀",l:2},{n:82,s:"Pb",m:"鉛",l:2},
@@ -116,7 +140,7 @@ function goHome(){
 function endGame(){
   clearInterval(timer);
   $('play').classList.add('hidden');$('end').classList.remove('hidden');
-  $('fscore').textContent=score;
+  $('fscore').textContent=score;showBest(score,'lv'+level);
   $('fnote').textContent='Lv.'+level+'('+(level===1?'基本20元素':level===2?'受験頻出':'全118元素')+')';
 }
 
