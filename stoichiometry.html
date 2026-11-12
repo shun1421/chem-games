@@ -4,39 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>量的関係マスター | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
---neon:#00e0cf;--pink:#ff5d8f;--sun:#ffc531;--grape:#7b5cff;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
-.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
-.htitle{font-weight:800;letter-spacing:.05em}
-.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
-main{max-width:680px;margin:0 auto;padding:14px 12px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--acc:#0b96a8;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--neon:#00e0cf;--pink:#ff5d8f;--sun:#ffc531;--grape:#7b5cff;--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
 #play.panel{background:linear-gradient(170deg,#0f2b33 0%,#13313c 55%,#16263a 100%);border:0;color:#eaf7f6;
  box-shadow:0 10px 30px rgba(10,30,40,.25)}
-.hidden{display:none}
-h1{font-size:22px;margin:0 0 8px}
-.desc{color:var(--mut);line-height:1.75}
-.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.85}
-.primary{display:block;width:100%;margin-top:14px;padding:15px;font-size:17px;font-weight:800;color:#fff;
- background:linear-gradient(135deg,var(--acc),#15a39a);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
- box-shadow:0 4px 0 #0a5d64;transition:transform .08s,box-shadow .08s}
-.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d64}
-.primary:disabled{opacity:.4;box-shadow:none;cursor:default}
-.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
 .hint{font-size:12.5px;color:var(--mut);line-height:1.7}
 .hint code{font-family:var(--mono);background:#eef4f3;padding:1px 5px;border-radius:4px}
-
-/* ===== プレイ画面(濃色) ===== */
-.hud{display:flex;gap:8px;justify-content:space-between;align-items:center;font-size:11.5px;
- color:#8fb6bb;margin-bottom:10px;letter-spacing:.04em}
-.hud b{display:block;font-family:var(--mono);font-size:19px;color:#fff;margin-top:1px}
 .hud .sc b{color:var(--sun);text-shadow:0 0 12px rgba(255,197,49,.5)}
 .steps{display:flex;gap:5px;margin-bottom:6px}
 .steps div{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.12);transition:all .3s}
@@ -145,11 +119,7 @@ th.col.ask{color:var(--pink)}
  22%{opacity:1;transform:scale(1.12)}100%{opacity:0;transform:translateY(-52px) scale(1)}}
 .conf{position:fixed;width:9px;height:14px;pointer-events:none;z-index:49;border-radius:2px}
 @keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
-
-.result{font-size:18px;text-align:center;line-height:2}
-.result b{font-family:var(--mono);font-size:36px;color:var(--acc)}
 .medal{font-size:46px;text-align:center;line-height:1.2}
-sub,sup{font-size:.62em}
 @media(max-width:420px){
   .term .f{font-size:17px}.cnum{font-size:18px}
   .cell{height:35px;font-size:13px}
@@ -159,23 +129,20 @@ sub,sup{font-size:.62em}
   .keys{grid-auto-rows:40px}.keys button{font-size:16px}
   .cdisp .main{font-size:22px}
 }
-/* 自己ベスト */
-.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
-.best.new{color:#e8a13d}
+
+main.game{max-width:680px}
+/* ARCADE POP に合わせる(部品) */
+#play.panel{border:3px solid var(--navy)}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">量的関係マスター</div>
-  <span class="chip">量的関係</span>
-</header>
-<main>
+<body data-u="teal">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">量的関係マスター</div><span class="chip">量的関係</span></header>
+<main class="game">
 
 <section id="start" class="panel">
   <h1>量的関係マスター 〜表を埋めて攻略〜</h1>
-  <p class="desc">化学反応の計算は、<b>係数 → 物質量の比 → mol → 質量・体積</b> とたどれば必ず解ける。
-  5ステップで<b>表のマスを1つずつ埋めて</b>いこう。計算には電卓が使える。</p>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">化学反応の計算は、<b>係数 → 物質量の比 → mol → 質量・体積</b> とたどれば必ず解ける。
+  5ステップで<b>表のマスを1つずつ埋めて</b>いこう。計算には電卓が使える。</div></div>
   <ul class="rules">
     <li><b>STEP 1</b> 上下ボタンで係数を合わせ、反応式を完成させる</li>
     <li><b>STEP 2</b> 物質量の比を上下ボタンで入力する</li>
@@ -186,7 +153,7 @@ sub,sup{font-size:.62em}
   <p class="hint">全3問。1ステップ正解ごとに100点、ノーミスで1問解くとボーナス100点(満点1800点)。<br>
   原子量: H=1.0, C=12, N=14, O=16, Na=23, Mg=24, Al=27, S=32, Cl=35.5, K=39, Ca=40, Fe=56, Cu=64, Zn=65, Ag=108<br>
   気体の体積は標準状態(22.4 L/mol)。答えは有効数字2桁でよい。</p>
-  <button class="primary" onclick="startGame()">スタート</button>
+  <button class="btn" onclick="startGame()">スタート</button>
 </section>
 
 <section id="play" class="panel hidden">
@@ -215,11 +182,12 @@ sub,sup{font-size:.62em}
   <div class="medal" id="medal">🏆</div>
   <h1 style="text-align:center">リザルト</h1>
   <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
-  <button class="primary" onclick="startGame()">もう一度</button>
-  <a class="ghost" href="index.html">一覧へ戻る</a>
+  <button class="btn" onclick="startGame()">もう一度</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
 </section>
 </main>
 
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 

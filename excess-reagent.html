@@ -4,35 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>過不足ある反応 〜何が残る？〜 | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---teal:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-.hidden{display:none}
-sub,sup{font-size:.62em}
-
-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;
- border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:20}
-.back{color:var(--teal);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
-.htitle{font-size:16px;font-weight:900;letter-spacing:.04em;flex:1}
-.chip{font-size:11px;font-weight:700;color:var(--teal);border:1px solid var(--teal);
- border-radius:999px;padding:2px 10px;white-space:nowrap}
-
-main{max-width:620px;margin:0 auto;padding:14px 12px 40px}
-.panel{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 14px}
-h1{font-size:19px;margin:0 0 10px;letter-spacing:.03em}
-.desc{font-size:13.5px;line-height:1.85;color:var(--ink);margin:0 0 12px}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--teal:#0b96a8;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
 .desc b{color:var(--teal)}
-.note{margin:14px 0 0;font-size:12.5px;color:var(--mut);line-height:2}
-.primary{display:block;width:100%;margin-top:16px;padding:15px;font-size:16px;font-weight:900;
- color:#fff;background:var(--teal);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
- box-shadow:0 4px 0 #0a5d65;transition:transform .08s,box-shadow .08s;letter-spacing:.06em}
-.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d65}
-.primary:disabled{background:#b6c6c5;box-shadow:0 4px 0 #9aacab;cursor:default}
-.primary.hidden{display:none} /* .hidden より後に書くので明示的に打ち消す */
+.note{margin:14px 0 0;font-size:12.5px;color:var(--mut);line-height:2} /* .hidden より後に書くので明示的に打ち消す */
 
 /* 見本の表(スタート画面) */
 .demo{border:1px solid var(--line);border-radius:10px;overflow:hidden;font-family:var(--mono);
@@ -131,23 +107,25 @@ td.rowlbl{font-size:11px;color:var(--mut);font-weight:700;text-align:left;line-h
   .eq{font-size:16px}
   .pad{grid-auto-rows:43px}
 }
-/* 自己ベスト */
-.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
-.best.new{color:#e8a13d}
+
+main.game{max-width:620px}
+/* ARCADE POP に合わせる(部品) */
+.pad button{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy);border-radius:12px}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.pk{border:3px solid var(--navy);box-shadow:0 4px 0 var(--navy);border-radius:14px}
+.pk:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.fs{font-size:58px;font-family:var(--numf);color:var(--u);-webkit-text-stroke:3px var(--navy);paint-order:stroke fill;text-shadow:0 5px 0 var(--navy)}
+.fmiss{background:#f3f1ff;border:0}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">過不足ある反応</div>
-  <span class="chip">物質量</span>
-</header>
-<main>
+<body data-u="teal">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">過不足ある反応</div><span class="chip">物質量</span></header>
+<main class="game">
 
 <section id="start" class="panel">
   <h1>過不足ある反応 〜何が残る？〜</h1>
-  <p class="desc">CaCO<sub>3</sub> 0.30 mol に HCl 0.40 mol を加える。<br>
-  先になくなるのはどっち？ 残るのは何 mol？</p>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">CaCO<sub>3</sub> 0.30 mol に HCl 0.40 mol を加える。<br>
+  先になくなるのはどっち？ 残るのは何 mol？</div></div>
   <div class="demo">
     <div class="hd"><span></span><span>CaCO<sub>3</sub></span><span>2HCl</span><span>CO<sub>2</sub></span></div>
     <div><span>反応前</span><span>0.30</span><span>0.40</span><span>0</span></div>
@@ -157,7 +135,7 @@ td.rowlbl{font-size:11px;color:var(--mut);font-weight:700;text-align:left;line-h
   <p class="cap"><b class="mk">オレンジ</b>をうめる。<b class="au">緑</b>は正解すると出る。</p>
   <p class="note">符号は入力せずに、反応する物質量および生成する物質量の値のみを入力しよう。<br>
   問題は全部で5問。間違えても何度も挑戦！（やり直した分だけ、スコアは減少します）</p>
-  <button class="primary" onclick="startGame()">スタート</button>
+  <button class="btn" onclick="startGame()">スタート</button>
 </section>
 
 <section id="play" class="panel hidden">
@@ -176,10 +154,10 @@ td.rowlbl{font-size:11px;color:var(--mut);font-weight:700;text-align:left;line-h
   <div class="padlbl" id="padlbl"></div>
   <div class="pad" id="pad"></div>
 
-  <button class="primary" id="submit" onclick="submit()" disabled>解答する</button>
+  <button class="btn" id="submit" onclick="submit()" disabled>解答する</button>
   <div id="fb"></div>
   <div class="ex hidden" id="ex"></div>
-  <button class="primary hidden" id="nextBtn" onclick="nextQ()">次の問題へ →</button>
+  <button class="btn hidden" id="nextBtn" onclick="nextQ()">次の問題へ →</button>
 </section>
 
 <section id="end" class="panel hidden">
@@ -187,12 +165,12 @@ td.rowlbl{font-size:11px;color:var(--mut);font-weight:700;text-align:left;line-h
   <div class="fs" id="fscore">0</div>
   <div class="fsub">満点500点中 ／ 一発正解 <b id="fperfect">0</b> 問</div>
   <div class="fmiss" id="fmiss"></div>
-  <button class="primary" onclick="startGame()">もう一度</button>
-  <button class="primary" style="background:#fff;color:var(--teal);box-shadow:0 4px 0 #cfdedd;border:1.5px solid var(--line)"
-    onclick="location.href='index.html'">一覧にもどる</button>
+  <button class="btn" onclick="startGame()">もう一度</button>
+  <button class="btn white" onclick="location.href='index.html'">一覧にもどる</button>
 </section>
 
 </main>
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 

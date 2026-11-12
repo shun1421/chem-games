@@ -4,59 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>化学ゲームラボ | 高校化学 学習ゲーム集</title>
-<style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---teal:#0e7c86;--rose:#c2607d;--blue:#3e77b6;--green:#5a9367;--purple:#8a6bbf;--brown:#b3702e;--amber:#e8a13d;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-header{padding:34px 18px 22px;text-align:center;background:
- radial-gradient(circle at 15% 0%,rgba(14,124,134,.10),transparent 45%),
- radial-gradient(circle at 85% 100%,rgba(232,161,61,.12),transparent 45%),#fff;
- border-bottom:3px solid var(--teal)}
-h1{margin:0;font-size:clamp(24px,5vw,34px);letter-spacing:.12em;font-weight:900}
-h1 .flask{color:var(--teal)}
-.tag{color:var(--mut);font-size:14px;margin-top:8px;letter-spacing:.05em}
-main{max-width:1000px;margin:0 auto;padding:22px 14px 60px}
-.unit{margin:26px 0 10px;display:flex;align-items:center;gap:10px}
-.unit .sq{width:12px;height:12px;border-radius:3px}
-.unit h2{font-size:16px;margin:0;letter-spacing:.08em}
-.unit .ln{flex:1;height:1px;background:var(--line)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
-a.tile{display:block;text-decoration:none;color:var(--ink);background:var(--card);
- border:1.5px solid var(--line);border-top:5px solid var(--c,var(--teal));border-radius:12px;
- padding:12px 14px;position:relative;transition:transform .12s,box-shadow .12s}
-a.tile:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(27,42,51,.12)}
-.no{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:12px;color:var(--mut)}
-.sym{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--c,var(--teal));line-height:1.1}
-.nm{font-size:15.5px;font-weight:800;margin-top:4px}
-.ds{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.55;min-height:36px}
-.rec{display:inline-block;margin:8px 0 0 6px;font-size:11px;font-weight:800;color:#b97a16;white-space:nowrap}
-.rec.seen{color:var(--mut)}
-.prog{color:var(--mut);font-size:12.5px;margin-top:6px;font-weight:700;min-height:1.4em}
-.prog b{color:var(--teal);font-family:var(--mono);font-size:15px}
-.clr{margin-top:10px;font-family:inherit;font-size:11.5px;color:var(--mut);background:none;border:0;
- text-decoration:underline;cursor:pointer;padding:4px}
-.kind{display:inline-block;margin-top:8px;font-size:11px;border:1px solid var(--c,var(--teal));color:var(--c,var(--teal));border-radius:999px;padding:1px 9px;font-weight:700}
-footer{text-align:center;color:var(--mut);font-size:12px;padding:24px;border-top:1px solid var(--line);line-height:1.9}
-footer .credit{display:inline-block;margin-top:10px;padding:4px 16px;font-size:12.5px;font-weight:700;letter-spacing:.06em;
- color:var(--teal);border:1px solid var(--line);border-radius:999px;background:#fff}
-footer .credit .flask{margin-right:4px}
-sub,sup{font-size:.62em}
-.hidden{display:none}
-</style>
+<link rel="stylesheet" href="common.css">
 </head>
 <body>
-<header>
-  <h1><span class="flask">⌬</span> 化学ゲームラボ</h1>
-  <div class="tag">遊んで身につく高校化学 — 全24アプリ / スマホ対応</div>
-  <div class="prog" id="prog"></div>
+<header class="home-head">
+  <div class="en">CHEM GAME LAB</div>
+  <h1>化学ゲームラボ</h1>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble" id="say">ようこそ。気になるゲームから、やってみよう。</div></div>
+  <div class="prog hidden" id="prog"></div>
 </header>
-<main id="list"></main>
-<footer>化学ゲームラボ | ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。<br>
-<span class="credit"><span class="flask">⌬</span>制作: 鹿児島中央高校 福永</span><br>
+<main id="list" class="home"></main>
+<footer class="home-foot">遊んで身につく高校化学 — 全24アプリ / スマホ対応<br>
+ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。<br>
+<span class="credit">制作: 鹿児島中央高校 福永</span><br>
 <button class="clr hidden" id="clr" onclick="clearRecords()">この端末の記録を消す</button></footer>
+<script src="common.js"></script>
 <script>
 const UNITS=[
  {t:'元素と周期表',c:'var(--teal)',games:[
@@ -115,9 +77,10 @@ for(const u of UNITS){
   for(const gm of u.games){
     const a=document.createElement('a');
     a.className='tile';a.href=gm.f;a.style.setProperty('--c',u.c);
-    a.innerHTML='<span class="no">No.'+gm.no+'</span><div class="sym">'+gm.sym+'</div>'+
-     '<div class="nm">'+gm.nm+'</div><div class="ds">'+gm.ds+'</div><span class="kind">'+gm.k+'</span>'+
-     '<span class="rec"></span>';
+    const sl=[...gm.sym].length,sc=sl>=4?' s4':(sl===3?' s3':'');   // 記号が長いときは字を小さく
+    a.innerHTML='<span class="no">No.'+gm.no+'</span><div class="sym'+sc+'">'+gm.sym+'</div>'+
+     '<div class="tx"><div class="nm">'+gm.nm+'</div><div class="ds">'+gm.ds+'</div>'+
+     '<span class="kind">'+gm.k+'</span><span class="rec"></span></div>';
     a.dataset.g=gm.f.replace('.html','');a.dataset.u=gm.bu||'点';
     g.appendChild(a);
   }
@@ -148,11 +111,15 @@ function paintRecords(){
   document.querySelectorAll('a.tile').forEach(a=>{
     all++;
     const r=readRec(a.dataset.g),el=a.querySelector('.rec');
-    if(r.best!==null){el.className='rec';el.textContent='★ ベスト '+r.best+a.dataset.u;done++;}
+    if(r.best!==null){el.className='rec';el.textContent='★ ベスト '+CG.fmt(r.best)+a.dataset.u;done++;}
     else if(r.seen){el.className='rec seen';el.textContent='✓ 使った';done++;}
     else{el.className='rec';el.textContent='';}
   });
-  document.getElementById('prog').innerHTML=done?'<b>'+done+'</b> / '+all+' 本にチャレンジ済み':'';
+  const pg=document.getElementById('prog');
+  pg.innerHTML=done?'<b>'+done+'</b> / '+all+' 本にチャレンジ済み':'';
+  pg.classList.toggle('hidden',!done);
+  document.getElementById('say').textContent=!done?'ようこそ。気になるゲームから、やってみよう。'
+    :(done>=all?'ぜんぶ制覇！ つぎは自己ベストをねらおう。':'いい調子。つぎはどれにする？');
   document.getElementById('clr').classList.toggle('hidden',!done);
 }
 function clearRecords(){

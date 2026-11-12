@@ -4,31 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ポジションマスター | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace;
---cell:34px;--gap:3px}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
-.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
-.htitle{font-weight:800;letter-spacing:.05em}
-.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
-main{max-width:900px;margin:0 auto;padding:16px 12px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
-.hidden{display:none}
-h1{font-size:22px;margin:0 0 8px}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--acc:#0b96a8;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--mono:"SFMono-Regular",Consolas,"Courier New",monospace;--cell:34px;--gap:3px}
 h2{font-size:18px;margin:0 0 8px;text-align:center}
-.desc{color:var(--mut)}
-.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
 .lvbtn{display:block;width:100%;margin-top:10px;padding:14px;font-size:16px;font-weight:800;
  border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:12px;cursor:pointer;color:var(--ink);font-family:inherit;transition:all .1s}
 .lvbtn:active{transform:translateY(2px);border-bottom-width:2px}
 .lvbtn b{color:var(--acc);margin-right:8px}
-.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer;font-family:inherit}
-.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none;background:none;border:none;font-size:15px;cursor:pointer;width:100%;font-family:inherit}
 .scrollwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px -6px;padding:0 6px 8px}
 .periodic-wrapper{display:inline-grid;
  grid-template-columns:26px repeat(18,var(--cell));
@@ -47,24 +30,22 @@ h2{font-size:18px;margin:0 0 8px;text-align:center}
  border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:12px;cursor:pointer;color:var(--ink);transition:all .1s}
 .choices button:active{transform:translateY(2px);border-bottom-width:2px}
 .qhead{text-align:center;font-size:16px;font-weight:800;margin-bottom:4px}
-.result{font-size:18px;text-align:center;line-height:2;font-weight:800}
-.result b{font-family:var(--mono);font-size:30px;color:var(--acc)}
 @media(max-width:600px){:root{--cell:27px}.cell{font-size:9px}.cell.correct-fill{font-size:10px}}
-/* 自己ベスト */
-.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
-.best.new{color:#e8a13d}
+
+main.game{max-width:900px}
+/* ARCADE POP に合わせる(部品) */
+.lvbtn{border:3px solid var(--navy);box-shadow:0 4px 0 var(--navy);border-radius:16px;background:#fff}
+.lvbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.choices button{border:3px solid var(--navy);box-shadow:0 4px 0 var(--navy);border-radius:14px}
+.choices button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">ポジションマスター</div>
-  <span class="chip">元素と周期表</span>
-</header>
-<main>
+<body data-u="teal">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">ポジションマスター</div><span class="chip">元素と周期表</span></header>
+<main class="game">
 <section id="start" class="panel">
   <h1>ポジションマスター 〜周期表の位置あて〜</h1>
-  <p class="desc">周期表の光ったマスに入る元素はどれ?4択で答えて周期表の構造(族と周期)を体で覚えよう。全10問。</p>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">周期表の光ったマスに入る元素はどれ?4択で答えて周期表の構造(族と周期)を体で覚えよう。全10問。</div></div>
   <ul class="rules">
     <li>黄色く点滅しているマスに入る元素記号を選ぶ</li>
     <li>Lv.1: 原子番号1〜20 / Lv.2: +受験頻出 / Lv.3: 全118元素</li>
@@ -85,12 +66,13 @@ h2{font-size:18px;margin:0 0 8px;text-align:center}
   <h2>リザルト</h2>
   <div class="scrollwrap"><div class="periodic-wrapper" id="result-table-grid"></div></div>
   <p class="result" id="fstats"></p>
-  <button class="primary" onclick="startGame(level)">同じレベルでもう一度</button>
-  <button class="ghost" onclick="goHome()">レベル選択にもどる</button>
-  <a class="ghost" href="index.html">一覧へ戻る</a>
+  <button class="btn" onclick="startGame(level)">同じレベルでもう一度</button>
+  <button class="btn white" onclick="goHome()">レベル選択にもどる</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
 </section>
 </main>
 
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 

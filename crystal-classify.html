@@ -4,27 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>結晶ソムリエ | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
-.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
-.htitle{font-weight:800;letter-spacing:.05em}
-.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
-main{max-width:720px;margin:0 auto;padding:20px 14px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
-.hidden{display:none}
-h1{font-size:22px;margin:0 0 8px}
-.desc{color:var(--mut)}
-.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.8}
-button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:17px;font-weight:800;color:#fff;background:var(--acc);border:0;border-radius:10px;cursor:pointer}
-.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
-.hud{display:flex;gap:8px;justify-content:space-between;font-size:13px;color:var(--mut)}
-.hud b{font-family:var(--mono);font-size:18px;color:var(--ink);margin-left:4px}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--acc:#0b96a8;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
 #tbar{height:6px;background:var(--line);border-radius:3px;margin:10px 0}
 #tfill{height:100%;width:100%;background:var(--acc);border-radius:3px;transition:width .1s linear}
 #formula{min-height:80px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;margin:6px 0}
@@ -42,31 +24,31 @@ button.primary{display:block;width:100%;margin-top:14px;padding:14px;font-size:1
 #fb{min-height:44px;margin-top:12px;font-size:14px;color:var(--mut);text-align:center;line-height:1.6}
 #fb .good{color:var(--ok);font-weight:800}
 #fb .bad{color:var(--bad);font-weight:800}
-.result{font-size:18px;text-align:center;line-height:2}
-.result b{font-family:var(--mono);font-size:34px;color:var(--acc)}
-sub,sup{font-size:.62em}
-/* 自己ベスト */
-.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
-.best.new{color:#e8a13d}
+
+main.game{max-width:720px}
+/* ARCADE POP に合わせる(部品) */
+#tbar{height:14px;border:3px solid var(--navy);border-radius:99px;background:#fff;overflow:hidden}
+#tfill{background:var(--pink)}
+.qchip{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
+#types button{border:3px solid var(--navy);box-shadow:0 4px 0 var(--navy);border-radius:14px;background:#fff}
+#types button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+#types button.correct{background:var(--ok);color:#fff;border-color:var(--navy)}
+#types button.wrong{background:var(--bad);color:#fff;border-color:var(--navy)}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">結晶ソムリエ</div>
-  <span class="chip">化学結合</span>
-</header>
-<main>
+<body data-u="teal">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">結晶ソムリエ</div><span class="chip">化学結合</span></header>
+<main class="game">
 <section id="start" class="panel">
   <h1>結晶ソムリエ</h1>
-  <p class="desc">化学式を見て「イオン結晶・分子結晶・共有結合の結晶・金属結晶」の4つに分類しよう。
-  ときどき現れる「？？？」はミステリー問題。性質についての質問を選んで、返ってくる「はい/いいえ」から結晶の種類を推理する。</p>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">化学式を見て「イオン結晶・分子結晶・共有結合の結晶・金属結晶」の4つに分類しよう。
+  ときどき現れる「？？？」はミステリー問題。性質についての質問を選んで、返ってくる「はい/いいえ」から結晶の種類を推理する。</div></div>
   <ul class="rules">
     <li>制限時間は120秒。ふつうの問題は100点+連続ボーナス</li>
     <li>ミステリー問題は200点スタート。質問1回ごとに−50点(質問は3回まで)</li>
     <li>質問せずに当てられれば200点満点！</li>
   </ul>
-  <button class="primary" onclick="startGame()">スタート</button>
+  <button class="btn" onclick="startGame()">スタート</button>
 </section>
 
 <section id="play" class="panel hidden">
@@ -87,11 +69,12 @@ sub,sup{font-size:.62em}
 <section id="end" class="panel hidden">
   <h1>タイムアップ！</h1>
   <p class="result">スコア <b id="fscore"></b><br>正答 <span id="facc"></span></p>
-  <button class="primary" onclick="startGame()">もう一度</button>
-  <a class="ghost" href="index.html">一覧へ戻る</a>
+  <button class="btn" onclick="startGame()">もう一度</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
 </section>
 </main>
 
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 

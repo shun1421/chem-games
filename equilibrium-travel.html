@@ -4,25 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>太平洋トラベラー 〜日本 ⇌ アメリカで平衡を実感〜 | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;--pur:#8a6bbf;
---jp:#d4566a;--us:#3e77b6;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-sub{font-size:.62em;line-height:0}
-sup{font-size:.62em;line-height:0}
-
-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;
- border-bottom:3px solid var(--pur);position:sticky;top:0;z-index:30}
-.back{color:var(--pur);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap}
-.htitle{font-size:16px;font-weight:900;letter-spacing:.04em;flex:1}
-.chip{font-size:11px;font-weight:700;color:var(--pur);border:1px solid var(--pur);
- border-radius:999px;padding:2px 10px;white-space:nowrap}
-
-main{max-width:1120px;margin:0 auto;padding:10px 10px 40px}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--pur:#8150e6;--jp:#f0446a;--us:#2f74e0;--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
 
 /* タブ */
 .tabs{display:flex;gap:6px;margin-bottom:10px}
@@ -169,16 +153,31 @@ canvas{width:100%;height:100%;display:block}
  .card{width:50px;height:50px;font-size:19px;border-radius:10px}
  .fld input{width:50px}
 }
-.hidden{display:none}
+
+main.game{max-width:1120px}
+/* ARCADE POP に合わせる(部品) */
+.tabs button{border:3px solid var(--navy);box-shadow:0 4px 0 var(--navy);border-radius:14px;background:#fff;color:var(--navy)}
+.tabs button.on{background:var(--yellow);border-color:var(--navy);color:var(--navy);box-shadow:0 4px 0 var(--navy)}
+.pane{background:#fff;border:3px solid var(--navy);border-radius:22px;box-shadow:0 7px 0 var(--navy);padding:14px}
+.big{background:var(--yellow);color:var(--navy);border:3px solid var(--navy);box-shadow:0 5px 0 var(--navy);border-radius:14px;font-weight:900;letter-spacing:.08em}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.big[disabled]{box-shadow:0 5px 0 var(--navy)}
+.seg{border:2px solid var(--navy)}
+.seg button.on{background:var(--navy)}
+.fld{border:2px solid var(--navy)}
+.card{border-width:3px;box-shadow:0 3px 0 var(--navy)}
+.stp,.row2 button{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
+.stp:active,.row2 button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.go{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
+.st{border:2px solid var(--navy)}
+.kbtn{border:3px solid var(--navy);box-shadow:0 5px 0 var(--navy)}
+.kbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.qt{border:2px solid var(--navy)}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">太平洋トラベラー</div>
-  <span class="chip">化学平衡</span>
-</header>
-<main>
+<body data-u="purple">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">太平洋トラベラー</div><span class="chip">化学平衡</span></header>
+<main class="game">
 
 <div class="tabs">
   <button class="on" id="tb0" onclick="setTab(0)">実戦</button>
@@ -316,6 +315,7 @@ canvas{width:100%;height:100%;display:block}
 </section>
 
 </main>
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 // 一覧ページに「使った」印を出すための記録(保存できない環境では何もしない)

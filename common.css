@@ -1,0 +1,178 @@
+/* 化学ゲームラボ 共通スタイル「ARCADE POP」
+   太い紺のフチ・段差のある影・原色。全ページがこのファイルを読む。 */
+:root{
+ --navy:#1c1740;--ink:#1c1740;--mut:#6b6690;--card:#fff;
+ --bg1:#6f5dff;--bg2:#4330d9;
+ --yellow:#ffcc00;--pink:#ff4f8b;--ok:#19c37d;--bad:#ff4f5e;
+ /* 単元色 */
+ --teal:#10b3c7;--rose:#ff5f93;--blue:#3d8bff;--green:#2fbf71;--purple:#a070ff;--brown:#f08a24;
+ --u:var(--teal);
+ --numf:"Bahnschrift","DIN Alternate","Avenir Next Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+ --bd:3px solid var(--navy);
+}
+body[data-u="teal"]{--u:var(--teal)}body[data-u="rose"]{--u:var(--rose)}body[data-u="blue"]{--u:var(--blue)}
+body[data-u="green"]{--u:var(--green)}body[data-u="purple"]{--u:var(--purple)}body[data-u="brown"]{--u:var(--brown)}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);min-height:100vh;
+ font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+ -webkit-tap-highlight-color:transparent}
+/* 背景は固定の水玉。スクロールしても動かない */
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:
+ radial-gradient(circle at 14px 14px,rgba(255,255,255,.13) 3px,transparent 4px) 0 0/30px 30px,
+ linear-gradient(160deg,var(--bg1),var(--bg2))}
+sub,sup{font-size:.62em;line-height:0}
+.num{font-family:var(--numf);font-variant-numeric:tabular-nums}
+.hidden{display:none !important}
+button{font-family:inherit}
+
+/* ---------- ボタン ---------- */
+.btn{display:block;width:100%;padding:15px 12px;font-size:17px;font-weight:900;letter-spacing:.1em;color:var(--navy);
+ background:var(--yellow);border:var(--bd);border-radius:16px;box-shadow:0 6px 0 var(--navy);cursor:pointer;
+ text-align:center;text-decoration:none;transition:transform .07s,box-shadow .07s}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--navy)}
+.btn.white{background:#fff}
+.btn+.btn{margin-top:14px}
+
+/* ---------- パネル ---------- */
+.panel{background:var(--card);border:var(--bd);border-radius:22px;box-shadow:0 7px 0 var(--navy);padding:18px 16px 20px}
+.pop{animation:cg-pop .32s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes cg-pop{from{transform:scale(.9) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+
+.btn:disabled{opacity:.45;cursor:default;transform:none;box-shadow:0 6px 0 var(--navy)}
+
+/* ---------- ゲームページの上の帯 ---------- */
+.top{display:flex;align-items:center;gap:9px;padding:10px 12px;position:sticky;top:0;z-index:30;
+ background:var(--bg1);border-bottom:3px solid var(--navy);box-shadow:0 4px 0 rgba(28,23,64,.22);margin-bottom:12px}
+.top .back{flex:0 0 40px;height:40px;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--navy);
+ border:var(--bd);border-radius:50%;box-shadow:0 4px 0 var(--navy);text-decoration:none;font-size:22px;font-weight:900;line-height:1;
+ padding-bottom:3px}
+.top .back:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.top .ttl{flex:1;min-width:0;color:#fff;font-size:17px;font-weight:900;letter-spacing:.05em;
+ text-shadow:0 3px 0 var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .chip{background:var(--u);color:#fff;border:var(--bd);border-radius:99px;padding:3px 11px;font-size:11px;font-weight:900;
+ white-space:nowrap;max-width:38%;overflow:hidden;text-overflow:ellipsis}
+.top .snd{flex:0 0 40px;height:40px;background:#fff;border:var(--bd);border-radius:50%;box-shadow:0 4px 0 var(--navy);
+ font-size:17px;font-weight:900;color:var(--navy);cursor:pointer;position:relative;padding:0}
+.top .snd.off{color:#b9b5d3}
+.top .snd.off::after{content:'';position:absolute;left:8px;right:8px;top:50%;height:3px;background:var(--bad);transform:rotate(-40deg);border-radius:2px}
+main.game{max-width:560px;margin:0 auto;padding:0 12px 44px}
+main.game>.panel+.panel{margin-top:16px}
+
+/* ---------- キャラクター(説明役) ---------- */
+.mascot{display:flex;align-items:flex-end;gap:4px;margin:4px 0 14px}
+.mascot img{flex:0 0 84px;width:84px;height:84px;animation:cg-bob 2.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes cg-bob{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) translateY(-3px)}}
+.bubble{position:relative;flex:1;background:#fff;border:var(--bd);border-radius:16px;padding:10px 13px;font-size:13.5px;font-weight:700;
+ line-height:1.7;margin-bottom:14px;box-shadow:0 4px 0 var(--navy)}
+.bubble::before{content:'';position:absolute;left:-12px;bottom:14px;border:8px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:'';position:absolute;left:-7px;bottom:15px;border:7px solid transparent;border-right-color:#fff;border-left:0}
+
+/* ---------- スタート画面 ---------- */
+.start h1{margin:2px 0 12px;font-size:23px;font-weight:900;letter-spacing:.04em;line-height:1.4}
+.rules{list-style:none;margin:0 0 16px;padding:0;counter-reset:r}
+.rules li{counter-increment:r;position:relative;padding:8px 10px 8px 42px;margin-bottom:7px;background:#f3f1ff;border-radius:12px;
+ font-size:13px;font-weight:700;line-height:1.65;color:var(--ink)}
+.rules li::before{content:counter(r);position:absolute;left:9px;top:7px;width:24px;height:24px;border-radius:50%;background:var(--u);
+ color:#fff;border:2px solid var(--navy);font-family:var(--numf);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+/* ---------- プレイ画面 ---------- */
+.hud{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:9px}
+.hud>div{background:#fff;border:var(--bd);border-radius:16px;box-shadow:0 5px 0 var(--navy);padding:7px 4px 5px;text-align:center;
+ font-size:11px;font-weight:900;color:var(--mut)}
+.hud .lb{display:block;font-size:10px;font-weight:900;letter-spacing:.16em;color:var(--mut)}
+.hud b{display:block;font-family:var(--numf);font-size:27px;font-weight:700;line-height:1.1;color:var(--ink)}
+/* パネルの中に置いたHUDは、影を小さく */
+.panel .hud>div{box-shadow:0 3px 0 var(--navy);border-radius:13px}
+.hud b.bump{animation:cg-bump .25s}
+@keyframes cg-bump{50%{transform:scale(1.25);color:var(--pink)}}
+body[data-game] .tbar{height:18px;margin:16px 0;background:#fff;border:var(--bd);border-radius:99px;overflow:hidden}
+body[data-game] .tfill{height:100%;width:100%;background:var(--pink);border-radius:99px;transition:width .1s linear}
+body[data-game] .tfill.low{background:var(--bad);animation:cg-blink .5s steps(2) infinite}
+@keyframes cg-blink{50%{opacity:.55}}
+body[data-game] .q{min-height:124px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:21px;font-weight:900;
+ line-height:1.55;padding:14px 12px}
+body[data-game] .choices{display:grid;gap:11px;margin-top:16px}
+body[data-game] .choice{padding:15px 6px;font-size:16.5px;font-weight:900;color:var(--ink);background:#fff;border:var(--bd);border-radius:16px;
+ box-shadow:0 5px 0 var(--navy);cursor:pointer;transition:transform .07s,box-shadow .07s}
+body[data-game] .choice:active{transform:translateY(4px);box-shadow:0 1px 0 var(--navy)}
+body[data-game] .choice.correct{background:var(--ok);color:#fff;animation:cg-hop .35s}
+body[data-game] .choice.wrong{background:var(--bad);color:#fff;animation:cg-shake .35s}
+body[data-game] .choice[disabled]{cursor:default}
+@keyframes cg-hop{40%{transform:translateY(-7px) scale(1.04)}}
+@keyframes cg-shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+body[data-game] .fb{min-height:54px;margin-top:14px;padding:0 4px;text-align:center;font-size:13.5px;font-weight:700;line-height:1.7;color:#fff}
+body[data-game] .fb b{display:inline-block;padding:1px 12px;margin-right:4px;border-radius:99px;border:2px solid var(--navy);font-weight:900}
+body[data-game] .fb b.good{background:var(--ok);color:#fff}
+body[data-game] .fb b.bad{background:var(--bad);color:#fff}
+@media(max-width:400px){body[data-game] .q{font-size:19px}body[data-game] .choice{font-size:15.5px}}
+
+/* ---------- 手書き型ゲームの共通部品(旧デザインからの移行分) ---------- */
+.panel h1{margin:2px 0 12px;font-size:22px;font-weight:900;letter-spacing:.04em;line-height:1.4}
+.panel h2{font-weight:900}
+.desc{font-size:14px;line-height:1.85;font-weight:600;margin:0 0 12px}
+.result{text-align:center;font-size:15px;font-weight:800;line-height:1.9;color:var(--mut);margin:6px 0 4px}
+.result b{display:block;font-family:var(--numf);font-size:62px;font-weight:700;line-height:1.1;color:var(--u);
+ -webkit-text-stroke:3px var(--navy);paint-order:stroke fill;text-shadow:0 5px 0 var(--navy);margin:2px 0 8px}
+.best{text-align:center;font-size:12.5px;font-weight:900;color:var(--mut);margin:4px 0 10px;min-height:1.6em}
+.best.new{display:table;margin:8px auto 12px;color:#fff;background:var(--pink);border:var(--bd);border-radius:99px;padding:3px 16px;
+ transform:rotate(-2deg);animation:cg-pop .4s .3s both}
+
+/* ---------- 結果画面 ---------- */
+body[data-game] .res{text-align:center}
+body[data-game] .res .lb{font-size:11px;font-weight:900;letter-spacing:.3em;color:var(--mut)}
+body[data-game] .rank{display:inline-flex;align-items:center;justify-content:center;width:82px;height:82px;margin:10px 0 2px;
+ font-family:var(--numf);font-size:46px;font-weight:700;background:var(--yellow);border:4px solid var(--navy);border-radius:50%;
+ box-shadow:0 6px 0 var(--navy);transform:rotate(8deg);animation:cg-stamp .45s cubic-bezier(.3,1.6,.5,1) .15s both}
+body[data-game] .rank.r-a{background:#7ee0ff}
+body[data-game] .rank.r-b{background:#b8f5c8}
+body[data-game] .rank.r-c{background:#e9e6f7}
+@keyframes cg-stamp{from{transform:scale(2.4) rotate(-20deg);opacity:0}to{transform:rotate(8deg);opacity:1}}
+body[data-game] .score{font-family:var(--numf);font-size:68px;font-weight:700;line-height:1.05;color:var(--u);
+ -webkit-text-stroke:3px var(--navy);paint-order:stroke fill;text-shadow:0 5px 0 var(--navy)}
+body[data-game] .bestline{min-height:30px;margin-top:8px}
+body[data-game] .bestline span{display:inline-block;font-size:12px;font-weight:900;color:var(--mut)}
+body[data-game] .bestline .new{color:#fff;background:var(--pink);border:var(--bd);border-radius:99px;padding:3px 16px;letter-spacing:.14em;
+ transform:rotate(-3deg);animation:cg-pop .4s .9s both}
+body[data-game] .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0 4px}
+body[data-game] .stats>div{background:#f3f1ff;border-radius:14px;padding:8px 4px}
+body[data-game] .stats .lb{display:block;font-size:10.5px;letter-spacing:.1em}
+body[data-game] .stats b{font-family:var(--numf);font-size:23px;font-weight:700}
+body[data-game] .res .mascot{text-align:left;margin:12px 0 6px}
+
+/* ---------- 一覧ページ ---------- */
+.home-head{max-width:1000px;margin:0 auto;padding:26px 14px 6px;color:#fff}
+.home-head .en{font-family:var(--numf);font-size:13px;font-weight:700;letter-spacing:.34em;opacity:.9}
+.home-head h1{margin:2px 0 0;font-size:clamp(28px,7vw,40px);font-weight:900;letter-spacing:.1em;text-shadow:0 5px 0 var(--navy);
+ -webkit-text-stroke:2px var(--navy);paint-order:stroke fill}
+.home-head .mascot{margin:14px 0 0;max-width:520px}
+.home-head .bubble{color:var(--ink)}
+.home-head .prog{display:inline-block;margin-top:2px;background:var(--navy);color:#fff;border-radius:99px;padding:5px 15px;font-size:12px;font-weight:800}
+.home-head .prog b{font-family:var(--numf);font-size:17px;color:var(--yellow)}
+main.home{max-width:1000px;margin:0 auto;padding:4px 14px 40px}
+.home .unit{margin:26px 2px 12px;display:flex;align-items:center;gap:10px;color:#fff}
+.home .unit .sq{width:16px;height:16px;border-radius:5px;border:var(--bd);transform:rotate(-8deg)}
+.home .unit h2{font-size:16px;margin:0;letter-spacing:.1em;font-weight:900;text-shadow:0 3px 0 var(--navy)}
+.home .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+a.tile{position:relative;display:flex;gap:12px;align-items:flex-start;text-decoration:none;color:var(--ink);background:#fff;
+ border:var(--bd);border-radius:20px;box-shadow:0 6px 0 var(--navy);padding:14px 12px 12px;transition:transform .08s,box-shadow .08s}
+a.tile:hover{transform:translateY(-3px);box-shadow:0 9px 0 var(--navy)}
+a.tile:active{transform:translateY(5px);box-shadow:0 1px 0 var(--navy)}
+.tile .sym{flex:0 0 56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--c,var(--teal));color:#fff;
+ border:var(--bd);border-radius:15px;font-family:var(--numf);font-size:22px;font-weight:700;transform:rotate(-5deg);white-space:nowrap}
+.tile .sym.s3{font-size:18px}.tile .sym.s4{font-size:15px}
+.tile .tx{flex:1;min-width:0}
+.tile .nm{font-size:16px;font-weight:900;padding-right:44px;line-height:1.35}
+.tile .ds{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.6;font-weight:600}
+.tile .no{position:absolute;top:11px;right:13px;font-family:var(--numf);font-size:12px;font-weight:700;color:var(--mut)}
+.tile .kind{display:inline-block;margin-top:8px;font-size:10.5px;font-weight:900;color:var(--navy);background:#f3f1ff;border-radius:99px;padding:2px 10px}
+.tile .rec{display:inline-block;margin:8px 0 0 6px;font-size:11px;font-weight:900;color:#fff;background:var(--pink);border-radius:99px;
+ padding:2px 10px;white-space:nowrap}
+.tile .rec:empty{display:none}
+.tile .rec.seen{background:var(--ok)}
+.home-foot{text-align:center;color:#fff;font-size:12px;font-weight:600;padding:22px 16px 34px;line-height:1.9}
+.home-foot .credit{display:inline-block;margin-top:10px;padding:4px 16px;font-weight:800;background:var(--navy);border-radius:99px}
+.clr{margin-top:10px;font-size:11.5px;color:#fff;background:none;border:0;text-decoration:underline;cursor:pointer;padding:4px;opacity:.85}
+
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}

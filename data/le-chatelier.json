@@ -1,0 +1,27 @@
+{
+  "title": "平衡移動よそう",
+  "unit": "化学平衡",
+  "color": "purple",
+  "desc": "ルシャトリエの原理で平衡の移動方向を予想しよう。「変化をやわらげる向き」が合言葉。",
+  "rules": ["制限時間は90秒","圧力→気体分子数、温度→発熱/吸熱に注目","触媒・不活性気体のひっかけに注意"],
+  "limit": 90,
+  "cols": 3,
+  "choices": ["右に移動","左に移動","移動しない"],
+  "questions": [
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 圧力を高くする","a":"右に移動","ex":"気体分子数が減る右(4分子→2分子)へ移動。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 温度を上げる","a":"左に移動","ex":"吸熱方向=左へ移動して熱をやわらげる。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> NH<sub>3</sub>を取り除く","a":"右に移動","ex":"NH<sub>3</sub>を補う右へ移動。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 触媒を加える","a":"移動しない","ex":"触媒は平衡に達する時間を短くするだけで、平衡は移動しない。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> N<sub>2</sub>を加える(体積一定)","a":"右に移動","ex":"N<sub>2</sub>を減らす右へ移動。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 体積一定でアルゴンを加える","a":"移動しない","ex":"各気体の濃度(分圧)が変わらないので移動しない。"},
+    {"q":"N<sub>2</sub> + 3H<sub>2</sub> ⇌ 2NH<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 全圧一定でアルゴンを加える","a":"左に移動","ex":"体積が増えて各分圧が下がる → 分子数が増える左へ。難問！"},
+    {"q":"2SO<sub>2</sub> + O<sub>2</sub> ⇌ 2SO<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 圧力を高くする","a":"右に移動","ex":"気体分子数が減る右(3分子→2分子)へ。"},
+    {"q":"2SO<sub>2</sub> + O<sub>2</sub> ⇌ 2SO<sub>3</sub>(正反応は発熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 温度を下げる","a":"右に移動","ex":"発熱方向=右へ移動。工業的には速度との兼ね合いで400〜600℃。"},
+    {"q":"H<sub>2</sub> + I<sub>2</sub> ⇌ 2HI(すべて気体)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 圧力を高くする","a":"移動しない","ex":"両辺とも気体2分子なので圧力では移動しない。"},
+    {"q":"H<sub>2</sub> + I<sub>2</sub> ⇌ 2HI(すべて気体)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> H<sub>2</sub>を加える(体積一定)","a":"右に移動","ex":"H<sub>2</sub>を減らす右へ移動。"},
+    {"q":"N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub>(正反応は吸熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 温度を上げる","a":"右に移動","ex":"吸熱方向=右へ。赤褐色(NO<sub>2</sub>)が濃くなる。"},
+    {"q":"N<sub>2</sub>O<sub>4</sub> ⇌ 2NO<sub>2</sub>(正反応は吸熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 圧力を低くする","a":"右に移動","ex":"気体分子数が増える右(1分子→2分子)へ。"},
+    {"q":"C(固) + CO<sub>2</sub> ⇌ 2CO(正反応は吸熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 圧力を高くする","a":"左に移動","ex":"固体は数えない。気体は右2分子・左1分子なので左へ。"},
+    {"q":"C(固) + CO<sub>2</sub> ⇌ 2CO(正反応は吸熱)<br><span style=\"color:#5b6f78;font-size:.8em\">条件変化:</span> 温度を上げる","a":"右に移動","ex":"吸熱方向=右へ移動。"}
+  ]
+}

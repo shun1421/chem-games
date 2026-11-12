@@ -4,30 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>モル換算スプリント | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
 <style>
-:root{--paper:#f3f6f5;--card:#fff;--ink:#1b2a33;--mut:#5b6f78;--line:#d5e0de;
---acc:#0e7c86;--amber:#e8a13d;--bad:#d4566a;--ok:#2e9e6b;
---neon:#00ffe0;--pink:#ff3d87;--sun:#ffd21e;--grape:#8b5cff;--lime:#7dff4d;
---mono:"SFMono-Regular",Consolas,"Courier New",monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:3px solid var(--acc)}
-.back{color:var(--acc);text-decoration:none;font-weight:700;font-size:14px}
-.htitle{font-weight:800;letter-spacing:.05em}
-.chip{margin-left:auto;font-size:12px;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:2px 10px}
-main{max-width:680px;margin:0 auto;padding:14px 12px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(27,42,51,.05)}
-.hidden{display:none}
-h1{font-size:22px;margin:0 0 8px}
-.desc{color:var(--mut);line-height:1.75}
-.rules{color:var(--mut);font-size:14px;padding-left:20px;line-height:1.85}
+:root{--paper:#f3f1ff;--card:#fff;--line:#d9d3f5;--acc:#0b96a8;--amber:#ff9f1c;--bad:#ff4f5e;--ok:#19c37d;--neon:#00ffe0;--pink:#ff3d87;--sun:#ffd21e;--grape:#8b5cff;--lime:#7dff4d;--mono:"SFMono-Regular",Consolas,"Courier New",monospace}
 .hint{font-size:12.5px;color:var(--mut);line-height:1.7}
-.primary{display:block;width:100%;margin-top:14px;padding:15px;font-size:17px;font-weight:800;color:#fff;
- background:linear-gradient(135deg,var(--acc),#15a39a);border:0;border-radius:12px;cursor:pointer;font-family:inherit;
- box-shadow:0 4px 0 #0a5d64;transition:transform .08s,box-shadow .08s}
-.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #0a5d64}
-.ghost{display:block;text-align:center;margin-top:12px;color:var(--acc);font-weight:700;text-decoration:none}
 .sample{background:#eef6f5;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;
  text-align:center;font-size:15px;line-height:2.2}
 .sample .k{color:var(--pink);font-weight:800}
@@ -142,37 +122,32 @@ h1{font-size:22px;margin:0 0 8px}
  100%{opacity:0;transform:translateY(-56px) scale(1)}}
 .conf{position:fixed;width:10px;height:15px;pointer-events:none;z-index:59;border-radius:2px}
 @keyframes fall{to{transform:translateY(100vh) rotate(760deg);opacity:0}}
-
-.result{font-size:18px;text-align:center;line-height:2}
-.result b{font-family:var(--mono);font-size:38px;color:var(--acc)}
 .medal{font-size:50px;text-align:center;line-height:1.2}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
 .stat{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
 .stat b{display:block;font-family:var(--mono);font-size:20px;color:var(--ink)}
 .stat span{font-size:10.5px;color:var(--mut)}
-sub,sup{font-size:.62em}
 @media(max-width:420px){
   .qmain{font-size:18px}.val{font-size:17px}.frac .num,.frac .den{font-size:15px}
   .ans{font-size:18px}.ch .num,.ch .den{font-size:13.5px}.frac{min-width:84px}
   .expr{gap:5px;padding:12px 6px}.mul{font-size:18px}.qmk{font-size:26px}
 }
-/* 自己ベスト */
-.best{text-align:center;font-size:13px;font-weight:800;color:var(--mut,#5b6f78);margin:2px 0 0;min-height:1.6em}
-.best.new{color:#e8a13d}
+
+main.game{max-width:680px}
+/* ARCADE POP に合わせる(部品) */
+#play.panel{border:3px solid var(--navy)}
+.sample{background:#f3f1ff;border:0}
+.stat{background:#f3f1ff;border:0}
 </style>
 </head>
-<body>
-<header>
-  <a class="back" href="index.html">‹ 一覧</a>
-  <div class="htitle">モル換算スプリント</div>
-  <span class="chip">物質量</span>
-</header>
-<main>
+<body data-u="teal">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">モル換算スプリント</div><span class="chip">物質量</span></header>
+<main class="game">
 
 <section id="start" class="panel">
   <h1>モル換算スプリント 〜単位をそろえて消せ〜</h1>
-  <p class="desc">molの計算は、<b>かける数(換算係数)</b>さえ選べば単位が勝手に約分されて答えが出る。
-  消したい単位が<b>下</b>、残したい単位が<b>上</b>。60秒で何問いけるか。</p>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">molの計算は、<b>かける数(換算係数)</b>さえ選べば単位が勝手に約分されて答えが出る。
+  消したい単位が<b>下</b>、残したい単位が<b>上</b>。60秒で何問いけるか。</div></div>
   <div class="sample">
     N<sub>2</sub> 4.0 mol は何 g ?<br>
     4.0 mol × <span class="k">[ ? g / 1 mol ]</span> = ? g<br>
@@ -186,7 +161,7 @@ sub,sup{font-size:.62em}
     <li>原子量: H=1.0, He=4.0, C=12, N=14, O=16, Ne=20, Na=23, Mg=24, Al=27, S=32, Cl=35.5, Ca=40, Fe=56, Cu=64</li>
     <li>標準状態の気体 1 mol = 22.4 L、アボガドロ定数 6.0×10<sup>23</sup> /mol</li>
   </ul>
-  <button class="primary" onclick="startGame()">スタート</button>
+  <button class="btn" onclick="startGame()">スタート</button>
 </section>
 
 <section id="play" class="panel hidden">
@@ -218,11 +193,12 @@ sub,sup{font-size:.62em}
     <div class="stat"><b id="fmax">0</b><span>最大コンボ</span></div>
   </div>
   <div class="hint" id="fmiss"></div>
-  <button class="primary" onclick="startGame()">もう一度</button>
-  <a class="ghost" href="index.html">一覧へ戻る</a>
+  <button class="btn" onclick="startGame()">もう一度</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
 </section>
 </main>
 
+<script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 

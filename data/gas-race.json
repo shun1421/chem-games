@@ -1,0 +1,21 @@
+{
+  "title": "気体方程式レース",
+  "unit": "気体・状態変化",
+  "color": "blue",
+  "desc": "気体の状態方程式 PV=nRT の計算レース。R=8.3×10<sup>3</sup> Pa・L/(K・mol) とする。",
+  "rules": ["制限時間は90秒","V=8.3 L の問題が多い理由を考えると暗算が速くなる","単位(Pa・L・K・mol)に注目"],
+  "limit": 90,
+  "cols": 2,
+  "questions": [
+    {"q":"PV=nRT で考える。<br>n=2.0 mol, T=300 K, V=8.3 L のとき圧力Pは？","a":"6.0×10<sup>5</sup> Pa","w":["3.0×10<sup>5</sup> Pa","1.2×10<sup>6</sup> Pa","6.0×10<sup>4</sup> Pa"],"ex":"P=nRT/V=2.0×8.3×10<sup>3</sup>×300÷8.3"},
+    {"q":"PV=nRT で考える。<br>n=1.0 mol, T=400 K, V=8.3 L のとき圧力Pは？","a":"4.0×10<sup>5</sup> Pa","w":["2.0×10<sup>5</sup> Pa","8.0×10<sup>5</sup> Pa","4.0×10<sup>4</sup> Pa"],"ex":"P=nRT/V=1.0×8.3×10<sup>3</sup>×400÷8.3"},
+    {"q":"PV=nRT で考える。<br>n=0.50 mol, T=600 K, V=8.3 L のとき圧力Pは？","a":"3.0×10<sup>5</sup> Pa","w":["6.0×10<sup>5</sup> Pa","1.5×10<sup>5</sup> Pa","3.0×10<sup>4</sup> Pa"],"ex":"P=nRT/V=0.50×8.3×10<sup>3</sup>×600÷8.3"},
+    {"q":"PV=nRT で考える。<br>n=0.25 mol, T=400 K, V=8.3 L のとき圧力Pは？","a":"1.0×10<sup>5</sup> Pa","w":["2.0×10<sup>5</sup> Pa","5.0×10<sup>4</sup> Pa","1.0×10<sup>6</sup> Pa"],"ex":"P=nRT/V=0.25×8.3×10<sup>3</sup>×400÷8.3"},
+    {"q":"PV=nRT で考える。<br>P=1.0×10<sup>5</sup> Pa, n=1.0 mol, T=300 K のとき体積Vは？","a":"約 25 L","w":["約 12 L","約 50 L","約 2.5 L"],"ex":"V=nRT/P=8.3×10<sup>3</sup>×300÷10<sup>5</sup>=24.9 L"},
+    {"q":"PV=nRT で考える。<br>P=1.0×10<sup>5</sup> Pa, n=2.0 mol, T=300 K のとき体積Vは？","a":"約 50 L","w":["約 25 L","約 100 L","約 5.0 L"],"ex":"V=nRT/P=2.0×8.3×10<sup>3</sup>×300÷10<sup>5</sup>=49.8 L"},
+    {"q":"PV=nRT で考える。<br>P=1.0×10<sup>5</sup> Pa, V=8.3 L, T=250 K のとき物質量nは？","a":"0.40 mol","w":["0.80 mol","0.20 mol","4.0 mol"],"ex":"n=PV/RT=10<sup>5</sup>×8.3÷(8.3×10<sup>3</sup>×250)"},
+    {"q":"PV=nRT で考える。<br>P=2.0×10<sup>5</sup> Pa, V=8.3 L, T=400 K のとき物質量nは？","a":"0.50 mol","w":["1.0 mol","0.25 mol","5.0 mol"],"ex":"n=PV/RT=2.0×10<sup>5</sup>×8.3÷(8.3×10<sup>3</sup>×400)"},
+    {"q":"PV=nRT で考える。<br>P=1.0×10<sup>5</sup> Pa, V=8.3 L, n=0.50 mol のとき温度Tは？","a":"200 K","w":["400 K","100 K","300 K"],"ex":"T=PV/nR=10<sup>5</sup>×8.3÷(0.50×8.3×10<sup>3</sup>)"},
+    {"q":"PV=nRT で考える。<br>P=3.0×10<sup>5</sup> Pa, V=8.3 L, n=1.0 mol のとき温度Tは？","a":"300 K","w":["600 K","150 K","83 K"],"ex":"T=PV/nR=3.0×10<sup>5</sup>×8.3÷(1.0×8.3×10<sup>3</sup>)"}
+  ]
+}
