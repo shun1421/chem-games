@@ -45,7 +45,7 @@ crystal-classify.html    … No.6  結晶分類+質問推理
 ion-formula.html         … No.10 イオン式・組成式(ion_learning-game由来)
 formula-tower.html       … No.11 物質名→化学式(ミニ周期表を押して組立、SVGモンスター)
 polarity-3d.html         … No.8  3D極性判定(自作3D投影)
-lattice-viewer.html      … No.14 結晶格子3D教材(自作3D投影)
+lattice-viewer.html      … No.14 結晶格子3D教材(金属4種・CsCl/NaCl/ZnS型・ダイヤモンド、限界半径比スライダー、断面。自作3D投影)
 gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体)
 element-match.html       … No.1  元素記号マッチング(elemental-master-118由来)
 element-position.html    … No.2  周期表の位置あて(同上)

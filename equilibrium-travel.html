@@ -63,17 +63,16 @@
 /* 記録 */
 .rec{margin-top:11px;background:#f7f4fc;border:1.5px solid #ddd3ef;border-radius:11px;padding:10px}
 .rec .lb{font-size:11.5px;font-weight:800;color:var(--mut);margin-bottom:7px}
-.recrow{display:flex;gap:6px;align-items:center}
-.stp{width:40px;height:40px;border:1.5px solid var(--line);background:#fff;border-radius:9px;
- font-size:19px;font-weight:900;color:var(--pur);cursor:pointer;font-family:inherit;padding:0}
-.recrow input{flex:1;min-width:0;height:40px;border:1.5px solid var(--line);border-radius:9px;
- font-family:var(--mono);font-size:20px;font-weight:900;text-align:center;color:var(--ink);
- background:#fff;-moz-appearance:textfield}
-.recrow input::-webkit-outer-spin-button,.recrow input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.go{height:40px;padding:0 16px;border:0;border-radius:9px;background:var(--ok);color:#fff;
- font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;white-space:nowrap}
-.moved{font-size:13px;font-weight:800;line-height:1.9}
-.moved .n{font-family:var(--mono);font-size:17px}
+.rec .lb span{font-weight:700}
+/* この試行で動いた人(向きごと) */
+.mv2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mvc{background:#fff;border:2px solid var(--navy);border-radius:10px;padding:5px 6px;text-align:center}
+.mvc .mk{display:block;font-size:11.5px;font-weight:900;white-space:nowrap}
+.mvc .n{font-family:var(--mono);font-size:26px;font-weight:900;line-height:1.2}
+.mvc .u{font-size:12px;font-weight:800;color:var(--mut);margin-left:3px}
+.mvc.jp .mk,.mvc.jp .n{color:var(--jp)}
+.mvc.us .mk,.mvc.us .n{color:var(--us)}
+.mvnote{font-size:11px;color:var(--mut);font-weight:700;margin-top:6px;line-height:1.6}
 
 /* 状態表示 */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
@@ -166,9 +165,9 @@ main.game{max-width:1120px}
 .seg button.on{background:var(--navy)}
 .fld{border:2px solid var(--navy)}
 .card{border-width:3px;box-shadow:0 3px 0 var(--navy)}
-.stp,.row2 button{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
-.stp:active,.row2 button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
-.go{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
+.row2 button{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy)}
+.row2 button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.rec{border:2px solid var(--navy)}
 .st{border:2px solid var(--navy)}
 .kbtn{border:3px solid var(--navy);box-shadow:0 5px 0 var(--navy)}
 .kbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
@@ -215,19 +214,19 @@ body.cls .card{width:var(--cs,62px);height:var(--cs,62px);font-size:var(--cf,30p
 body.cls .card .bdg{width:max(21px,calc(var(--cs,62px)*.3));height:max(21px,calc(var(--cs,62px)*.3));
  font-size:max(11px,calc(var(--cs,62px)*.16));top:calc(var(--cs,62px)*-.1);right:calc(var(--cs,62px)*-.08);
  border:2px solid var(--navy)}
-/* 進行のボタン(まわす・人数の入力・記録)は下に横ならび */
-body.cls .gbar{flex:none;display:flex;gap:12px;align-items:stretch;min-height:108px;margin-top:10px}
-body.cls #gSpin{margin:0;flex:1 1 0;font-size:22px;padding:8px;line-height:1.3}
-body.cls #gRec{margin:0;flex:1.5 1 0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;
- border:2px solid var(--navy)}
-body.cls .rec .lb{font-size:15px;margin-bottom:6px}
-body.cls .recrow{gap:8px}
-body.cls .stp{width:54px;height:54px;font-size:28px}
-body.cls .recrow input{height:54px;font-size:32px}
-body.cls .go{height:54px;font-size:20px;padding:0 22px}
-body.cls .moved{font-size:16px;line-height:1.5}
-body.cls .moved .n{font-size:28px}
-body.cls .moved br+span{font-size:12px}
+/* 「まわす」(大きく)と「この試行で動いた人」は下に横ならび */
+body.cls .gbar{flex:none;display:flex;gap:12px;align-items:stretch;min-height:120px;margin-top:10px}
+body.cls #gSpin{margin:0;flex:1 1 0;font-size:32px;padding:8px;line-height:1.2}
+body.cls #gRec{margin:0;flex:1.6 1 0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center}
+body.cls .rec .lb{font-size:16px;margin-bottom:6px}
+body.cls .mv2{gap:10px}
+body.cls .mvc{padding:4px 8px}
+body.cls .mvc .mk{font-size:16px}
+body.cls .mvc .n{font-size:48px;line-height:1.05}
+body.cls .mvc .u{font-size:18px}
+body.cls .mvnote{font-size:13px;margin-top:5px;line-height:1.4}
+/* グラフの切りかえ(教室表示では押しやすい高さに) */
+body.cls #ggraph button{min-height:44px;padding:0 16px;font-size:15px}
 /* 右側: 人数とグラフ */
 body.cls .stats{flex:none}
 body.cls .st .k{font-size:14px}
@@ -265,12 +264,9 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
       <label class="fld">参加人数 <input id="gN" type="number" min="2" max="60" value="24"><span class="unit">人</span></label>
       <label class="fld jp">日→米 <input id="gR1" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
       <label class="fld us">米→日 <input id="gR2" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
-      <span class="seg" id="gmode">
-        <button class="on" data-v="in">人数を入力</button><button data-v="auto">自動で追跡</button>
-      </span>
     </div>
     <div class="warn" id="gwarn"></div>
-    <p class="note ghide" style="margin:6px 0 0">参加人数・枚数・記録のしかたを変えると、記録は最初からになる。</p>
+    <p class="note ghide" style="margin:6px 0 0">参加人数・枚数を変えると、記録は最初からになる。</p>
 
     <div class="gfit" id="gFit">
     <div class="dir jp" id="gD1"><span class="ar">日本 → アメリカ</span><b id="gL1">3</b>枚</div>
@@ -282,32 +278,29 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
     <div class="gbar" id="gBar">
     <button class="big" id="gSpin" onclick="gSpin()">まわす</button>
 
-    <div class="rec hidden" id="gRec">
-      <div class="lb" id="gRecLb">いま アメリカ にいる人数は？</div>
-      <div class="recrow" id="gRecIn">
-        <button class="stp" onclick="gBump(-1)">−</button>
-        <input id="gUs" type="number" min="0" value="0">
-        <button class="stp" onclick="gBump(1)">＋</button>
-        <button class="go" onclick="gRecord()">記録</button>
+    <div class="rec" id="gRec">
+      <div class="lb" id="gRecLb">この試行で動いた人</div>
+      <div class="mv2">
+        <div class="mvc jp"><span class="mk">日本 → アメリカ</span><span class="n" id="gM1">−</span><span class="u">人</span></div>
+        <div class="mvc us"><span class="mk">アメリカ → 日本</span><span class="n" id="gM2">−</span><span class="u">人</span></div>
       </div>
-      <div class="moved hidden" id="gMoved"></div>
+      <div class="mvnote" id="gMvNote"></div>
     </div>
     </div>
   </div>
 
   <div class="pane">
-    <div class="hd"><div class="t">各国の人数</div></div>
+    <div class="hd"><div class="t" id="gGt">各国の人数</div>
+      <span class="seg" id="ggraph">
+        <button class="on" data-v="0">人数</button><button data-v="1">移動人数</button><button data-v="2">見かけ</button>
+      </span></div>
     <div class="stats">
       <div class="st"><div class="k">試行回数</div><div class="v" id="gT">0</div></div>
       <div class="st jp"><div class="k">日本</div><div class="v" id="gJ">24</div></div>
       <div class="st us"><div class="k">アメリカ</div><div class="v" id="gA">0</div></div>
     </div>
     <div class="cwrap"><canvas id="gCv"></canvas></div>
-    <div class="legend">
-      <span><i style="background:#d4566a"></i>日本（実測）</span>
-      <span><i style="background:#3e77b6"></i>アメリカ（実測）</span>
-      <span><i class="d" style="border-color:#b9b2c7"></i>理論値</span>
-    </div>
+    <div class="legend" id="gLeg"></div>
     <div class="row2">
       <button onclick="gUndo()">1つ戻す</button>
       <button onclick="gReset()">最初から</button>
@@ -534,11 +527,22 @@ function theory(N,r1,r2,J0,T){
   }
   return {J:J,A:A};
 }
+// 理論曲線から、試行ごとの移動人数の理論値(t 回目: 日→米 r1·J(t-1)/N、米→日 r2·A(t-1)/N)
+function theoryMoves(th,N,r1,r2,T){
+  const tM1=[null],tM2=[null],tNET=[null];
+  for(let t=1;t<=T;t++){
+    const a=r1*th.J[t-1]/N, b=r2*th.A[t-1]/N;
+    tM1.push(a);tM2.push(b);tNET.push(a-b);
+  }
+  return {tM1:tM1,tM2:tM2,tNET:tNET};
+}
 
 /* =======================================================
    実戦モード
    ======================================================= */
-const G={N:24,r1:3,r2:3,mode:'in',where:null,hist:[],nums1:[],nums2:[],spinning:false,pend:false};
+// where: 番号ごとの居場所(0=日本 1=アメリカ)。hist: 試行ごとの記録(その試行のあとの居場所の控え w もいっしょに持つ)
+// view: グラフの切りかえ(0=人数 1=移動人数 2=見かけ。保存はしない。「最初から」でも保つ)
+const G={N:24,r1:3,r2:3,where:null,hist:[],spinning:false,timers:[],view:0};
 
 function gSetup(reset){
   const N=num('gN',2,60,24);
@@ -616,25 +620,26 @@ function gFit(){
   w.style.setProperty('--h2',gh(Math.ceil(G.r2/r.c))+'px');
 }
 if(window.ResizeObserver)new ResizeObserver(()=>gFit()).observe($('gFit'));
+// 回っているとちゅうのルーレットを止める(「最初から」「1つ戻す」・設定の変更のとき)
+function gStopSpin(){
+  G.timers.forEach(t=>{clearInterval(t);clearTimeout(t);});
+  G.timers=[];G.spinning=false;
+  $('gSpin').disabled=false;
+}
 function gReset(){
-  G.where=new Uint8Array(G.N+1);      // 0=日本 1=アメリカ
-  G.hist=[{j:G.N,a:0,m1:0,m2:0}];
-  G.nums1=[];G.nums2=[];G.pend=false;
-  $('gC1').innerHTML='';$('gC2').innerHTML='';
-  $('gRec').classList.add('hidden');
-  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
+  gStopSpin();
+  G.where=new Uint8Array(G.N+1);      // 全員が日本からスタート
+  G.hist=[{j:G.N,a:0,m1:0,m2:0,w:G.where.slice(),n1:[],n2:[],o1:[],o2:[]}];
+  gShowTrial();
   gPaint();
 }
+// 1つ前の試行のあとの状態にもどす(居場所も控え w からもどす)
 function gUndo(){
+  if(G.spinning){gStopSpin();gShowTrial();return;}   // 回っているときは、その試行を取りやめるだけ
   if(G.hist.length<2)return;
   G.hist.pop();
-  if(G.mode==='auto'){ // 自動モードは状態が戻せないので入力値から作り直す
-    const h=G.hist[G.hist.length-1];
-    G.where=new Uint8Array(G.N+1);
-    for(let i=1;i<=h.a;i++)G.where[i]=1;
-  }
-  G.pend=false;$('gRec').classList.add('hidden');
-  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
+  G.where=G.hist[G.hist.length-1].w.slice();
+  gShowTrial();
   gPaint();
 }
 function gCards(el,nums,cls,spin){
@@ -647,10 +652,9 @@ function gCards(el,nums,cls,spin){
 }
 function gSpin(){
   if(G.spinning)return;
-  if(G.pend){return;}
   if(G.r1+G.r2>G.N)return;
   G.spinning=true;$('gSpin').disabled=true;
-  $('gRec').classList.add('hidden');
+  $('gM1').textContent='?';$('gM2').textContent='?';
   const c1=$('gC1'),c2=$('gC2');
   gCards(c1,new Array(G.r1).fill(0),'jp',true);
   gCards(c2,new Array(G.r2).fill(0),'us',true);
@@ -660,79 +664,50 @@ function gSpin(){
     all.forEach(e=>{e.textContent=1+Math.floor(Math.random()*G.N);});
     if(n++%2===0)sfx.tick();
   },55);
-  setTimeout(()=>{
-    clearInterval(iv);
+  const to=setTimeout(()=>{
+    clearInterval(iv);G.timers=[];
     const pick=sampleUnique(G.N,G.r1+G.r2);
-    G.nums1=pick.slice(0,G.r1);G.nums2=pick.slice(G.r1);
-    gCards(c1,G.nums1,'jp',false);gCards(c2,G.nums2,'us',false);
+    G.spinning=false;$('gSpin').disabled=false;
+    gStep(pick.slice(0,G.r1),pick.slice(G.r1));
     [...c1.children,...c2.children].forEach(e=>e.classList.add('pop'));
     sfx.fix();
-    G.spinning=false;G.pend=true;
-    gAfterSpin();
-  },1150);
-}
-function gAfterSpin(){
-  const last=G.hist[G.hist.length-1];
-  $('gRec').classList.remove('hidden');
-  if(G.mode==='auto'){
-    // 試行前の状態で判定してから、まとめて動かす
-    const snap=G.where.slice();
-    let m1=0,m2=0;
-    const c1=$('gC1').children,c2=$('gC2').children;
-    G.nums1.forEach((x,i)=>{
-      const ok=snap[x]===0;
-      if(ok){G.where[x]=1;m1++;}
-      gBadge(c1[i],ok);
-    });
-    G.nums2.forEach((x,i)=>{
-      const ok=snap[x]===1;
-      if(ok){G.where[x]=0;m2++;}
-      gBadge(c2[i],ok);
-    });
-    const j=last.j-m1+m2, a=last.a+m1-m2;
-    G.hist.push({j:j,a:a,m1:m1,m2:m2});
-    G.pend=false;
-    $('gRecIn').classList.add('hidden');
-    const mv=$('gMoved');mv.classList.remove('hidden');
-    mv.innerHTML='日本 → アメリカ <span class="n" style="color:var(--jp)">'+m1+'</span> 人　／　'
-      +'アメリカ → 日本 <span class="n" style="color:var(--us)">'+m2+'</span> 人<br>'
-      +'<span style="color:var(--mut);font-weight:700">✈ のついた人だけが動いた（その国にいた人）</span>';
-    $('gRecLb').textContent='この試行で動いた人';
-    $('gSpin').disabled=false;
-    sfx.rec();
+    setTimeout(()=>sfx.rec(),180);
     gPaint();
+  },1150);
+  G.timers=[iv,to];
+}
+// 1回の試行: 試行前の居場所で「動けるか」を決めてから、まとめて動かす
+function gStep(nums1,nums2){
+  const last=G.hist[G.hist.length-1];
+  const snap=G.where.slice();
+  let m1=0,m2=0;
+  const o1=nums1.map(x=>{const ok=snap[x]===0;if(ok){G.where[x]=1;m1++;}return ok;});
+  const o2=nums2.map(x=>{const ok=snap[x]===1;if(ok){G.where[x]=0;m2++;}return ok;});
+  G.hist.push({j:last.j-m1+m2,a:last.a+m1-m2,m1:m1,m2:m2,w:G.where.slice(),
+    n1:nums1.slice(),n2:nums2.slice(),o1:o1,o2:o2});
+  gShowTrial();
+}
+// いちばん新しい試行のカード(✈・うすい表示)と「この試行で動いた人」を出す
+function gShowTrial(){
+  const h=G.hist,t=h.length-1,e=h[t];
+  const c1=$('gC1'),c2=$('gC2');
+  gCards(c1,e.n1,'jp',false);gCards(c2,e.n2,'us',false);
+  e.n1.forEach((_,i)=>gBadge(c1.children[i],e.o1[i]));
+  e.n2.forEach((_,i)=>gBadge(c2.children[i],e.o2[i]));
+  if(t>0){
+    $('gRecLb').innerHTML='この試行で動いた人<span>（'+t+'回目）</span>';
+    $('gM1').textContent=e.m1;$('gM2').textContent=e.m2;
+    $('gMvNote').textContent='✈ のついた人だけが動いた（呼ばれたとき、その国にいた人）';
   }else{
-    $('gRecIn').classList.remove('hidden');
-    $('gMoved').classList.add('hidden');
-    $('gRecLb').textContent='いま アメリカ にいる人数は？（数えて入力）';
-    $('gUs').value=last.a;
-    $('gUs').max=G.N;
-    $('gSpin').textContent='記録してから、まわす';
+    $('gRecLb').textContent='この試行で動いた人';
+    $('gM1').textContent='−';$('gM2').textContent='−';
+    $('gMvNote').textContent='「まわす」を押すと、呼ばれた番号のうち、その国にいる人に ✈ がついて移動する。';
   }
 }
 function gBadge(el,ok){
   if(!el)return;
   if(ok){const b=document.createElement('span');b.className='bdg go';b.textContent='✈';el.appendChild(b);}
   else el.classList.add('no');
-}
-function gBump(d){
-  const v=clamp(Math.round(iv('gUs',0))+d,0,G.N);
-  $('gUs').value=v;
-}
-function gRecord(){
-  if(!G.pend)return;
-  const a=clamp(Math.round(iv('gUs',0)),0,G.N);
-  const last=G.hist[G.hist.length-1];
-  const j=G.N-a;
-  G.hist.push({j:j,a:a,m1:Math.max(0,last.j-j),m2:Math.max(0,last.a-a)});
-  // 入力モードでも番号の所在をだいたい合わせておく（戻す用）
-  G.where=new Uint8Array(G.N+1);
-  for(let i=1;i<=a;i++)G.where[i]=1;
-  G.pend=false;
-  $('gRec').classList.add('hidden');
-  $('gSpin').disabled=false;$('gSpin').textContent='まわす';
-  sfx.rec();
-  gPaint();
 }
 function gPaint(){
   const h=G.hist,last=h[h.length-1];
@@ -741,28 +716,28 @@ function gPaint(){
   $('gA').textContent=last.a;
   gDraw();
 }
+// 実戦の記録を、シミュレーションと同じ形のデータにしてグラフにする
+// 横軸は試行回数 0 から(まだ少ないうちも、理論値は 8 回目まで先に見せる)
 function gDraw(){
-  const h=G.hist;
-  const xs=h.map((_,i)=>i);
-  const th=theory(G.N,G.r1,G.r2,h[0].j,Math.max(h.length-1,8));
-  const xs2=th.J.map((_,i)=>i);
-  const allx=xs2.length>xs.length?xs2:xs;
-  const pad=v=>{const o=v.slice();while(o.length<allx.length)o.push(null);return o;};
-  drawChart($('gCv'),{
-    xs:allx,ymin:0,ymax:G.N,intX:true,xlab:'試行回数',ylab:'人数',k:G.cls&&tab===0?G_CLS_K:1,
-    series:[
-      {c:'#b9b2c7',data:pad(th.J),dash:[3,3],w:1.8},
-      {c:'#b9b2c7',data:pad(th.A),dash:[3,3],w:1.8},
-      {c:'#d4566a',data:pad(h.map(x=>x.j)),w:2.6},
-      {c:'#3e77b6',data:pad(h.map(x=>x.a)),w:2.6}
-    ]
-  });
+  const h=G.hist,t=h.length-1,N=G.N,r1=G.r1,r2=G.r2;
+  const T=Math.max(t,8);
+  const pad=v=>{const o=v.slice();while(o.length<T+1)o.push(null);return o;};
+  const th=theory(N,r1,r2,h[0].j,T);
+  const d={N:N,r1:r1,r2:r2,th:th,
+    J:pad(h.map(x=>x.j)),A:pad(h.map(x=>x.a)),
+    M1:pad(h.map((x,i)=>i?x.m1:null)),M2:pad(h.map((x,i)=>i?x.m2:null)),
+    NET:pad(h.map((x,i)=>i?x.m1-x.m2:null))};
+  Object.assign(d,theoryMoves(th,N,r1,r2,T));
+  const r=travelGraph(G.view,d);
+  r.cfg.k=G.cls&&tab===0?G_CLS_K:1;
+  $('gGt').textContent=r.title;
+  drawChart($('gCv'),r.cfg);
+  legend($('gLeg'),r.leg);
 }
-$('gmode').onclick=e=>{
+$('ggraph').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
-  [...$('gmode').children].forEach(x=>x.classList.toggle('on',x===b));
-  G.mode=b.dataset.v;
-  gReset();
+  [...$('ggraph').children].forEach(x=>x.classList.toggle('on',x===b));
+  G.view=+b.dataset.v;gDraw();
 };
 ['gN','gR1','gR2'].forEach(id=>{$(id).onchange=()=>gSetup(false);});
 
@@ -801,12 +776,7 @@ function sRun(){
     M1.push(m1);M2.push(m2);NET.push(m1-m2);
   }
   const th=theory(N,r1,r2,J0,T);
-  const tM1=[null],tM2=[null],tNET=[null];
-  for(let t=1;t<=T;t++){
-    const a=r1*th.J[t-1]/N, b=r2*th.A[t-1]/N;
-    tM1.push(a);tM2.push(b);tNET.push(a-b);
-  }
-  S.data={N:N,T:T,r1:r1,r2:r2,J:J,A:A,M1:M1,M2:M2,NET:NET,th:th,tM1:tM1,tM2:tM2,tNET:tNET};
+  S.data=Object.assign({N:N,T:T,r1:r1,r2:r2,J:J,A:A,M1:M1,M2:M2,NET:NET,th:th},theoryMoves(th,N,r1,r2,T));
 
   const need=Math.ceil(3*N/(r1+r2));
   if(!w&&T<need)$('swarn').textContent='試行回数が少なめ。平衡まで届かせるには '+need+' 回くらい必要。';
@@ -832,41 +802,51 @@ function smooth(arr,w){
   }
   return out;
 }
-function sDraw(){
-  const d=S.data;
-  if(!d){drawChart($('sCv'),null);legend($('sLeg'),[]);return;}
+// 人数・移動人数・見かけの3つのグラフの組み立て(シミュレーションと実戦で共通)
+// d:{N,r1,r2,J,A,M1,M2,NET,th:{J,A},tM1,tM2,tNET}。配列の i 番目が i 回目の試行(0 は試行前)
+// 返り値 {title, cfg(drawChart に渡す), leg(凡例)}
+function travelGraph(view,d){
   const xs=d.J.map((_,i)=>i);
-  if(S.view===0){
-    $('sGt').textContent='各国の人数';
-    drawChart($('sCv'),{xs:xs,ymin:0,ymax:d.N,intX:true,xlab:'試行回数',ylab:'人数',
+  const T=xs.length-1;
+  if(view===0){
+    return {title:'各国の人数',
+      cfg:{xs:xs,ymin:0,ymax:d.N,intX:true,xlab:'試行回数',ylab:'人数',
       series:[{c:'#b9b2c7',data:d.th.J,dash:[3,3],w:1.8},
               {c:'#b9b2c7',data:d.th.A,dash:[3,3],w:1.8},
-              {c:'#d4566a',data:d.J,w:2.4},{c:'#3e77b6',data:d.A,w:2.4}]});
-    legend($('sLeg'),[{c:'#d4566a',t:'日本'},{c:'#3e77b6',t:'アメリカ'},{c:'#b9b2c7',t:'理論値',d:1}]);
-  }else if(S.view===1){
-    $('sGt').textContent='実際に移動した人数';
-    const w=Math.max(2,Math.round(d.T*0.04));
+              {c:'#d4566a',data:d.J,w:2.4},{c:'#3e77b6',data:d.A,w:2.4}]},
+      leg:[{c:'#d4566a',t:'日本'},{c:'#3e77b6',t:'アメリカ'},{c:'#b9b2c7',t:'理論値',d:1}]};
+  }else if(view===1){
+    const w=Math.max(2,Math.round(T*0.04));
     const mx=Math.max(1,d.r1,d.r2,...d.M1.filter(v=>v!=null),...d.M2.filter(v=>v!=null));
-    drawChart($('sCv'),{xs:xs,ymin:0,ymax:mx*1.1,intX:true,xlab:'試行回数',ylab:'人数',
+    return {title:'実際に移動した人数',
+      cfg:{xs:xs,ymin:0,ymax:mx*1.1,intX:true,xlab:'試行回数',ylab:'人数',
       series:[{c:'#f3bfc7',data:d.M1,w:1.1},{c:'#aecae6',data:d.M2,w:1.1},
               {c:'#d4566a',data:smooth(d.M1,w),w:2.4},{c:'#3e77b6',data:smooth(d.M2,w),w:2.4},
               {c:'#6f6683',data:d.tM1,dash:[4,3],w:1.8},
-              {c:'#6f6683',data:d.tM2,dash:[4,3],w:1.8}]});
-    legend($('sLeg'),[{c:'#d4566a',t:'日本→アメリカ'},{c:'#3e77b6',t:'アメリカ→日本'},
-      {c:'#cfd8d7',t:'うすい線＝1回ごとの実測'},{c:'#6f6683',t:'理論値',d:1}]);
+              {c:'#6f6683',data:d.tM2,dash:[4,3],w:1.8}]},
+      leg:[{c:'#d4566a',t:'日本→アメリカ'},{c:'#3e77b6',t:'アメリカ→日本'},
+      {c:'#cfd8d7',t:'うすい線＝1回ごとの実測'},{c:'#6f6683',t:'理論値',d:1}]};
   }else{
-    $('sGt').textContent='見かけの移動人数';
-    const w=Math.max(2,Math.round(d.T*0.04));
+    const w=Math.max(2,Math.round(T*0.04));
     const vs=d.NET.filter(v=>v!=null);
     const mx=Math.max(1,...vs.map(Math.abs));
-    drawChart($('sCv'),{xs:xs,ymin:-mx*1.15,ymax:mx*1.15,intX:true,xlab:'試行回数',ylab:'人数',
+    return {title:'見かけの移動人数',
+      cfg:{xs:xs,ymin:-mx*1.15,ymax:mx*1.15,intX:true,xlab:'試行回数',ylab:'人数',
       series:[{c:'#cfd8d7',data:xs.map(()=>0),w:1.4},
               {c:'#cdc3de',data:d.NET,w:1.1},
               {c:'#8a6bbf',data:smooth(d.NET,w),w:2.4},
-              {c:'#6f6683',data:d.tNET,dash:[4,3],w:1.8}]});
-    legend($('sLeg'),[{c:'#8a6bbf',t:'日→米 − 米→日'},{c:'#cdc3de',t:'うすい線＝1回ごとの実測'},
-      {c:'#6f6683',t:'理論値',d:1}]);
+              {c:'#6f6683',data:d.tNET,dash:[4,3],w:1.8}]},
+      leg:[{c:'#8a6bbf',t:'日→米 − 米→日'},{c:'#cdc3de',t:'うすい線＝1回ごとの実測'},
+      {c:'#6f6683',t:'理論値',d:1}]};
   }
+}
+function sDraw(){
+  const d=S.data;
+  if(!d){drawChart($('sCv'),null);legend($('sLeg'),[]);return;}
+  const r=travelGraph(S.view,d);
+  $('sGt').textContent=r.title;
+  drawChart($('sCv'),r.cfg);
+  legend($('sLeg'),r.leg);
 }
 $('sgraph').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
