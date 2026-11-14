@@ -42,6 +42,22 @@
 .timefill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--neon),var(--lime));transition:width .1s linear}
 .timefill.warn{background:linear-gradient(90deg,#ff6b3d,var(--pink));animation:warn .5s ease-in-out infinite}
 @keyframes warn{50%{filter:brightness(1.6)}}
+/* まちがえたときの時間ペナルティ(「−3秒」が浮かび、時間の数字とバーが赤く光って揺れる) */
+.tb.tm{position:relative}
+.tpen{position:absolute;left:34px;top:10px;padding:1px 8px;border:2px solid var(--navy);border-radius:99px;
+ background:var(--bad);color:#fff;font-family:var(--mono);font-size:14px;font-weight:900;letter-spacing:0;
+ white-space:nowrap;box-shadow:0 3px 0 var(--navy);pointer-events:none;opacity:0}
+.tpen.go{animation:tpen .8s ease-out forwards}
+@keyframes tpen{0%{opacity:0;transform:translateY(4px) scale(.6)}
+ 20%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1;transform:translateY(-10px) scale(1)}
+ 100%{opacity:0;transform:translateY(-18px) scale(1)}}
+.tb.thit b{animation:thit .45s}
+@keyframes thit{0%,100%{transform:translateX(0)}
+ 20%{color:var(--bad);text-shadow:0 0 14px var(--bad);transform:translateX(-5px)}
+ 40%{color:var(--bad);transform:translateX(5px)}60%{color:var(--bad);transform:translateX(-3px)}80%{transform:translateX(2px)}}
+.timebar.thit{animation:thitbar .5s}
+.timebar.thit .timefill,.paused .timebar.thit .timefill{background:var(--bad);filter:none}
+@keyframes thitbar{0%,60%{box-shadow:0 0 0 2px var(--bad),0 0 14px var(--bad)}100%{box-shadow:none}}
 .feverbadge{text-align:center;font-size:13px;font-weight:900;letter-spacing:.3em;margin-bottom:6px;
  color:var(--sun);text-shadow:0 0 14px rgba(255,210,30,.9);position:relative;z-index:6}
 .feverbadge.off{visibility:hidden}
@@ -158,6 +174,7 @@ main.game{max-width:680px}
     <li>制限時間60秒。正解100点+コンボボーナス</li>
     <li>mol をはさむ<b>2段階</b>の問題は +100点</li>
     <li>5問連続で正解すると <b>FEVER</b>（得点2倍）</li>
+    <li>まちがえると残り時間が<b><span id="penSec">3</span>秒</b>へる（コンボと FEVER も終わる）</li>
     <li>原子量: H=1.0, He=4.0, C=12, N=14, O=16, Ne=20, Na=23, Mg=24, Al=27, S=32, Cl=35.5, Ca=40, Fe=56, Cu=64</li>
     <li>標準状態の気体 1 mol = 22.4 L、アボガドロ定数 6.0×10<sup>23</sup> /mol</li>
   </ul>
@@ -167,11 +184,11 @@ main.game{max-width:680px}
 <section id="play" class="panel hidden">
   <div id="flash"></div>
   <div class="topbar">
-    <div class="tb">のこり<b id="time">60</b><div class="pausemark off" id="pausemark">⏸ 計算中は時間が止まる</div></div>
+    <div class="tb tm" id="timebox">のこり<b id="time">60</b><div class="tpen" id="tpen"></div><div class="pausemark off" id="pausemark">⏸ 計算中は時間が止まる</div></div>
     <div class="tb combo" id="combobox">コンボ<b id="combo">0</b></div>
     <div class="tb sc" style="text-align:right">スコア<b id="score">0</b></div>
   </div>
-  <div class="timebar"><div class="timefill" id="tfill"></div></div>
+  <div class="timebar" id="tbar"><div class="timefill" id="tfill"></div></div>
   <div class="feverbadge off" id="fever">🔥 F E V E R 🔥</div>
   <div class="qbox">
     <div class="qsub" id="qsub"></div>
@@ -201,6 +218,8 @@ main.game{max-width:680px}
 <script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const MISS_PENALTY=3; // まちがえたときに減らす残り時間(秒)
+$('penSec').textContent=MISS_PENALTY;
 
 // ==== 自己ベスト(localStorage。保存できない環境では記録なしで動く) ====
 function showBest(score,sub,unit){
@@ -496,6 +515,7 @@ function answer(f,btn){
     showPop('+'+pts);confetti(fever?26:14);
   }else{
     combo=0;
+    penalize();
     missed.push(cur.sub+' '+cur.give+' → '+cur.ask);
     fl.classList.add('ng');
     $('play').classList.add('shake');setTimeout(()=>$('play').classList.remove('shake'),340);
@@ -512,6 +532,21 @@ function answer(f,btn){
   nb.classList.remove('hidden');
   nb.classList.toggle('ng',!correct);
   nb.textContent=(tLeft<=0?'結果を見る →':'次の問題へ →');
+}
+// まちがえたら残り時間を減らす。0になっても、すぐには終わらず解説を見せ、
+// 「結果を見る →」ボタン(goNext → finish)で終わる
+let penT=null;
+function penalize(){
+  tLeft=Math.max(0,tLeft-MISS_PENALTY);
+  drawTime();
+  const p=$('tpen');
+  p.textContent='−'+MISS_PENALTY+'秒';
+  p.classList.remove('go');void p.offsetWidth;p.classList.add('go');
+  const tb=$('timebox'),bar=$('tbar');
+  tb.classList.remove('thit');bar.classList.remove('thit');void tb.offsetWidth;
+  tb.classList.add('thit');bar.classList.add('thit');
+  clearTimeout(penT);
+  penT=setTimeout(()=>{tb.classList.remove('thit');bar.classList.remove('thit');},500);
 }
 function finish(){
   clearInterval(timer);clearTimeout(strikeT);locked=true;paused=false;

@@ -41,6 +41,7 @@
   <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">左の<b>元素名</b>と右の<b>元素記号</b>、同じ元素のペアをタップして消していこう。制限時間は40秒!</div></div>
   <ul class="rules">
     <li>ペア成立で+10点。まちがえると少しのあいだ選べない</li>
+    <li>相手がまだ出ていないカードもある。ペアを消していくと、あとから相手が出てくる</li>
     <li>Lv.1: 原子番号1〜20 / Lv.2: +受験頻出の元素 / Lv.3: 全118元素</li>
   </ul>
   <button class="lvbtn" onclick="startGame(1)"><b>Lv.1</b>基本20元素</button>
@@ -103,7 +104,7 @@ function startGame(lv){
   $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
   $('lvdisp').textContent=lv;
   pool=ALL.filter(e=>e.l<=lv);
-  score=0;selL=null;selR=null;
+  score=0;selL=null;selR=null;gen++;fillNo=0;
   $('score').textContent='0';
   initGrid();
   timeLeft=40;
@@ -115,16 +116,41 @@ function startGame(lv){
   },100);
 }
 function goHome(){
-  clearInterval(timer);
+  clearInterval(timer);gen++;
   $('play').classList.add('hidden');$('end').classList.add('hidden');$('start').classList.remove('hidden');
 }
 function endGame(){
-  clearInterval(timer);
+  clearInterval(timer);gen++;
   $('play').classList.add('hidden');$('end').classList.remove('hidden');
   $('fscore').textContent=score;showBest(score,'lv'+level);
   $('fnote').textContent='Lv.'+level+'('+(level===1?'基本20元素':level===2?'受験頻出':'全118元素')+')';
 }
 
+// ==== 補充の決め方 ====
+// 名前の列と記号の列には、相手のいるカードが4組と、相手がまだ出ていないカード(待ちカード)が1枚ずつある。
+// 1組消えたら、名前・記号のどちらか一方には「古いほうの待ちカードの相手」を、もう一方には新しい元素を入れる。
+// こうすると、同時に現れた2枚は決してペアにならず、待ちカードは2回目の補充までに必ず相手が出る。
+// L,R: 消えかけていないカード[{id,born}] / busy: 画面にある元素(消えかけもふくむ) / pool: 元素の一覧
+function planFill(L,R,busy,pool){
+  const lIds=new Set(L.map(c=>c.id)),rIds=new Set(R.map(c=>c.id));
+  const older=a=>a.reduce((m,c)=>(!m||c.born<m.born||(c.born===m.born&&Math.random()<.5))?c:m,null);
+  const pickNew=ex=>{
+    const c=pool.filter(e=>!busy.has(e.n)&&!ex.includes(e.n));
+    return c.length?c[Math.floor(Math.random()*c.length)].n:null;
+  };
+  let n=older(L.filter(c=>!rIds.has(c.id))),s=older(R.filter(c=>!lIds.has(c.id)));
+  if(n&&s){if(n.born<s.born||(n.born===s.born&&Math.random()<.5))s=null;else n=null;}
+  if(n)return{left:pickNew([]),right:n.id};
+  if(s)return{left:s.id,right:pickNew([])};
+  const a=pickNew([]);
+  return{left:a,right:a===null?null:pickNew([a])};
+}
+// ==== ここまで ====
+
+let gen=0,fillNo=0;
+function cards(side){
+  return [...document.querySelectorAll('#'+side+'-col .match-btn')];
+}
 function initGrid(){
   const L=$('left-col'),R=$('right-col');
   L.innerHTML='';R.innerHTML='';
@@ -133,17 +159,17 @@ function initGrid(){
     const rs=document.createElement('div');rs.className='slot';rs.id='r-slot-'+i;
     L.appendChild(ls);R.appendChild(rs);
   }
-  const set=[...pool].sort(()=>0.5-Math.random()).slice(0,5);
+  // 6元素: 4つは名前と記号の両方、1つは名前だけ、1つは記号だけ
+  const set=[...pool].sort(()=>0.5-Math.random()).slice(0,6);
+  const names=set.slice(0,5),syms=[...set.slice(0,4),set[5]];
   const li=[0,1,2,3,4].sort(()=>0.5-Math.random());
   const ri=[0,1,2,3,4].sort(()=>0.5-Math.random());
-  set.forEach((el,idx)=>{
-    $('l-slot-'+li[idx]).appendChild(createBtn(el.n,el.m,'left'));
-    $('r-slot-'+ri[idx]).appendChild(createBtn(el.n,el.s,'right'));
-  });
+  names.forEach((el,idx)=>$('l-slot-'+li[idx]).appendChild(createBtn(el.n,el.m,'left',0)));
+  syms.forEach((el,idx)=>$('r-slot-'+ri[idx]).appendChild(createBtn(el.n,el.s,'right',0)));
 }
-function createBtn(id,text,side){
+function createBtn(id,text,side,born){
   const b=document.createElement('button');
-  b.className='match-btn';b.textContent=text;b.dataset.id=id;
+  b.className='match-btn';b.textContent=text;b.dataset.id=id;b.dataset.born=born;
   b.onclick=()=>handleSelect(b,side);
   return b;
 }
@@ -160,21 +186,38 @@ function checkMatch(){
   if(l.dataset.id===r.dataset.id){
     score+=10;$('score').textContent=score;
     l.classList.add('fade-out');r.classList.add('fade-out');
-    setTimeout(()=>{l.remove();r.remove();setTimeout(replenish,100);},700);
+    const g=gen;
+    setTimeout(()=>{l.remove();r.remove();},300);   // 消える動き(0.3秒)のあと取りのぞく
+    setTimeout(()=>replenish(g),700);               // 空いてから0.4秒おいて補充
   }else{
     l.classList.add('error');r.classList.add('error');
     setTimeout(()=>{l.classList.remove('error','selected');r.classList.remove('error','selected');},500);
   }
 }
-function replenish(){
-  const el=pool[Math.floor(Math.random()*pool.length)];
+function replenish(g){
+  if(g!==gen)return;   // 前のゲームの補充は捨てる
   const ls=[],rs=[];
   for(let i=0;i<5;i++){
     if(!$('l-slot-'+i).hasChildNodes())ls.push(i);
     if(!$('r-slot-'+i).hasChildNodes())rs.push(i);
   }
-  if(ls.length)$('l-slot-'+ls[Math.floor(Math.random()*ls.length)]).appendChild(createBtn(el.n,el.m,'left'));
-  if(rs.length)$('r-slot-'+rs[Math.floor(Math.random()*rs.length)]).appendChild(createBtn(el.n,el.s,'right'));
+  if(!ls.length||!rs.length)return;
+  const live=b=>!b.classList.contains('fade-out');
+  const info=b=>({id:+b.dataset.id,born:+b.dataset.born});
+  const lc=cards('left'),rc=cards('right');
+  const busy=new Set([...lc,...rc].map(b=>+b.dataset.id));
+  const p=planFill(lc.filter(live).map(info),rc.filter(live).map(info),busy,pool);
+  fillNo++;
+  const put=(slots,pre,id,key,side)=>{
+    if(id===null)return;
+    const el=pool.find(e=>e.n===id);
+    const b=createBtn(el.n,el[key],side,fillNo);
+    b.classList.add('pop');
+    b.addEventListener('animationend',()=>b.classList.remove('pop'),{once:true});
+    $(pre+slots[Math.floor(Math.random()*slots.length)]).appendChild(b);
+  };
+  put(ls,'l-slot-',p.left,'m','left');
+  put(rs,'r-slot-',p.right,'s','right');
 }
 </script>
 </body>

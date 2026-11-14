@@ -40,7 +40,8 @@ main.game{max-width:760px}
   矢印を決めたら、分子全体が「極性分子」か「無極性分子」かをジャッジ！</div></div>
   <ul class="rules">
     <li>全8問。結合の矢印がすべて正しく、極性の判定も正しければ+150点</li>
-    <li>結合をタップするたびに、矢印が「なし→一方向→逆方向」と切りかわる</li>
+    <li>はじめはどの結合も「?」。タップするたびに「一方向→逆方向→なし」と切りかわる。全部決めてから判定</li>
+    <li>極性分子か無極性分子かの判定をまちがえると、その問題で<b id="missPt">20</b>点ひかれる</li>
     <li>同じ元素どうしの結合は極性なし。C−H結合は極性がきわめて小さい(「なし」でもOK)</li>
     <li>結合に極性があっても、形によって打ち消されれば無極性分子</li>
   </ul>
@@ -54,7 +55,7 @@ main.game{max-width:760px}
   </div>
   <div id="mname"></div>
   <canvas id="stage"></canvas>
-  <div id="tip">ドラッグで回転 / 結合を<b>タップ</b>して矢印を割り当て</div>
+  <div id="tip">ドラッグで回転 / 結合を<b>タップ</b>して矢印を割り当て(「?」を全部うめたら判定)</div>
   <div id="judge">
     <button onclick="answer(true)">極性分子</button>
     <button onclick="answer(false)">無極性分子</button>
@@ -129,9 +130,65 @@ const MOLS=[
   ex:'C−Cl結合の強い極性が打ち消されないため、極性分子。'},
 ];
 
+// ==== 調整用の数値 ====
+const JUDGE_MISS=20;   // 極性の判定をまちがえたときの減点
+const VK=0.9;          // 電気陰性度の差1あたりの矢印の長さ(3D空間の単位)
+const ZERO_EPS=0.05;   // 合成ベクトルの長さがこれ未満なら「打ち消し合って0」
+const R_MIN=0.7;       // 合成の太い矢印の最短の表示長さ(向きは変えない)
+const ANIM={slide:550,chain:700,fin:550}; // 演出の各段階(ミリ秒)
+
+// ==== 極性ベクトル(3D)。演出の計算はすべてデータの座標から ====
+const vadd=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const vsc=(a,k)=>[a[0]*k,a[1]*k,a[2]*k];
+const vlerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+const vlen=a=>Math.hypot(a[0],a[1],a[2]);
+// 結合ごとに、正解として受けつける矢印(0なし / 1 → b原子 / 2 → a原子)
+function bondAccepted(bi,m){
+  m=m||mol;
+  const [a,b]=m.bonds[bi];
+  const ea=m.atoms[a][0],eb=m.atoms[b][0];
+  const d=EN[eb]-EN[ea];
+  const acc=[];
+  if(Math.abs(d)<0.05){acc.push(0);}
+  else{
+    acc.push(d>0?1:2); // 電気陰性度の大きい方へ
+    if((ea==='C'&&eb==='H')||(ea==='H'&&eb==='C'))acc.push(0); // C-Hは「なし」も可
+  }
+  return acc;
+}
+const isCH=(m,bi)=>{const e=[m.atoms[m.bonds[bi][0]][0],m.atoms[m.bonds[bi][1]][0]].sort().join('');return e==='CH';};
+// 判定後に見せる矢印。まちがいは正しく直し、C−Hは分子の中でそろえる
+// (どれか1本でも矢印を付けていれば全部に正しい向きの矢印、そうでなければ全部「なし」)
+function settleArrows(m,states){
+  const s=states.map((st,i)=>bondAccepted(i,m).includes(st)?st:bondAccepted(i,m)[0]);
+  const ch=m.bonds.map((b,i)=>i).filter(i=>isCH(m,i));
+  const anyArrow=ch.some(i=>s[i]>0);
+  ch.forEach(i=>{s[i]=anyArrow?bondAccepted(i,m)[0]:0;});
+  return s;
+}
+// 結合の極性ベクトル(δ+ → δ−)。大きさは電気陰性度の差に比例
+function bondVecs(m,states){
+  const out=[];
+  m.bonds.forEach((b,i)=>{
+    const st=states[i];if(!(st>0))return;
+    const A=m.atoms[b[0]],B=m.atoms[b[1]];
+    const F=st===1?A:B,T2=st===1?B:A;
+    const from=[F[1],F[2],F[3]],to=[T2[1],T2[2],T2[3]];
+    const d=[to[0]-from[0],to[1]-from[1],to[2]-from[2]];
+    const w=Math.abs(EN[A[0]]-EN[B[0]])*VK;
+    out.push({i,from,to,v:vsc(d,w/vlen(d))});
+  });
+  return out;
+}
+const sumVecs=vs=>vs.reduce((s,o)=>vadd(s,o.v),[0,0,0]);
+
 let order=[],idx=0,score=0,mol=null,arrow=[],yaw=.6,pitch=.35,locked=false;
 let cv,ctx,W,H,DPR,downP=null,moved=0,autoSpin=true;
 let bondHits=[]; // {mid:{x,y}, i}
+let anim=null;   // 判定後の「打ち消し合い」の演出
+let nudge=0;     // 「?」を光らせはじめた時刻
+$('missPt').textContent=JUDGE_MISS;
+document.querySelector('.top').appendChild(CG.soundButton());
 
 function startGame(){
   $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
@@ -159,8 +216,8 @@ function next(){
   idx++;
   if(idx>=8){finish();return;}
   mol=order[idx];
-  arrow=mol.bonds.map(()=>0); // 0なし / 1 → b原子 / 2 → a原子
-  locked=false;autoSpin=true;yaw=.6;pitch=.35;
+  arrow=mol.bonds.map(()=>-1); // -1未設定 / 0なし / 1 → b原子 / 2 → a原子
+  locked=false;autoSpin=true;yaw=.6;pitch=.35;anim=null;nudge=0;
   $('round').textContent=idx+1;$('score').textContent=score;
   $('mname').innerHTML=mol.name;
   $('fb').innerHTML='';$('nextb').style.display='none';
@@ -168,6 +225,7 @@ function next(){
 }
 function finish(){
   $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  anim=null;CG.sfx.fin();
   $('fscore').textContent=score;showBest(score);
   $('fmsg').textContent=score>=1000?'極性マスター！':score>=600?'あと少し。形と対称性に注目！':'矢印は電気陰性度の大きい原子へ。再挑戦！';
 }
@@ -188,7 +246,8 @@ function proj(p){
 }
 function loop(){
   if(!$('play').classList.contains('hidden')){
-    if(autoSpin&&!locked)yaw+=0.004;
+    if(anim){if(!downP)yaw+=0.006;} // 演出中はゆっくり回す(ドラッグ中は止める)
+    else if(autoSpin&&!locked)yaw+=0.004;
     draw();
   }
   requestAnimationFrame(loop);
@@ -204,6 +263,11 @@ function draw(){
   mol.bonds.forEach((b,i)=>items.push({z:(rp[b[0]][2]+rp[b[1]][2])/2,type:'bond',i}));
   items.sort((p,q)=>p.z-q.z);
   bondHits=[];
+  const now=performance.now();
+  const at=anim?now-anim.t0:-1;
+  const vecMode=!!(anim&&anim.vecs.length); // 演出中は結合の矢印を演出側で描く
+  const glow=nudge&&now-nudge<900?Math.abs(Math.sin((now-nudge)/90)):0;
+  ctx.globalAlpha=vecMode?1-.55*Math.min(1,at/250):1; // 分子を少しうすくして矢印を見やすく
   for(const it of items){
     if(it.type==='bond'){
       const [a,b]=mol.bonds[it.i];
@@ -215,9 +279,17 @@ function draw(){
       bondHits.push({mid,i:it.i});
       // 矢印
       const st=arrow[it.i];
-      if(st>0){
+      if(vecMode){
+        // 演出中は描かない
+      }else if(st>0){
         const from=st===1?p1:p2, to=st===1?p2:p1;
         drawArrow(from,to);
+      }else if(st<0){ // 未設定「?」
+        const r=9+glow*4;
+        ctx.fillStyle=glow?'#ffcc00':'#fff';ctx.strokeStyle='#1c1740';ctx.lineWidth=2.5;
+        ctx.beginPath();ctx.arc(mid.x,mid.y,r,0,7);ctx.fill();ctx.stroke();
+        ctx.fillStyle='#1c1740';ctx.font='900 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('?',mid.x,mid.y+1);
       }else{
         ctx.fillStyle='rgba(232,161,61,.9)';
         ctx.beginPath();ctx.arc(mid.x,mid.y,4,0,7);ctx.fill();
@@ -234,8 +306,94 @@ function draw(){
       ctx.fillText(a[0],p.x,p.y);
     }
   }
-  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px sans-serif';ctx.textAlign='left';
-  ctx.fillText('● = 矢印なし(タップで切りかえ)',10,H-12);
+  ctx.globalAlpha=1;
+  if(anim){drawAnim(at);return;}
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('? = 未設定  ● = 矢印なし(タップで切りかえ)',10,H-12);
+}
+
+// ==== 判定後の演出:結合の矢印を中心に集め、つぎたして合成する ====
+const clamp01=t=>Math.max(0,Math.min(1,t));
+const ease=t=>1-Math.pow(1-t,3);
+function startAnim(){
+  const vs=bondVecs(mol,arrow);
+  const R=sumVecs(vs),Rl=vlen(R);
+  const zero=Rl<ZERO_EPS;
+  let s=[0,0,0];
+  vs.forEach(o=>{
+    o.cum=s;s=vadd(s,o.v);              // つぎたすときの根元の位置
+    o.tail0=vlerp(o.from,o.to,.18);     // いまの矢印の位置から動きはじめる
+    o.head0=vlerp(o.from,o.to,.82);
+  });
+  let l1,l2,col='#0b96a8';
+  if(!vs.length){
+    const same=mol.bonds.every(b=>mol.atoms[b[0]][0]===mol.atoms[b[1]][0]);
+    l1=same?'同じ元素どうしの結合なので矢印なし':'C−H結合の極性はごく小さく矢印なし';
+    l2='→ 無極性分子';
+  }else if(zero){l1='矢印どうしが打ち消し合う';l2='→ 無極性分子';}
+  else{l1=vs.length===1?'矢印1本だけ。打ち消し合わない':'打ち消し合わない';l2='→ 極性分子';col='#ff4f8b';}
+  anim={t0:performance.now(),vecs:vs,zero,Rd:zero?R:vsc(R,Math.max(Rl,R_MIN)/Rl),l1,l2,col};
+}
+function drawAnim(at){
+  const vs=anim.vecs,n=vs.length;
+  const P=a=>proj(rot(a));
+  const tB=at-ANIM.slide,tC=tB-ANIM.chain;
+  if(n){
+    const pA=ease(clamp01(at/ANIM.slide));
+    const c=clamp01(tC/ANIM.fin);
+    const alpha=tC>0?(anim.zero?1-c:1-.6*c):1;
+    vs.forEach((o,k)=>{
+      // 1) 中心へすべる  2) 1本ずつ前の矢印の先へつぎたす
+      let off=[0,0,0];
+      if(k>0&&tB>0){const slot=ANIM.chain/(n-1);off=vsc(o.cum,ease(clamp01((tB-(k-1)*slot)/slot)));}
+      const tail=vlerp(o.tail0,off,pA),head=vlerp(o.head0,vadd(off,o.v),pA);
+      drawVec(P(tail),P(head),{alpha});
+    });
+    if(tC>0){
+      const o0=P([0,0,0]);
+      if(anim.zero){ // 3) 打ち消し合って消える
+        ctx.save();ctx.globalAlpha=1-c;ctx.strokeStyle='#ffcc00';ctx.lineWidth=4;
+        ctx.beginPath();ctx.arc(o0.x,o0.y,8+46*ease(c),0,7);ctx.stroke();
+        ctx.fillStyle='#ffcc00';ctx.font='900 '+(16+10*c)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('0',o0.x,o0.y);ctx.restore();
+      }else{ // 3) 合わさった太い矢印
+        drawVec(o0,P(vsc(anim.Rd,ease(clamp01(tC/(ANIM.fin*.8))))),{thick:true});
+      }
+    }
+  }
+  const showAt=n?ANIM.slide+ANIM.chain+150:150;
+  if(at>showAt)banner(anim.l1,anim.l2,anim.col,ease(clamp01((at-showAt)/200)));
+}
+// 3Dの矢印(画面上の2点)。thick は合成の矢印(ピンク+紺のフチ)
+function drawVec(p1,p2,o){
+  const dx=p2.x-p1.x,dy=p2.y-p1.y,L=Math.hypot(dx,dy);
+  if(L<2)return;
+  const ux=dx/L,uy=dy/L,thick=o&&o.thick;
+  const hl=Math.min(thick?20:11,L*.5),hw=thick?12:6;
+  const bx=p2.x-ux*hl*.7,by=p2.y-uy*hl*.7;
+  const shaft=()=>{ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(bx,by);
+    if(!thick){ctx.moveTo(p1.x-uy*5+ux*4,p1.y+ux*5+uy*4);ctx.lineTo(p1.x+uy*5+ux*4,p1.y-ux*5+uy*4);}}
+  const head=()=>{ctx.beginPath();ctx.moveTo(p2.x,p2.y);
+    ctx.lineTo(p2.x-ux*hl-uy*hw,p2.y-uy*hl+ux*hw);ctx.lineTo(p2.x-ux*hl+uy*hw,p2.y-uy*hl-ux*hw);ctx.closePath();};
+  ctx.save();ctx.globalAlpha=(o&&o.alpha!=null)?o.alpha:1;ctx.lineCap='round';ctx.lineJoin='round';
+  const col=thick?'#ff4f8b':'#e8a13d';
+  if(thick){ctx.strokeStyle='#1c1740';ctx.lineWidth=13;shaft();ctx.stroke();ctx.lineWidth=6;head();ctx.stroke();}
+  ctx.strokeStyle=col;ctx.lineWidth=thick?7:3;shaft();ctx.stroke();
+  ctx.fillStyle=col;head();ctx.fill();
+  ctx.restore();
+}
+// 下の帯に結論を出す(白地+紺のフチ+段差の影)
+function banner(l1,l2,col,k){
+  const w=Math.min(W-20,300),h=56,x=(W-w)/2,y=H-h-14+(1-k)*10;
+  const rr=(yy)=>{const r=12;ctx.beginPath();ctx.moveTo(x+r,yy);ctx.arcTo(x+w,yy,x+w,yy+h,r);ctx.arcTo(x+w,yy+h,x,yy+h,r);
+    ctx.arcTo(x,yy+h,x,yy,r);ctx.arcTo(x,yy,x+w,yy,r);ctx.closePath();};
+  ctx.save();ctx.globalAlpha=k;
+  ctx.fillStyle='#1c1740';rr(y+4);ctx.fill();
+  ctx.fillStyle='#fff';ctx.strokeStyle='#1c1740';ctx.lineWidth=3;rr(y);ctx.fill();ctx.stroke();
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='#1c1740';ctx.font='800 13px sans-serif';ctx.fillText(l1,W/2,y+18);
+  ctx.fillStyle=col;ctx.font='900 19px sans-serif';ctx.fillText(l2,W/2,y+39);
+  ctx.restore();
 }
 function shade(hex){
   const n=parseInt(hex.slice(1),16);
@@ -288,30 +446,25 @@ function pup(e){
       const d=(p.x-b.mid.x)**2+(p.y-b.mid.y)**2;
       if(d<bd){bd=d;best=b;}
     }
-    if(best&&bd<38**2){arrow[best.i]=(arrow[best.i]+1)%3;}
+    // ?(未設定) → 一方向 → 逆方向 → なし → 一方向 …
+    if(best&&bd<38**2){const s=arrow[best.i];arrow[best.i]=s===1?2:s===2?0:1;CG.sfx.tap();}
   }
   downP=null;
 }
 
 // ==== 判定 ====
-function bondAccepted(bi){
-  const [a,b]=mol.bonds[bi];
-  const ea=mol.atoms[a][0],eb=mol.atoms[b][0];
-  const d=EN[eb]-EN[ea];
-  const acc=[];
-  if(Math.abs(d)<0.05){acc.push(0);}
-  else{
-    acc.push(d>0?1:2); // 電気陰性度の大きい方へ
-    if((ea==='C'&&eb==='H')||(ea==='H'&&eb==='C'))acc.push(0); // C-Hは「なし」も可
-  }
-  return acc;
-}
 function answer(saidPolar){
-  if(locked)return;locked=true;
+  if(locked)return;
+  const left=arrow.filter(s=>s<0).length;
+  if(left){ // 矢印を付けずに判定させない
+    $('fb').innerHTML='<span class="bad">先に矢印を付けよう(「?」があと'+left+'本)</span>';
+    nudge=performance.now();CG.sfx.tick();return;
+  }
+  locked=true;
   const wrongBonds=[];
   mol.bonds.forEach((b,i)=>{if(!bondAccepted(i).includes(arrow[i]))wrongBonds.push(i);});
-  // 正しい矢印に修正して見せる
-  mol.bonds.forEach((b,i)=>{const acc=bondAccepted(i);if(!acc.includes(arrow[i]))arrow[i]=acc[0];});
+  // 正しい矢印に修正して見せる(C−Hは分子の中でそろえる)
+  arrow=settleArrows(mol,arrow);
   const polarOK=(saidPolar===mol.polar);
   const bondOK=wrongBonds.length===0;
   const btns=$('judge').children;
@@ -322,13 +475,17 @@ function answer(saidPolar){
   if(bondOK&&polarOK)pts=150;
   else if(polarOK)pts=70;
   else if(bondOK)pts=50;
-  score+=pts;$('score').textContent=score;
+  if(!polarOK)pts-=JUDGE_MISS;
+  score=Math.max(0,score+pts);$('score').textContent=score;
+  if(polarOK)CG.sfx.ok();else CG.sfx.ng();
+  const miss='判定ミス(−'+JUDGE_MISS+'点)';
   let head=bondOK&&polarOK?'<span class="good">完璧！+150点</span>'
         :polarOK?'<span class="good">判定は正解(+70点)</span> <span class="bad">矢印にミスあり(正しい矢印に直したよ)</span>'
-        :bondOK?'<span class="bad">判定ミス…</span><span class="good">矢印は正解(+50点)</span>'
-        :'<span class="bad">ざんねん…正しい矢印を表示中</span>';
+        :bondOK?'<span class="bad">'+miss+'</span> <span class="good">矢印は正解(+50点)</span>'
+        :'<span class="bad">ざんねん…'+miss+'。正しい矢印を表示中</span>';
   $('fb').innerHTML=head+'<br>'+mol.ex;
   $('nextb').style.display='block';
+  startAnim();
 }
 </script>
 </body>

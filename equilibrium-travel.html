@@ -173,6 +173,75 @@ main.game{max-width:1120px}
 .kbtn{border:3px solid var(--navy);box-shadow:0 5px 0 var(--navy)}
 .kbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
 .qt{border:2px solid var(--navy)}
+
+/* 広い画面ではカードの番号を大きく(教室表示でないとき) */
+@media(min-width:900px){
+ .card{width:76px;height:76px;font-size:32px}
+}
+
+/* ===== 実戦: 教室表示の切りかえボタン ===== */
+.clsbtn,.gsetbtn{border:2px solid var(--navy);box-shadow:0 3px 0 var(--navy);background:#fff;color:var(--navy);
+ border-radius:10px;padding:5px 10px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}
+.clsbtn:active,.gsetbtn:active{transform:translateY(3px);box-shadow:0 0 0 var(--navy)}
+.clsbtn b{display:inline-block;margin-left:5px;padding:0 6px;border-radius:6px;background:#e9e6f7;color:var(--mut)}
+.clsbtn.on{background:var(--yellow)}
+.clsbtn.on b{background:var(--navy);color:var(--yellow)}
+.gsetbtn{display:none}
+
+/* ===== 実戦: 教室表示(body.cls。実戦タブを開いているときだけ付く) ===== */
+body.cls main.game{max-width:none;padding:0 16px 12px}
+body.cls .tabs{margin-bottom:8px}
+body.cls .tabs button{padding:6px}
+body.cls #sec0{grid-template-columns:3fr 2fr;gap:16px;align-items:stretch}
+body.cls #sec0>.pane{display:flex;flex-direction:column;min-height:0;padding:12px}
+body.cls #gPaneL{height:var(--gh,640px)}
+body.cls #sec0 .hd{flex:none;margin-bottom:6px}
+body.cls #sec0 .hd .t{font-size:16px}
+body.cls .gsetbtn{display:inline-block}
+body.cls.cls-set .gsetbtn{background:var(--yellow)}
+body.cls:not(.cls-set) .ghide{display:none}
+body.cls #gwarn{flex:none;margin-top:0;font-size:14px}
+/* カードの領域。大きさは gFit() が --cs(カード) --cf(文字) --cg(すきま) --cc(列数) で決める */
+body.cls .gfit{flex:1 1 0;min-height:0;position:relative}
+body.cls .dir{height:30px;margin:0;font-size:18px}
+body.cls .dir b{font-size:22px}
+body.cls .dir .ar{font-size:18px}
+body.cls .cards{display:grid;grid-template-columns:repeat(var(--cc,5),var(--cs,62px));gap:var(--cg,8px);
+ align-content:start;padding:calc(var(--cs,62px)*.12) 0 calc(var(--cs,62px)*.06)}
+body.cls #gC1{min-height:var(--h1,80px)}
+body.cls #gC2{min-height:var(--h2,80px)}
+body.cls .card{width:var(--cs,62px);height:var(--cs,62px);font-size:var(--cf,30px);
+ border-radius:calc(var(--cs,62px)*.16);border-width:4px;box-shadow:0 4px 0 var(--navy)}
+body.cls .card .bdg{width:max(21px,calc(var(--cs,62px)*.3));height:max(21px,calc(var(--cs,62px)*.3));
+ font-size:max(11px,calc(var(--cs,62px)*.16));top:calc(var(--cs,62px)*-.1);right:calc(var(--cs,62px)*-.08);
+ border:2px solid var(--navy)}
+/* 進行のボタン(まわす・人数の入力・記録)は下に横ならび */
+body.cls .gbar{flex:none;display:flex;gap:12px;align-items:stretch;min-height:108px;margin-top:10px}
+body.cls #gSpin{margin:0;flex:1 1 0;font-size:22px;padding:8px;line-height:1.3}
+body.cls #gRec{margin:0;flex:1.5 1 0;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;
+ border:2px solid var(--navy)}
+body.cls .rec .lb{font-size:15px;margin-bottom:6px}
+body.cls .recrow{gap:8px}
+body.cls .stp{width:54px;height:54px;font-size:28px}
+body.cls .recrow input{height:54px;font-size:32px}
+body.cls .go{height:54px;font-size:20px;padding:0 22px}
+body.cls .moved{font-size:16px;line-height:1.5}
+body.cls .moved .n{font-size:28px}
+body.cls .moved br+span{font-size:12px}
+/* 右側: 人数とグラフ */
+body.cls .stats{flex:none}
+body.cls .st .k{font-size:14px}
+body.cls .st .v{font-size:48px;line-height:1.15}
+body.cls #sec0 .cwrap{flex:1 1 0;min-height:220px;height:auto}
+body.cls #sec0 .cwrap canvas{position:absolute;inset:0}
+body.cls #sec0 .legend{flex:none;font-size:16px;gap:18px}
+body.cls #sec0 .legend i{width:28px;height:5px}
+body.cls #sec0 .legend i.d{height:0;border-top-width:5px}
+body.cls #sec0 .row2{flex:none}
+body.cls #sec0 .row2 button{padding:12px;font-size:15px}
+@media(max-width:860px){
+ body.cls #sec0 .cwrap{flex:none;height:320px}
+}
 </style>
 </head>
 <body data-u="purple">
@@ -187,10 +256,12 @@ main.game{max-width:1120px}
 
 <!-- ===================== 実戦モード ===================== -->
 <section id="sec0" class="split">
-  <div class="pane">
+  <div class="pane" id="gPaneL">
     <div class="hd"><div class="t">ルーレット</div>
+      <button class="clsbtn" id="gClsBtn" onclick="gClsToggle()" aria-pressed="false" title="プロジェクターやテレビに映すときの大きな表示">教室表示<b id="gClsSt">切</b></button>
+      <button class="gsetbtn" id="gSetBtn" onclick="gSetToggle()" aria-pressed="false">設定</button>
       <button class="mute" id="mute" onclick="toggleMute()" title="音">🔊</button></div>
-    <div class="ctrl">
+    <div class="ctrl ghide">
       <label class="fld">参加人数 <input id="gN" type="number" min="2" max="60" value="24"><span class="unit">人</span></label>
       <label class="fld jp">日→米 <input id="gR1" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
       <label class="fld us">米→日 <input id="gR2" type="number" min="1" max="10" value="3"><span class="unit">枚</span></label>
@@ -199,13 +270,16 @@ main.game{max-width:1120px}
       </span>
     </div>
     <div class="warn" id="gwarn"></div>
-    <p class="note" style="margin:6px 0 0">参加人数・枚数・記録のしかたを変えると、記録は最初からになる。</p>
+    <p class="note ghide" style="margin:6px 0 0">参加人数・枚数・記録のしかたを変えると、記録は最初からになる。</p>
 
-    <div class="dir jp"><span class="ar">日本 → アメリカ</span><b id="gL1">3</b>枚</div>
+    <div class="gfit" id="gFit">
+    <div class="dir jp" id="gD1"><span class="ar">日本 → アメリカ</span><b id="gL1">3</b>枚</div>
     <div class="cards" id="gC1"></div>
-    <div class="dir us"><span class="ar">アメリカ → 日本</span><b id="gL2">3</b>枚</div>
+    <div class="dir us" id="gD2"><span class="ar">アメリカ → 日本</span><b id="gL2">3</b>枚</div>
     <div class="cards" id="gC2"></div>
+    </div>
 
+    <div class="gbar" id="gBar">
     <button class="big" id="gSpin" onclick="gSpin()">まわす</button>
 
     <div class="rec hidden" id="gRec">
@@ -217,6 +291,7 @@ main.game{max-width:1120px}
         <button class="go" onclick="gRecord()">記録</button>
       </div>
       <div class="moved hidden" id="gMoved"></div>
+    </div>
     </div>
   </div>
 
@@ -237,7 +312,7 @@ main.game{max-width:1120px}
       <button onclick="gUndo()">1つ戻す</button>
       <button onclick="gReset()">最初から</button>
     </div>
-    <p class="note">全員が<b>日本</b>からスタート。呼ばれた番号の人は、<b>その向きの国にいるときだけ</b>移動する。</p>
+    <p class="note ghide">全員が<b>日本</b>からスタート。呼ばれた番号の人は、<b>その向きの国にいるときだけ</b>移動する。</p>
   </div>
 </section>
 
@@ -352,6 +427,7 @@ function setTab(i){
     $('sec'+k).classList.toggle('hidden',k!==i);
     $('tb'+k).classList.toggle('on',k===i);
   }
+  gClsApply();
   redraw();
   window.scrollTo(0,0);
 }
@@ -367,19 +443,21 @@ function fmtTick(v,step){
   const d=Math.min(4,Math.max(0,Math.ceil(-Math.log10(step))));
   return v.toFixed(d);
 }
-// cfg:{xs, series:[{c,data,dash,w}], ymin,ymax, xlab,ylab, intX}
+// cfg:{xs, series:[{c,data,dash,w}], ymin,ymax, xlab,ylab, intX, k}
+// k: 文字の大きさ・余白・線の太さ・点の大きさの倍率(ふだんは1。教室表示で大きくする)
 function drawChart(cv,cfg){
   const w=cv.clientWidth,h=cv.clientHeight;
   if(w<10||h<10)return;
-  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const k=(cfg&&cfg.k)||1;
+  const dpr=Math.min(window.devicePixelRatio||1,k>1?3:2);
   cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
   g.clearRect(0,0,w,h);
   if(!cfg||!cfg.xs||!cfg.xs.length){
-    g.fillStyle='#aebdbc';g.font='700 13px sans-serif';g.textAlign='center';
+    g.fillStyle='#aebdbc';g.font='700 '+(13*k)+'px sans-serif';g.textAlign='center';
     g.fillText('ここにグラフが出ます',w/2,h/2);return;
   }
-  const L=46,R=12,T=12,B=30;
+  const L=Math.round(46*k),R=Math.round(12*k),T=Math.round(12*k),B=Math.round(30*k);
   const pw=w-L-R,ph=h-T-B;
   const xs=cfg.xs;
   let x0=xs[0],x1=xs[xs.length-1];if(x1<=x0)x1=x0+1;
@@ -387,29 +465,29 @@ function drawChart(cv,cfg){
   if(!(y1>y0))y1=y0+1;
   const X=v=>L+(v-x0)/(x1-x0)*pw, Y=v=>T+ph-(v-y0)/(y1-y0)*ph;
   // 目もり
-  g.strokeStyle='#e7eeed';g.lineWidth=1;
-  g.fillStyle='#8fa0a5';g.font='600 10px sans-serif';
+  g.strokeStyle='#e7eeed';g.lineWidth=Math.max(1,k*0.75);
+  g.fillStyle=k>1?'#6b6690':'#8fa0a5';g.font='600 '+(10*k)+'px sans-serif';
   const ys=niceStep(y1-y0,4);
   g.textAlign='right';g.textBaseline='middle';
   for(let v=Math.ceil(y0/ys)*ys;v<=y1+1e-9;v+=ys){
     const y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();
-    g.fillText(fmtTick(v,ys),L-6,y);
+    g.fillText(fmtTick(v,ys),L-6*k,y);
   }
   let xst=niceStep(x1-x0,5);
   if(cfg.intX)xst=Math.max(1,Math.round(xst));
   g.textAlign='center';g.textBaseline='top';
   for(let v=Math.ceil(x0/xst)*xst;v<=x1+1e-9;v+=xst){
     const x=X(v);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();
-    g.fillText(fmtTick(v,xst),x,T+ph+6);
+    g.fillText(fmtTick(v,xst),x,T+ph+6*k);
   }
   // 軸
-  g.strokeStyle='#c3d0cf';g.lineWidth=1.5;
+  g.strokeStyle='#c3d0cf';g.lineWidth=1.5*k;
   g.beginPath();g.moveTo(L,T);g.lineTo(L,T+ph);g.lineTo(L+pw,T+ph);g.stroke();
   // 系列
   cfg.series.forEach(s=>{
     if(!s.data||!s.data.length)return;
-    g.strokeStyle=s.c;g.lineWidth=s.w||2.2;
-    g.setLineDash(s.dash||[]);
+    g.strokeStyle=s.c;g.lineWidth=(s.w||2.2)*k;
+    g.setLineDash((s.dash||[]).map(d=>d*k));
     g.lineJoin='round';g.beginPath();
     let on=false;
     for(let i=0;i<s.data.length&&i<xs.length;i++){
@@ -421,11 +499,11 @@ function drawChart(cv,cfg){
     g.stroke();g.setLineDash([]);
     if(s.data.filter(v=>v!=null&&isFinite(v)).length===1){
       const i=s.data.findIndex(v=>v!=null&&isFinite(v));
-      g.fillStyle=s.c;g.beginPath();g.arc(X(xs[i]),Y(s.data[i]),3.4,0,7);g.fill();
+      g.fillStyle=s.c;g.beginPath();g.arc(X(xs[i]),Y(s.data[i]),3.4*k,0,7);g.fill();
     }
   });
   // 軸ラベル
-  g.fillStyle='#8fa0a5';g.font='700 10px sans-serif';
+  g.fillStyle=k>1?'#6b6690':'#8fa0a5';g.font='700 '+(10*k)+'px sans-serif';
   g.textAlign='right';g.textBaseline='bottom';
   if(cfg.xlab)g.fillText(cfg.xlab,w-4,h-2);
   g.textAlign='left';g.textBaseline='top';
@@ -472,7 +550,72 @@ function gSetup(reset){
   G.N=N;G.r1=r1;G.r2=r2;
   $('gL1').textContent=r1;$('gL2').textContent=r2;
   if(reset||changed)gReset();
+  gFit();
 }
+
+/* ----- 教室表示(プロジェクター・大型テレビ用。状態は保存しない) ----- */
+const G_CLS_K=1.6;            // 教室表示のグラフの倍率(目もりの文字 10px → 16px)
+G.cls=false;G.set=false;
+function gClsToggle(){
+  G.cls=!G.cls;
+  if(!G.cls)G.set=false;
+  gClsApply();gDraw();
+}
+function gSetToggle(){
+  G.set=!G.set;
+  gClsApply();gDraw();
+}
+// body に cls を付けるのは実戦タブを開いているときだけ(ほかのタブの見た目は変えない)
+function gClsApply(){
+  const on=G.cls&&tab===0, b=document.body;
+  b.classList.toggle('cls',on);
+  b.classList.toggle('cls-set',on&&G.set);
+  $('gClsBtn').classList.toggle('on',G.cls);
+  $('gClsBtn').setAttribute('aria-pressed',G.cls?'true':'false');
+  $('gClsSt').textContent=G.cls?'入':'切';
+  $('gSetBtn').setAttribute('aria-pressed',G.set?'true':'false');
+  if(on){
+    // 実戦の画面が、上の帯とタブの下にちょうど収まる高さ
+    const top=$('sec0').getBoundingClientRect().top+window.scrollY;
+    const gh=Math.max(420,Math.floor(window.innerHeight-top-20));
+    $('sec0').style.setProperty('--gh',gh+'px');
+  }
+  gFit();
+}
+// 領域 W×H に、日→米 r1 枚と米→日 r2 枚を、同じ列数 c のグリッドで上下にならべたとき
+// 入る一番大きいカード s を求める。すきま g=0.14s、上に 0.12s(✈の印のぶん)、下に 0.06s(影)。
+function gFitCalc(W,H,r1,r2){
+  let best={s:0,c:1};
+  const mx=Math.max(r1,r2);
+  for(let c=1;c<=mx;c++){
+    const R=Math.ceil(r1/c)+Math.ceil(r2/c);
+    let s=Math.floor(Math.min(W/(1.14*c-0.06),H/(1.14*R+0.08),240));
+    while(s>8){
+      const g=Math.round(s*0.14);
+      if(c*s+(c-1)*g+Math.ceil(s*0.08)<=W&&R*s+(R-2)*g+Math.ceil(s*0.36)<=H)break;
+      s--;
+    }
+    if(s>best.s)best={s:s,c:c};
+  }
+  const s=Math.max(8,best.s);
+  return {s:s,c:best.c,g:Math.round(s*0.14),f:Math.max(10,Math.round(s*0.5))};
+}
+function gFit(){
+  if(!document.body.classList.contains('cls'))return;
+  const w=$('gFit');
+  const W=w.clientWidth;
+  const H=w.clientHeight-$('gD1').offsetHeight-$('gD2').offsetHeight;
+  if(W<20||H<20)return;
+  const r=gFitCalc(W,H,G.r1,G.r2);
+  const gh=rows=>Math.ceil(r.s*0.18)+rows*r.s+(rows-1)*r.g;
+  w.style.setProperty('--cs',r.s+'px');
+  w.style.setProperty('--cf',r.f+'px');
+  w.style.setProperty('--cg',r.g+'px');
+  w.style.setProperty('--cc',r.c);
+  w.style.setProperty('--h1',gh(Math.ceil(G.r1/r.c))+'px');
+  w.style.setProperty('--h2',gh(Math.ceil(G.r2/r.c))+'px');
+}
+if(window.ResizeObserver)new ResizeObserver(()=>gFit()).observe($('gFit'));
 function gReset(){
   G.where=new Uint8Array(G.N+1);      // 0=日本 1=アメリカ
   G.hist=[{j:G.N,a:0,m1:0,m2:0}];
@@ -606,7 +749,7 @@ function gDraw(){
   const allx=xs2.length>xs.length?xs2:xs;
   const pad=v=>{const o=v.slice();while(o.length<allx.length)o.push(null);return o;};
   drawChart($('gCv'),{
-    xs:allx,ymin:0,ymax:G.N,intX:true,xlab:'試行回数',ylab:'人数',
+    xs:allx,ymin:0,ymax:G.N,intX:true,xlab:'試行回数',ylab:'人数',k:G.cls&&tab===0?G_CLS_K:1,
     series:[
       {c:'#b9b2c7',data:pad(th.J),dash:[3,3],w:1.8},
       {c:'#b9b2c7',data:pad(th.A),dash:[3,3],w:1.8},
@@ -869,7 +1012,7 @@ function redraw(){
   else hDraw();
 }
 let rz=null;
-window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120);});
+window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{gClsApply();redraw();},120);});
 gSetup(true);
 sRun();
 hRun();
