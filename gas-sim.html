@@ -314,12 +314,13 @@ function addParticle(){
     a:Math.random()*6.28, f:0.6+Math.random()*0.8,
     vx:0,vy:0,init:true});
 }
-function stepParticles(){
+// k = 経過時間 ÷ 60fps の1回ぶん(16.667ms)。60fpsで k=1 となり、以前の「1回あたり」の動きと同じ
+function stepParticles(k){
   const N=targetCount();
   while(particles.length<N)addParticle();
   if(particles.length>N)particles.length=N;
   const pyT=BOT-gasHeight();
-  pistonY+=(pyT-pistonY)*0.18;
+  pistonY+=(pyT-pistonY)*(1-Math.pow(1-0.18,k)); // 指数で追いかける(k=1で0.18)
   const speed=1.55*Math.sqrt(vals.T/300);
   const r=4;
   // 気液平衡では蒸気が必ず存在する(蒸気圧) → 凝縮中でも最低1粒子は気体
@@ -328,16 +329,17 @@ function stepParticles(){
     const liquid=idx>=gasN;
     if(p.init){p.vx=Math.cos(p.a)*speed*p.f;p.vy=Math.sin(p.a)*speed*p.f;p.init=false;}
     if(liquid){ // 凝縮した分子: 底へ集まってふるえる
-      p.vy+=0.35;p.vx*=0.9;p.vy*=0.9;
-      p.vx+=(Math.random()-.5)*0.35;p.vy+=(Math.random()-.5)*0.2;
+      const damp=Math.pow(0.9,k),jit=Math.sqrt(k);
+      p.vy+=0.35*k;p.vx*=damp;p.vy*=damp;
+      p.vx+=(Math.random()-.5)*0.35*jit;p.vy+=(Math.random()-.5)*0.2*jit;
     }else{
       // 温度に合わせて速さをゆるやかに調整(熱浴)
       const cur=Math.hypot(p.vx,p.vy)||0.01;
       const want=speed*p.f;
-      const sc=(cur+(want-cur)*0.06)/cur;
+      const sc=(cur+(want-cur)*(1-Math.pow(1-0.06,k)))/cur;
       p.vx*=sc;p.vy*=sc;
     }
-    p.x+=p.vx;p.y+=p.vy;
+    p.x+=p.vx*k;p.y+=p.vy*k;
     if(p.x<X0+r){p.x=X0+r;p.vx=Math.abs(p.vx);}
     if(p.x>X1-r){p.x=X1-r;p.vx=-Math.abs(p.vx);}
     if(p.y<pistonY+r){p.y=pistonY+r;p.vy=Math.abs(p.vy);}
@@ -351,11 +353,11 @@ function stepParticles(){
       const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
       if(d<1e-3||d>24)continue;
       if(d<8){ // 反発(排除体積)
-        const push=0.35*(8-d)/8;
+        const push=0.35*(8-d)/8*k;
         a.vx-=dx/d*push;a.vy-=dy/d*push;
         b.vx+=dx/d*push;b.vy+=dy/d*push;
       }else{  // 引力
-        const f=pull*(1-d/24);
+        const f=pull*(1-d/24)*k;
         a.vx+=dx/d*f;a.vy+=dy/d*f;
         b.vx-=dx/d*f;b.vy-=dy/d*f;
       }
@@ -530,9 +532,15 @@ function drawGraph(){
 }
 
 // ==== メインループ ====
+let lastNow=null;
+const FRAME_MS=1000/60, MAX_DT=50; // 1回ぶんの上限(タブ復帰などで大きく空いたとき壁をすり抜けないように)
 function loop(now){
+  let dt=lastNow===null?FRAME_MS:now-lastNow;
+  lastNow=now;
+  if(!(dt>0))dt=0;
+  if(dt>MAX_DT)dt=MAX_DT;
   if(sweeping)sweepStep(now);
-  stepParticles();
+  stepParticles(dt/FRAME_MS);
   drawBox();
   if(graphDirty){graphDirty=false;drawGraph();}
   requestAnimationFrame(loop);

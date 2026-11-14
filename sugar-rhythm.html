@@ -135,7 +135,7 @@ footer{color:rgba(255,255,255,.8)}
 </section>
 
 <section id="end" class="panel hidden">
-  <h1>リズムマスター！</h1>
+  <h1 id="endTitle">リズムマスター！</h1>
   <p class="result">スコア <b id="fscore"></b><br><span id="facc"></span></p>
   <button class="btn" onclick="startGame()">もう一度</button>
   <a class="btn white" href="index.html">一覧へ戻る</a>
@@ -254,15 +254,24 @@ function loadVoices(){
   for(const spk in VOICE){
     VBUF[spk]={};
     for(const k in VOICE[spk]){
-      const bin=atob(VOICE[spk][k]),ab=new ArrayBuffer(bin.length),u=new Uint8Array(ab);
-      for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
-      ((spk,k)=>c.decodeAudioData(ab,b=>{VBUF[spk][k]=b;},()=>{}))(spk,k);
+      try{
+        const bin=atob(VOICE[spk][k]),ab=new ArrayBuffer(bin.length),u=new Uint8Array(ab);
+        for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+        const p=c.decodeAudioData(ab,b=>{VBUF[spk][k]=b;},()=>{});
+        if(p&&p.catch)p.catch(()=>{}); // 失敗しても和太鼓の音で遊べる
+      }catch(e){}
     }
   }
 }
+// 最初のタッチで声のデコードを始める(操作前に AudioContext を作ると警告が出るため)
+document.addEventListener('pointerdown',function pre(){
+  document.removeEventListener('pointerdown',pre,true);
+  try{ac();}catch(e){}
+},true);
 function playVoice(spk,k,t0){
-  const b=VBUF[spk]&&VBUF[spk][k];
-  if(!b)return; // 読み込み前は鳴らさない
+  const V=VBUF[spk],b=V&&V[k];
+  // 3つの声がそろうまでは、同じ役割の和太鼓の音で代わりに鳴らす(1つのリズムの中で声と太鼓が混ざらないように)
+  if(!V||!V.don||!V.ka||!V.doon){KITS.taiko[k](t0);return;}
   const c=ac(),s=c.createBufferSource(),g=c.createGain();
   s.buffer=b;g.gain.value=2;
   s.connect(g);g.connect(MASTER);s.start(t0);
@@ -501,6 +510,9 @@ function nextQ(){
   if(qi>=deck.length){
     clearRhythm();
     $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    // 正解数で見出しを変える(全問 / 半分より多い / それ以下)
+    $('endTitle').textContent=ok>=deck.length?'リズムマスター！'
+      :ok*2>deck.length?'いいリズム！':'もう1回たたいてみよう';
     $('fscore').textContent=score;showBest(score);
     $('facc').textContent=ok+' 問 / '+deck.length+' 問 正解';
     return;

@@ -346,8 +346,9 @@ const sfx={
 function toggleMute(){muted=!muted;$('mute').textContent=muted?'🔇':'🔊';}
 
 // ==== 状態 ====
-let deck=[],qi=0,cur=null,lives=0,score=0,slain=0,tokens=[],missed=[];
+let deck=[],qi=0,cur=null,lives=0,score=0,slain=0,tokens=[];
 let tLeft=0,timer=null,lastSec=-1,locked=true,missedAt=[],cdT=null;
+let wrongCnt=0,wrongAt=[];                // まちがった式を決定した回数と、その問題
 
 function makeDeck(){
   const d=[];
@@ -358,7 +359,7 @@ function makeDeck(){
 }
 function startGame(){
   ac();                                  // 最初のタップで音を使えるようにする
-  deck=makeDeck();qi=0;lives=LIVES;score=0;slain=0;missed=[];missedAt=[];
+  deck=makeDeck();qi=0;lives=LIVES;score=0;slain=0;missedAt=[];wrongCnt=0;wrongAt=[];
   $('start').classList.add('hidden');$('end').classList.add('hidden');
   $('play').classList.remove('hidden');
   $('score').textContent=0;
@@ -486,6 +487,7 @@ function judge(){
   if(tokens.join('')===cur.f)win();
   else{
     $('answer').className='answer ng';
+    wrongCnt++;wrongAt[qi]=true;
     sfx.hit();attacked();
     setTimeout(()=>{tokens=[];drawAnswer();},420);
   }
@@ -537,7 +539,7 @@ function attacked(){
   setTimeout(drawHearts,500);
   if(lives<=0){
     locked=true;clearInterval(timer);
-    missedAt[qi]=true;missed.push(cur.nm+' … '+cur.f);
+    missedAt[qi]=true;
     sfx.over();
     setTimeout(()=>finish(false),900);
   }
@@ -548,7 +550,7 @@ function timeUp(){
   $('stage').classList.remove('panic');
   attacked();
   if(lives<=0)return;                      // ライフ0なら attacked() が終了させる
-  missedAt[qi]=true;missed.push(cur.nm+' … '+cur.f);
+  missedAt[qi]=true;
   showAns();
   setTimeout(next,1700);
 }
@@ -582,10 +584,16 @@ function finish(cleared){
     ?(slain===10?'タワー制覇！':'最上階に到達')
     :'ライフが尽きた…';
   $('medal').textContent=slain===10?'👑':slain>=8?'🏆':slain>=5?'🥈':slain>=3?'🥉':'💀';
-  const m=[...new Set(missed)];
+  // 取りこぼした問題と、まちがえたが倒せた問題(取りこぼしと重なるものは取りこぼし側だけに出す)
+  const line=q=>q.nm+' … '+fmtTokens(splitF(q.f));
+  const m=deck.filter((q,i)=>missedAt[i]).map(line);
+  const w=deck.filter((q,i)=>wrongAt[i]&&!missedAt[i]).map(line);
+  const wl=w.length?'まちがえた問題: <b>'+w.join('</b> / <b>')+'</b>':'';
   $('fmiss').innerHTML=m.length
-    ?'取りこぼし: <b>'+m.join('</b> / <b>')+'</b>'
-    :'ノーミス。全10体を一撃で討伐した。';
+    ?'取りこぼし: <b>'+m.join('</b> / <b>')+'</b>'+(wl?'<br>'+wl:'')
+    :wrongCnt===0
+      ?'ノーミス。全10体を一撃で討伐した。'
+      :'全10体を討伐。まちがえたのは '+wrongCnt+'回。次はノーミスをねらおう。<br>'+wl;
   window.scrollTo(0,0);
 }
 </script>

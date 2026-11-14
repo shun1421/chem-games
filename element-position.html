@@ -108,13 +108,17 @@ const rawData=[
 ];
 const elements=rawData.map(d=>{const [s,n,c,r,l]=d.split(',');return {s,n:+n,c:+c,r:+r,l:+l};});
 
-let pool=[],qIdx=0,correct=0,target=null,solved=[],level=1;
+let pool=[],order=[],qIdx=0,correct=0,target=null,solved=[],level=1;
 
 function startGame(lv){
   level=lv;
   $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
   pool=elements.filter(e=>e.l<=lv);
+  // 出題順: pool をシャッフルして先頭から出す(1回の中で同じ元素を出さない)
+  order=pool.slice();
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
   createTable('table-grid');
+  $('table-grid').parentNode.scrollLeft=0;
   qIdx=0;correct=0;solved=[];
   nextQuestion();
 }
@@ -150,13 +154,23 @@ function nextQuestion(){
   qIdx++;
   if(qIdx>10)return showResult();
   $('qcounter').textContent='第 '+qIdx+' / 10 問';
-  target=pool[Math.floor(Math.random()*pool.length)];
+  target=order[(qIdx-1)%order.length];
+  // 正解したマスは残し、それ以外(まちがえた問題のマス)は空に戻す
+  const keep=new Set(solved.map(e=>'table-grid-'+e.c+'-'+e.r));
   document.querySelectorAll('#table-grid .cell').forEach(c=>{
-    if(!c.classList.contains('empty')&&!c.classList.contains('spacer')){c.className='cell';c.textContent='';}
+    if(!c.classList.contains('empty')&&!c.classList.contains('spacer')&&!keep.has(c.id)){c.className='cell';c.textContent='';}
   });
   const tc=$('table-grid-'+target.c+'-'+target.r);
-  if(tc)tc.classList.add('target');
+  if(tc){tc.classList.add('target');scrollToCell(tc);}
   renderChoices();
+}
+// 問題のマスが横方向の中央あたりに来るよう、表の横スクロールだけを動かす
+function scrollToCell(cell){
+  const wrap=cell.closest('.scrollwrap');if(!wrap)return;
+  const wr=wrap.getBoundingClientRect(),cr=cell.getBoundingClientRect();
+  const dx=(cr.left+cr.width/2)-(wr.left+wrap.clientWidth/2);
+  if(Math.abs(dx)<1)return;
+  try{wrap.scrollBy({left:dx,behavior:'smooth'});}catch(e){wrap.scrollLeft+=dx;}
 }
 function renderChoices(){
   const box=$('choices');box.innerHTML='';

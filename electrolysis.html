@@ -62,7 +62,7 @@ main.game{max-width:760px}
   <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">電気分解の生成物は「手順」で必ず決められる!
   電解液中のイオン・水・電極を見て、①反応しないものに✕ → ②陽極で反応するもの → ③陰極で反応するもの → ④両極の反応式、の4ステップで攻略しよう。</div></div>
   <ul class="rules">
-    <li>全7問。ステップ①100点、②③各50点、④100点(まちがえると減点)</li>
+    <li>全7問。①100点(やり直すたびに−20点)、②③各50点(1回まちがえると25点、2回で0点)、④100点(式1つ50点)</li>
     <li>✕をつけるのは:<b>イオン化傾向の大きい金属の陽イオン</b>(Li〜Al)、<b>反応しにくい多原子イオン</b>(SO<sub>4</sub><sup>2−</sup>, NO<sub>3</sub><sup>−</sup>)、<b>安定な電極</b>(Pt, C)と<b>陰極側の金属電極</b></li>
     <li>H<sub>2</sub>O はいつでも反応の候補。✕をつけた物質の代わりに反応する</li>
   </ul>
@@ -185,16 +185,19 @@ const PROBLEMS=[
   ex:'電極がCuのような反応しやすい金属だと、陽極は電極自身が溶ける(Cu→Cu²⁺+2e⁻)!陰極ではCu²⁺が析出。これが銅の電解精錬の原理。'},
 ];
 
-let idx=0,score=0,phase=0,cur=null,xSel=new Set(),retries=0,eqSelA=-1,eqSelC=-1;
+let idx=0,score=0,phase=0,cur=null,xSel=new Set(),retries=0,miss=0,eqSelA=-1,eqSelC=-1;
+let order=[];// 出題順(1問目は固定、2問目以降はシャッフル)
 
 function startGame(){
   $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  const rest=[];for(let i=1;i<PROBLEMS.length;i++)rest.push(i);
+  order=[0].concat(CG.shuffle(rest));
   idx=-1;score=0;next();
 }
 function next(){
   idx++;
-  if(idx>=PROBLEMS.length){finish();return;}
-  cur=PROBLEMS[idx];phase=1;xSel=new Set();retries=0;eqSelA=-1;eqSelC=-1;
+  if(idx>=order.length){finish();return;}
+  cur=PROBLEMS[order[idx]];phase=1;xSel=new Set();retries=0;miss=0;eqSelA=-1;eqSelC=-1;
   $('round').textContent=idx+1;$('score').textContent=score;
   $('pname').innerHTML=cur.name;
   $('fb').innerHTML='';$('nextb').style.display='none';$('eqs').style.display='none';
@@ -248,14 +251,26 @@ function judgePick(id,el,correct,cls,text,nextPhase){
   if(xSel.has(id)){$('fb').innerHTML='<span class="bad">✕をつけた物質は反応しないよ</span>';return;}
   if(id===correct){
     el.classList.add(cls);
-    score+=50;$('score').textContent=score;
-    $('fb').innerHTML='<span class="good">正解!+50点</span> '+text;
-    phase=nextPhase;
-    if(nextPhase===3)setStep(3,'<b>陰極(−)で反応(還元)するもの</b>をタップしよう');
-    else showEqs();
+    const pts=miss===0?50:25;
+    score+=pts;$('score').textContent=score;
+    $('fb').innerHTML='<span class="good">正解!+'+pts+'点</span> '+text;
+    goPhase(nextPhase);
   }else{
-    $('fb').innerHTML='<span class="bad">ちがう…</span> ✕がついていない物質のうち、'+(phase===2?'酸化されやすい(電子を出しやすい)':'還元されやすい(電子を受け取りやすい)')+'ものはどれ?';
+    miss++;
+    if(miss>=2){
+      // 2回まちがえたら正解を見せて0点で次へ
+      const ce=chipEl(correct);if(ce)ce.classList.add(cls);
+      $('fb').innerHTML='<span class="bad">2回まちがえたので0点。</span> 正解は色のついた物質。'+text;
+      goPhase(nextPhase);
+    }else{
+      $('fb').innerHTML='<span class="bad">ちがう…(次に正解すると25点)</span> ✕がついていない物質のうち、'+(phase===2?'酸化されやすい(電子を出しやすい)':'還元されやすい(電子を受け取りやすい)')+'ものはどれ?';
+    }
   }
+}
+function goPhase(nextPhase){
+  phase=nextPhase;miss=0;
+  if(nextPhase===3)setStep(3,'<b>陰極(−)で反応(還元)するもの</b>をタップしよう');
+  else showEqs();
 }
 function showEqs(){
   phase=4;

@@ -51,9 +51,9 @@
 .score-hero{text-align:center;padding:2rem 1rem;background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:1.2rem}
 .score-big{font-size:3.2rem;font-weight:800;letter-spacing:-2px;font-family:var(--mono);color:var(--acc)}
 .score-label{font-size:.85rem;color:var(--mut);margin-top:2px}
-.rank-info{margin-top:.9rem;font-size:.9rem;color:var(--mut);line-height:1.8}
-.rank-pct{font-size:1.5rem;font-weight:800;color:var(--ink)}
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.2rem}
+.tally-info{margin-top:.9rem;font-size:.9rem;color:var(--mut);line-height:1.8;font-weight:700}
+.tally-main{font-size:1.3rem;font-weight:800;color:var(--ink)}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1.2rem}
 .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.9rem;text-align:center}
 .stat-num{font-size:1.4rem;font-weight:800;font-family:var(--mono)}
 .stat-lbl{font-size:10px;color:var(--mut);margin-top:3px}
@@ -128,10 +128,9 @@
       <div class="score-hero">
         <div class="score-big" id="final-score">0</div>
         <div class="score-label">最終スコア</div>
-        <div class="rank-info" id="rank-info"></div>
+        <div class="tally-info" id="tally-info"></div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num" id="stat-correct">0</div><div class="stat-lbl">正解数</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-lbl">最大連続正解</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-time">0s</div><div class="stat-lbl">平均解答時間</div></div>
       </div>
@@ -146,39 +145,6 @@
 
 <script src="common.js"></script>
 <script>
-// ===== デモデータによる上位%計算 =====
-// 実際の生徒の得点分布を想定したデモデータ（150件）
-const DEMO_SCORES = (function(){
-  const base = [
-    100,150,180,200,220,250,260,280,300,310,
-    320,340,350,360,380,390,400,410,420,430,
-    440,450,460,470,480,490,500,510,520,530,
-    540,550,560,570,580,590,600,610,620,630,
-    640,650,660,670,680,690,700,710,720,730,
-    740,750,760,770,780,790,800,810,820,830,
-    840,850,860,870,880,890,900,910,920,930,
-    940,950,960,970,980,990,1000,1010,1020,1030,
-    1040,1050,1060,1070,1080,1090,1100,1110,1120,1130,
-    1140,1150,1160,1170,1180,1190,1200,1210,1220,1230,
-    1240,1250,1260,1270,1280,1290,1300,1310,1320,1330,
-    1340,1350,1360,1380,1400,1420,1440,1460,1480,1500,
-    1520,1540,1560,1580,1600,1620,1640,1660,1700,1750,
-    1800,1850,1900,1950,2000,2050,2100,2150,2200,2300,
-    2350,2400,2450,2500,2550,2600,2650,2700,2750,2800
-  ];
-  return base;
-})();
-
-function calcRank(score) {
-  const all = DEMO_SCORES;
-  const total = all.length;
-  const below = all.filter(s => s < score).length;
-  const topPct = Math.max(1, Math.round(((total - below) / total) * 100));
-  const sorted = [...all].sort((a, b) => b - a);
-  const top10score = sorted[Math.floor(total * 0.1)];
-  return { topPct, top10score };
-}
-
 const IONS = [
   {name:'水素イオン', formula:'H', charge:1, type:'cation'},
   {name:'リチウムイオン', formula:'Li', charge:1, type:'cation'},
@@ -420,18 +386,12 @@ function showResults(){
   const avgTime=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
   document.getElementById('final-score').textContent=score;
   showBest(score);
-  document.getElementById('stat-correct').textContent=`${correctCount}/15`;
   document.getElementById('stat-streak').textContent=maxStreak;
   document.getElementById('stat-time').textContent=`${avgTime}s`;
-  document.getElementById('rank-info').innerHTML='';
-  const { topPct, top10score } = calcRank(score);
-  let rankText = `<span class="rank-pct">上位 ${topPct}%</span> の成績`;
-  if(score < top10score){
-    rankText += `<br><small>上位10%まであと <strong>${top10score - score}</strong> 点</small>`;
-  } else {
-    rankText += `<br><small>上位10%達成！</small>`;
-  }
-  document.getElementById('rank-info').innerHTML = rankText;
+  const total=questions.length;
+  let tally=`<span class="tally-main">${total}問中 ${correctCount}問 正解</span>`;
+  if(correctCount<total) tally+=`<br>全問正解まで あと${total-correctCount}問`;
+  document.getElementById('tally-info').innerHTML=tally;
   const ms=document.getElementById('mistakes-section');
   if(mistakes.length===0){
     ms.innerHTML='<div style="text-align:center;color:#888;padding:1rem;">全問正解！素晴らしい！</div>';

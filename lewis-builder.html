@@ -179,14 +179,25 @@ function upd(){$('score').textContent=score;$('count').textContent=made;
 function msg(t,color){$('msg').textContent=t;$('msg').style.color=color||'var(--mut)';}
 
 function newAtom(el){return {el,dx:0,dy:0,ue:0,used:[false,false,false,false]};}
-function spawn(){
-  const el=pick(SPAWN);
+function spawn(force){
+  const el=force||pick(SPAWN);
   const c={atoms:[newAtom(el)],bonds:[],needsLewis:true,
     x:40+Math.random()*(W-80),y:40+Math.random()*(H-80),
     vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.5};
   clusters.push(c);
 }
 function totalAtoms(){return clusters.reduce((s,c)=>s+c.atoms.length,0)}
+// 結合の相手になれるかたまり(電子式がまだの原子、または不対電子が残っているかたまり)が2つ以上あるか。
+// 不対電子を持つかたまりどうしは、どの組み合わせでも結合できる(tryMergeは向きが重なっても代わりの向きでつなぐ)。
+const MAX_ATOMS=40; // 安全のための上限(H を足し続けても画面が埋まりきらないように)
+function canBondAny(){
+  let n=0;
+  for(const c of clusters){
+    if(c.needsLewis||c.atoms.some(a=>a.ue>0))n++;
+    if(n>=2)return true;
+  }
+  return false;
+}
 function extent(c){ // クラスターの見た目上の半径(壁judgeバウンド用)
   let m=0;
   for(const a of c.atoms){const d=Math.hypot(a.dx,a.dy)+EL[a.el].r;if(d>m)m=d;}
@@ -196,7 +207,12 @@ function extent(c){ // クラスターの見た目上の半径(壁judgeバウン
 function loop(){
   if(!running)return;
   spawnT+=1;
-  if(spawnT>150&&totalAtoms()<10){spawn();spawnT=0;}
+  if(spawnT>150){
+    const n=totalAtoms();
+    if(n<10){spawn();spawnT=0;}
+    // 10個以上でも、くっつけられる相手がいなければ H(不対電子1個)を出す。H は1個ごとに残りの不対電子を必ず1つ減らす
+    else if(n<MAX_ATOMS&&!canBondAny()){spawn('H');spawnT=0;}
+  }
   // 移動
   for(const c of clusters){
     if(c===drag)continue;
