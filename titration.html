@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ギリギリ滴定 | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
+<style>
+main.game{max-width:540px}
+body.tt-playing main.game{padding-bottom:0}
+
+/* ===== プレイ画面(1画面に収める) ===== */
+#play{display:flex;flex-direction:column;height:calc(100vh - 83px);height:calc(100dvh - 83px);min-height:470px;max-height:780px}
+#play .hud{flex:0 0 auto}
+#play .hud>div{padding:4px 4px 3px;box-shadow:0 4px 0 var(--navy);border-radius:14px}
+#play .hud b{font-size:24px}
+#play .tbar{flex:0 0 auto;height:14px;margin:9px 0 7px}
+#play .tfill.stop{background:#b9b5d3;animation:none}
+.tt-info{flex:0 0 auto;display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 2px 6px;color:#fff;
+ font-size:12.5px;font-weight:900;text-shadow:0 2px 0 var(--navy);flex-wrap:wrap}
+.tt-info>span{white-space:nowrap}
+.tt-info b{color:var(--yellow)}
+.tt-stage{position:relative;flex:1 1 auto;min-height:220px;border:3px solid var(--navy);border-radius:20px;box-shadow:0 6px 0 var(--navy);overflow:hidden;
+ background:radial-gradient(circle at 10px 10px,rgba(111,93,255,.10) 2px,transparent 3px) 0 0/22px 22px,#f7f5ff}
+#cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+
+/* コック(大きなボタン1つ)。押した瞬間に見た目が変わる(なめらかに変えない) */
+.tt-cock{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:14px;width:100%;height:76px;margin:14px 0 8px;padding:0 12px;
+ background:var(--yellow);color:var(--navy);border:3px solid var(--navy);border-radius:20px;box-shadow:0 7px 0 var(--navy);cursor:pointer;
+ touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-weight:900}
+.tt-cock.on{transform:translateY(6px);box-shadow:0 1px 0 var(--navy);background:#ffe566}
+.tt-cock.flow{background:var(--pink);color:#fff}
+.tt-ck-i{flex:0 0 46px;height:46px;border-radius:50%;background:#fff;border:3px solid var(--navy);position:relative}
+.tt-ck-i::after{content:'';position:absolute;left:5px;right:5px;top:50%;height:9px;margin-top:-4.5px;background:var(--navy);border-radius:5px}
+.tt-cock.on .tt-ck-i::after{transform:rotate(90deg)}
+.tt-ck-t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.3}
+.tt-ck-t b{font-size:21px;letter-spacing:.12em}
+.tt-ck-t small{font-size:12px;font-weight:800}
+
+/* 1本ごとの結果カード */
+.tt-card{position:absolute;left:10px;right:10px;top:10px;z-index:4;background:#fff;border:3px solid var(--navy);border-radius:18px;
+ box-shadow:0 5px 0 var(--navy);padding:9px 12px 7px;cursor:pointer}
+.tt-card-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tt-jd{font-size:20px;font-weight:900;padding:1px 14px;border:3px solid var(--navy);border-radius:99px;color:#fff;background:var(--ok);white-space:nowrap}
+.tt-jd.j-oshii{background:#2aa8f0}.tt-jd.j-over{background:#b0106e}.tt-jd.j-fail{background:#6b6690}.tt-jd.j-time{background:var(--bad)}
+.tt-pts{font-size:28px;font-weight:700;color:var(--navy);white-space:nowrap}
+.tt-pts small{font-size:13px}
+.tt-card-v{font-size:12.5px;font-weight:800;color:var(--mut);margin:3px 0 2px}
+.tt-card-v b{font-size:20px;color:var(--navy)}
+#cCurve{display:block;width:100%;height:104px}
+.tt-card-t{font-size:12.5px;font-weight:700;line-height:1.6;margin-top:3px}
+.tt-card-k{text-align:right;font-size:11px;font-weight:900;color:var(--mut)}
+
+/* 指示薬えらび(4本目・5本目) */
+.tt-choose{position:absolute;left:10px;right:10px;top:50%;transform:translateY(-50%);z-index:5;background:#fff;border:3px solid var(--navy);
+ border-radius:18px;box-shadow:0 5px 0 var(--navy);padding:11px 12px 13px}
+.tt-ch-h{text-align:center;font-size:12px;font-weight:900;color:var(--mut);letter-spacing:.1em}
+.tt-ch-pair{text-align:center;font-size:16px;font-weight:900;line-height:1.5;margin:3px 0 4px}
+.tt-ch-b{display:block;width:100%;margin-top:9px;padding:9px 8px;background:#fff;color:var(--navy);border:3px solid var(--navy);border-radius:14px;
+ box-shadow:0 4px 0 var(--navy);font-weight:900;cursor:pointer;text-align:center}
+.tt-ch-b:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.tt-ch-b b{display:block;font-size:17px}
+.tt-ch-b small{display:block;font-size:12px;color:var(--mut);margin-top:1px}
+.tt-sw{display:block;height:9px;margin:5px auto 0;width:70%;border:2px solid var(--navy);border-radius:99px}
+.tt-sw.pp{background:linear-gradient(90deg,#e3f2ff,#ffb8d6 60%,#e0218a)}
+.tt-sw.mo{background:linear-gradient(90deg,#e8323c,#ff8a1e 50%,#ffd23c)}
+
+/* 1本目だけのひとこと */
+.tt-tip{position:absolute;right:10px;bottom:30%;max-width:54%;z-index:3;background:var(--yellow);border:3px solid var(--navy);border-radius:14px;
+ box-shadow:0 4px 0 var(--navy);padding:6px 10px;font-size:13.5px;font-weight:900;line-height:1.5}
+
+/* ===== 結果画面 ===== */
+.tt-tb{font-size:12.5px;font-weight:900;color:var(--mut);min-height:1.4em}
+.tt-list{display:grid;gap:6px;margin:12px 0 4px;text-align:left}
+.tt-row{display:grid;grid-template-columns:24px 1fr auto 52px;gap:6px;align-items:center;background:#f3f1ff;border-radius:12px;padding:6px 8px;
+ font-size:12.5px;font-weight:800}
+.tt-row .n{font-family:var(--numf);font-size:18px;font-weight:700;text-align:center;color:var(--mut)}
+.tt-row .w small{display:block;font-size:11.5px;color:var(--mut)}
+.tt-row .w b{font-family:var(--numf);font-size:15px;color:var(--navy)}
+.tt-row .j{padding:1px 9px;border:2px solid var(--navy);border-radius:99px;color:#fff;font-size:11.5px;font-weight:900;white-space:nowrap;background:#b9b5d3}
+.tt-row .j.j-pitari{background:var(--ok)}.tt-row .j.j-oshii{background:#2aa8f0}.tt-row .j.j-over{background:#b0106e}
+.tt-row .j.j-fail{background:#6b6690}.tt-row .j.j-time{background:var(--bad)}
+.tt-row .p{font-family:var(--numf);font-size:17px;font-weight:700;text-align:right}
+.tt-bq{margin:14px 0 6px;padding:12px;border:3px solid var(--navy);border-radius:16px;background:#fffbe6;text-align:left;box-shadow:0 4px 0 var(--navy)}
+.tt-bq-h{display:inline-block;background:var(--pink);color:#fff;font-weight:900;font-size:12px;padding:2px 11px;border-radius:99px;border:2px solid var(--navy)}
+.tt-bq-q{font-size:14px;font-weight:800;line-height:1.75;margin:8px 0 2px}
+#bqCh{grid-template-columns:1fr 1fr;margin-top:8px}
+#bqCh .choice{padding:12px 4px;font-size:16px}
+.tt-bq-ex{font-size:13px;font-weight:700;line-height:1.75;margin-top:10px}
+.tt-bq-ex b.ok{color:var(--ok)}.tt-bq-ex b.ng{color:var(--bad)}
+#fAfter{text-align:center}
+#end .btn{margin-top:14px}
+@media(max-width:380px){.tt-ck-t b{font-size:19px}.tt-row{grid-template-columns:20px 1fr auto 46px;gap:4px}}
+</style>
+</head>
+<body data-u="rose" data-game="titration">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">ギリギリ滴定</div><span class="chip">中和滴定</span></header>
+<main class="game">
+
+<section id="start" class="panel start">
+  <h1>ギリギリ滴定</h1>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">中和点の<b>直前</b>で止める度胸試し。
+  流せば速いが、<b>1滴でも行きすぎたら台なし</b>。落ちた所の赤色が<b>消えにくくなったら</b>、中和点は近いぞ。</div></div>
+  <ul class="rules">
+    <li>5本のコニカルビーカー(およその濃度だけ分かっている酸や塩基 10.0 mL)を、合計 <b id="rLimit">90</b> 秒で順に中和滴定する</li>
+    <li>ビュレットには 0.10 mol/L 水酸化ナトリウム水溶液(塩基を滴定するときは 0.10 mol/L 塩酸)。<b>長押しで流す</b>、<b>タップで1滴</b>(<span id="rDrop">0.05</span> mL)。スペースキーでもよい</li>
+    <li>中和点をこえた瞬間にその1本は終わり。1滴以内の行きすぎなら「ピタリ!」<span id="rPt">300</span>点。連続ピタリでボーナス</li>
+    <li>硫酸やシュウ酸、水酸化バリウムは2価。中和点までの量に注意</li>
+    <li>4本目と5本目は、指示薬を自分でえらぶ。最後に、滴定の結果から濃度を求めるボーナス問題</li>
+  </ul>
+  <button class="btn" type="button" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="hidden">
+  <div class="hud">
+    <div><span class="lb">ビーカー</span><b id="hNo">1/5</b></div>
+    <div><span class="lb">のこり</span><b id="hTime">90</b></div>
+    <div><span class="lb">スコア</span><b id="hScore">0</b></div>
+  </div>
+  <div class="tbar"><div class="tfill" id="tfill"></div></div>
+  <div class="tt-info" id="ttInfo"></div>
+  <div class="tt-stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="tt-tip hidden" id="ttTip">赤が消えにくくなったら1滴ずつ!</div>
+    <div class="tt-choose hidden" id="ttChoose">
+      <div class="tt-ch-h">指示薬をえらぼう</div>
+      <div class="tt-ch-pair" id="chPair"></div>
+      <button type="button" class="tt-ch-b" data-ind="PP"><b>フェノールフタレイン</b><small>変色域 pH 8.0〜9.8(無色→赤)</small><i class="tt-sw pp"></i></button>
+      <button type="button" class="tt-ch-b" data-ind="MO"><b>メチルオレンジ</b><small>変色域 pH 3.1〜4.4(赤→黄)</small><i class="tt-sw mo"></i></button>
+    </div>
+    <div class="tt-card hidden" id="ttCard">
+      <div class="tt-card-h"><span class="tt-jd" id="cJudge"></span><span class="tt-pts num" id="cPts"></span></div>
+      <div class="tt-card-v" id="cOver"></div>
+      <canvas id="cCurve"></canvas>
+      <div class="tt-card-t" id="cText"></div>
+      <div class="tt-card-k">タップで次へ</div>
+    </div>
+  </div>
+  <button type="button" class="tt-cock" id="ttCock" aria-label="コック。長押しで流す、タップで1滴">
+    <span class="tt-ck-i"></span><span class="tt-ck-t"><b>コック</b><small>長押し=流す / タップ=1滴</small></span>
+  </button>
+</section>
+
+<section id="end" class="panel res hidden">
+  <div class="lb">RESULT</div>
+  <div class="score num" id="fScore">0</div>
+  <div class="tt-tb" id="fTime"></div>
+  <div class="tt-list" id="fList"></div>
+  <div class="tt-bq" id="bq">
+    <span class="tt-bq-h">ボーナス問題 +<span id="bqPt">500</span></span>
+    <div class="tt-bq-q" id="bqQ"></div>
+    <div class="choices" id="bqCh"></div>
+    <div class="tt-bq-ex hidden" id="bqEx"></div>
+  </div>
+  <div id="fAfter" class="hidden">
+    <div class="rank" id="fRank">A</div>
+    <div class="bestline" id="fBest"></div>
+    <div id="fSay"></div>
+  </div>
+  <button class="btn" type="button" onclick="startGame()">もう一度</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script src="common.js"></script>
+<script>
+'use strict';
+/*PURE-BEGIN*/
+// ================= 調整値(ここの数字を変えて調整する) =================
+const T_LIMIT=90;              // 【制限時間】秒(5本の合計)
+const ROUNDS=5;                // 【ビーカーの本数】
+const DROP_ML=0.05;            // 【1滴の体積】mL(タップ1回)
+const FLOW_ML_PER_S=1.5;       // 【流す速さ】mL/秒(長押し)
+const FLOW_TEMPO=8;            // 【流すときのテンポ】回/秒。音と滴の絵がこの間かくで出る(1回ぶん = 流す速さ÷テンポ mL)
+const HOLD_S=0.20;             // 【長押しと判定する時間】秒。これより長く押すと流しはじめる
+const FALL_S=0.12;             // 【滴が落ちる時間】秒(ビュレットの先から液面まで)。落ちている途中の液も、あとで入る
+const FLOW_STOP_S=0.15;        // 【流したまま中和点をこえたとき、コックが閉まるまでの時間】秒。この間の液(流す速さ×時間)も入る
+const LINGER_MIN=0.15;         // 【赤色が残る時間】中和点から遠いとき(秒)
+const LINGER_MAX=1.2;          // 【赤色が残る時間】あと1滴のとき(秒)
+const OMEN_FROM=2.0;           // 【予兆が出はじめる距離】mL(中和点の何 mL 手前から赤色が残りはじめるか)
+const OMEN_FROM_FIRST=3.0;     // 【予兆が出はじめる距離】1本目だけ(やさしく)
+const OMEN_CURVE=2;            // 【予兆の伸び方】1=まっすぐ伸びる。大きいほど中和点のすぐ手前で急に伸びる
+const TIP_AT=0.08;             // 【1本目のひとことを出す予兆の強さ】0〜1
+const TIP_S=3.0;               // 【1本目のひとことを出しておく時間】秒
+const VEQ_MIN=5.0, VEQ_MAX=15.0, VEQ_STEP=0.05; // 【中和点の滴下量】の範囲ときざみ(mL)
+const JUDGE_PITARI=0.05;       // 【ピタリの判定】行きすぎがこれ以内(mL)
+const JUDGE_OSHII=0.20;        // 【おしいの判定】行きすぎがこれ以内(mL)。こえると入れすぎ
+const PT_PITARI=300;           // 【点数】ピタリ
+const PT_OSHII_MAX=150;        // 【点数】おしい(行きすぎが小さいとき)
+const PT_OSHII_MIN=60;         // 【点数】おしい(行きすぎが判定ぎりぎりのとき)
+const PT_OVER=30;              // 【点数】入れすぎ
+const PT_FAIL=30;              // 【点数】指示薬のまちがいで変色が早すぎたとき
+const PT_STREAK=50;            // 【連続ピタリボーナス】2連続で+50、3連続で+100 …
+const PT_STREAK_MAX=200;       // 【連続ピタリボーナスの上限】
+const PT_TIME=2;               // 【残り時間ボーナス】1秒あたり × ピタリの本数(5本とも終えたときだけ。流しっぱなしで時間だけかせぐのを防ぐ)
+const PT_BONUS_Q=500;          // 【ボーナス問題の点数】
+const RANK_S=2200, RANK_A=1600, RANK_B=1000; // 【ランク】の下限点
+const HITSTOP={pitari:0.30,oshii:0.18,over:0.30,fail:0.24,time:0.20}; // 【ヒットストップ】秒
+const SHAKE_PX={pitari:5,oshii:4,over:9,fail:6,time:5};               // 【ヒットストップ中のビーカーのふるえ】px
+const SCREEN_SHAKE_PX=6, SCREEN_SHAKE_S=0.35; // 【入れすぎの画面のゆれ】大きさ(px)と長さ(秒)
+const REACT_S=0.45;            // 【判定のあと、ビーカーの反応を見せる時間】秒
+const RESULT_S=2.4;            // 【結果カードを自動で閉じるまで】秒
+const RESULT_FAIL_S=4.5;       // 【結果カードを自動で閉じるまで】指示薬のまちがい・時間切れ・2価の回(解説が長い)のとき
+const SKIP_GUARD_S=0.35;       // 【結果カードをタップで閉じられるまで】秒(連打で読みとばさないため)
+const CURVE_DRAW_S=0.6;        // 【滴定曲線を描く時間】秒
+const SWAP_S=0.35;             // 【次のビーカーへの入れかえ】秒
+const SND_POP_LOW=520;         // 【ポッの高さ】中和点から遠いとき(Hz)
+const SND_POP_HIGH=1250;       // 【ポッの高さ】あと1滴のとき(Hz)
+const PP_DEEP_SPAN=3.3;        // 【フェノールフタレインの色の濃さ】pH 8.0 からこれだけ上がると最も濃い赤紫(表示用)
+
+// ================= 化学(pH の計算) =================
+const KW=1.0e-14;              // 水のイオン積 (mol/L)^2, 25℃
+const KA_AC=2.7e-5;            // 酢酸の電離定数 Ka = 2.7×10^-5 mol/L(25℃。高校化学の教科書の値)
+const KB_NH3=2.3e-5;           // アンモニアの電離定数 Kb = 2.3×10^-5 mol/L(25℃。高校化学の教科書の値)
+const KA1_OX=5.4e-2;           // シュウ酸の第1電離定数 Ka1 = 5.4×10^-2 mol/L(25℃。理科年表 pKa1=1.27)
+const KA2_OX=5.4e-5;           // シュウ酸の第2電離定数 Ka2 = 5.4×10^-5 mol/L(25℃。理科年表 pKa2=4.27)
+const VA=10.0;                 // コニカルビーカーの液(ホールピペットではかりとった量)mL
+const CT=0.10;                 // ビュレットの液の濃度 mol/L
+const EST_STEP=1.0;            // 【濃度表示の粗さ】表示した「約 ○ mol/L」から見積もった中和点が、本当の中和点から最大でこの半分(mL)ずれる
+// n=価数、base=ビーカーの中身が塩基か、ok=正しい指示薬、endAtEq=中和点ちょうどで色が変わる(赤→無色)
+const KINDS={
+  SA:{name:'塩酸',f:'HCl',n:1,base:false,tit:'NaOH',titName:'水酸化ナトリウム水溶液',ok:['PP']},
+  WA:{name:'酢酸',f:'CH<sub>3</sub>COOH',n:1,base:false,tit:'NaOH',titName:'水酸化ナトリウム水溶液',ok:['PP']},
+  WB:{name:'アンモニア水',f:'NH<sub>3</sub>',n:1,base:true,tit:'HCl',titName:'塩酸',ok:['MO']},
+  S2:{name:'硫酸',f:'H<sub>2</sub>SO<sub>4</sub>',n:2,base:false,tit:'NaOH',titName:'水酸化ナトリウム水溶液',ok:['PP']},
+  OX:{name:'シュウ酸',f:'(COOH)<sub>2</sub>',n:2,base:false,tit:'NaOH',titName:'水酸化ナトリウム水溶液',ok:['PP']},
+  B2:{name:'水酸化バリウム水溶液',f:'Ba(OH)<sub>2</sub>',n:2,base:true,tit:'HCl',titName:'塩酸',ok:['PP'],endAtEq:true}
+};
+// 中和点の滴下量: 価数×c0×VA = 1×CT×v
+function veqOf(kind,c0){return KINDS[kind].n*c0*VA/CT;}
+function c0Of(kind,veq){return CT*veq/(KINDS[kind].n*VA);}
+// 情報の行に出す「約 ○ mol/L」。中和点を EST_STEP きざみに丸めた量から逆算するので、
+// 価数で割ったあとの値になり、1価・2価とも見積もりのずれは ±EST_STEP/2 mL で同じ
+function dispConc(kind,veq){return c0Of(kind,Math.round(veq/EST_STEP)*EST_STEP);}
+const IND={
+  PP:{name:'フェノールフタレイン',lo:8.0,hi:9.8},
+  MO:{name:'メチルオレンジ',lo:3.1,hi:4.4}
+};
+// 滴下量 vb (mL) のときの pH。
+// 近似式を場合分けでつなぐと境目で曲線がとぶので、電荷のつり合い
+//   [H+] + [陽イオン] = [OH-] + [陰イオン]
+// を [H+] について数値的に解く(左辺−右辺は [H+] について単調に増えるので二分法で1つに決まる)。
+// これは高校の近似式(強酸の pH、緩衝液 pH=pKa+log([A-]/[HA])、中和点の加水分解 [OH-]=√(Kb'c))と同じ値になり、
+// しかも全域でなめらかにつながる。
+//   SA: 強酸 HCl(c0) ← NaOH      [H+]+[Na+] = [OH-]+[Cl-]
+//   WA: 酢酸(c0)     ← NaOH      [H+]+[Na+] = [OH-]+[CH3COO-],  [CH3COO-]=C·Ka/(Ka+[H+])
+//   WB: アンモニア(c0) ← HCl     [H+]+[NH4+] = [OH-]+[Cl-],    [NH4+]=C·[H+]/([H+]+Kw/Kb)
+//   S2: 硫酸(c0) ← NaOH          [H+]+[Na+] = [OH-]+2[SO4 2-]  (高校の扱いどおり2段とも完全に電離)
+//   OX: シュウ酸(c0) ← NaOH      [H+]+[Na+] = [OH-]+[HC2O4-]+2[C2O4 2-]
+//                                 = [OH-]+C·(Ka1[H+]+2Ka1Ka2)/([H+]^2+Ka1[H+]+Ka1Ka2)
+//   B2: 水酸化バリウム(c0) ← HCl  [H+]+2[Ba2+] = [OH-]+[Cl-]
+function phOf(kind,c0,vb){
+  const vt=VA+vb, a=c0*VA/vt, t=CT*vb/vt;   // 混ぜて薄まったあとの濃度
+  let lo=-15,hi=1;                          // log10[H+] の範囲
+  for(let i=0;i<50;i++){
+    const m=(lo+hi)/2,h=Math.pow(10,m);
+    let g;
+    if(kind==='SA')g=h+t-KW/h-a;
+    else if(kind==='WA')g=h+t-KW/h-a*KA_AC/(KA_AC+h);
+    else if(kind==='S2')g=h+t-KW/h-2*a;
+    else if(kind==='OX')g=h+t-KW/h-a*(KA1_OX*h+2*KA1_OX*KA2_OX)/(h*h+KA1_OX*h+KA1_OX*KA2_OX);
+    else if(kind==='B2')g=h+2*a-KW/h-t;
+    else g=h+a*h/(h+KW/KB_NH3)-KW/h-t;
+    if(g>0)hi=m;else lo=m;
+  }
+  return -(lo+hi)/2;
+}
+// pH が target を通る滴下量(0〜中和点の間で二分法。酸は pH が上がり、塩基は下がる)
+function volAtPH(kind,c0,target){
+  const veq=veqOf(kind,c0), up=!KINDS[kind].base;
+  let lo=0,hi=veq;
+  for(let i=0;i<50;i++){
+    const m=(lo+hi)/2,p=phOf(kind,c0,m);
+    if(up?(p<target):(p>target))lo=m;else hi=m;
+  }
+  return (lo+hi)/2;
+}
+// 指示薬をまちがえたか(酸+NaOH はフェノールフタレイン、アンモニア水+塩酸 はメチルオレンジが正しい)
+function isWrong(kind,ind){return KINDS[kind].ok.indexOf(ind)<0;}
+// 色が変わってしまう滴下量。正しい指示薬なら中和点、まちがいなら変色域を通りきった所
+function changeVol(kind,c0,ind){
+  if(!isWrong(kind,ind))return veqOf(kind,c0);
+  return KINDS[kind].base?volAtPH(kind,c0,IND.PP.lo):volAtPH(kind,c0,IND.MO.hi);
+}
+// 予兆の強さ 0〜1(dist = 色が変わる所まで、あと何 mL)
+function omenOf(dist,from){
+  if(dist>=from)return 0;
+  const k=Math.min(1,Math.max(0,(from-dist)/(from-DROP_ML)));
+  return Math.pow(k,OMEN_CURVE);
+}
+function lingerOf(dist,from){return LINGER_MIN+(LINGER_MAX-LINGER_MIN)*omenOf(dist,from);}
+
+// 液の色(pH から決める)。[r,g,b]
+const C_CLEAR=[227,242,255],C_PP_PALE=[255,184,214],C_PP_DEEP=[176,16,110];
+const C_MO_RED=[232,50,60],C_MO_ORA=[255,138,30],C_MO_YEL=[255,210,60];
+const C_PP_FLASH=[255,61,150],C_WHITE=[250,253,255];
+function clamp01(x){return x<0?0:x>1?1:x;}
+function mixC(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+function liqColor(ind,pH){
+  if(ind==='MO'){
+    const t=clamp01((pH-IND.MO.lo)/(IND.MO.hi-IND.MO.lo));
+    return t<.5?mixC(C_MO_RED,C_MO_ORA,t/.5):mixC(C_MO_ORA,C_MO_YEL,(t-.5)/.5);
+  }
+  if(ind==='PP'){
+    const s=Math.pow(clamp01((pH-IND.PP.lo)/PP_DEEP_SPAN),2);
+    return s<.5?mixC(C_CLEAR,C_PP_PALE,s/.5):mixC(C_PP_PALE,C_PP_DEEP,(s-.5)/.5);
+  }
+  return C_CLEAR;
+}
+// 滴が落ちた所に一瞬出る色(ビュレットの液がまわりより多い所の色)
+function flashColor(kind,ind){
+  const base=!KINDS[kind].base;              // 落とす液が塩基(NaOH)か
+  if(ind==='MO')return base?C_MO_YEL:C_MO_RED;
+  if(ind==='PP')return base?C_PP_FLASH:C_WHITE;
+  return C_WHITE;
+}
+
+// 中和点の滴下量をランダムに(きざみに合わせる)
+function randVeq(){
+  const n=Math.round((VEQ_MAX-VEQ_MIN)/VEQ_STEP);
+  return Math.round((VEQ_MIN+Math.floor(Math.random()*(n+1))*VEQ_STEP)*100)/100;
+}
+// ボーナス問題に使える中和点(小数第1位までで表せて、濃度が有効数字2桁でちょうど割り切れる)
+function sig2(x){return Number(x).toPrecision(2);}
+function cleanVeqs(kind){
+  const out=[],n=Math.round((VEQ_MAX-VEQ_MIN)/VEQ_STEP);
+  for(let i=0;i<=n;i++){
+    const v=Math.round((VEQ_MIN+i*VEQ_STEP)*100)/100;
+    if(Math.abs(v*10-Math.round(v*10))>1e-9)continue;
+    const c=c0Of(kind,v);
+    if(Math.abs(parseFloat(sig2(c))-c)<1e-12)out.push(v);
+  }
+  return out;
+}
+// ボーナス問題の4択。誤答は よくあるまちがい。
+// 1つ目は必ず「価数を忘れた値」(2価なら2倍、1価なら2価とまちがえた半分)。ほかは体積の比を逆にする、10倍・1/10
+function makeBonus(kind,veq){
+  const n=KINDS[kind].n,c=c0Of(kind,veq),ans=sig2(c);
+  const wrong=[];
+  [n===2?c*2:c/2,CT*VA/veq/n,c*10,c/10,n===2?c/2:c*2].forEach(x=>{const s=sig2(x);if(s!==ans&&wrong.indexOf(s)<0)wrong.push(s);});
+  return {veq:veq.toFixed(1),ans:ans,wrong:wrong.slice(0,3),n:n,forgot:sig2(n===2?c*2:c/2)};
+}
+// 出題の並び。1本目 塩酸、2・3本目は {酢酸,硫酸,シュウ酸,水酸化バリウム} から(どちらか1本は必ず2価)、
+// 4・5本目は指示薬をえらぶ回(酢酸とアンモニア水)。shuffle は外から渡す(node で確かめるため)
+function planKinds(shuffle){
+  const two=shuffle(['S2','OX','B2']),d=two[0];
+  const rest=shuffle(['WA','S2','OX','B2'].filter(k=>k!==d));
+  const mid=shuffle([d,rest[0]]),pair=shuffle(['WA','WB']);
+  return ['SA',mid[0],mid[1],pair[0],pair[1]];
+}
+/*PURE-END*/
+// ================= ここまで純粋な計算(node で確かめられる) =================
+
+const $=CG.$;
+const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const FX=RM?0.25:1;            // ゆれ・フラッシュの強さ(動きをへらす設定のときは弱く)
+const NAVY='#1c1740';
+const NUMF='"Bahnschrift","DIN Alternate","Avenir Next Condensed","Roboto Condensed","Arial Narrow",sans-serif';
+const JPF='"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif';
+const JNAME={pitari:'ピタリ!',oshii:'おしい',over:'入れすぎ',fail:'変色が早すぎ!',time:'時間切れ!'};
+const JCOL={pitari:'#ffcc00',oshii:'#5fd0ff',over:'#d4147a',fail:'#d9d5ee',time:'#ff4f5e'};
+document.querySelector('.top').appendChild(CG.soundButton());
+$('rLimit').textContent=T_LIMIT;$('rDrop').textContent=DROP_ML.toFixed(2);$('rPt').textContent=PT_PITARI;$('bqPt').textContent=PT_BONUS_Q;
+function rgb(c,a){return 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(a==null?1:a)+')';}
+function easeOut(k){k=clamp01(k);return 1-Math.pow(1-k,3);}
+function easeIn(k){k=clamp01(k);return k*k*k;}
+function hash(n){const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);}  // 0〜1 の決まった乱数(ぷるぷる用)
+
+// ================= 音(Web Audio。最初の操作で作る。音の ON/OFF は CG に従う) =================
+let AC=null,MG=null,NZ=null;
+function au(){
+  if(!AC){
+    try{
+      const K=window.AudioContext||window.webkitAudioContext;AC=new K();
+      MG=AC.createGain();MG.gain.value=0.6;MG.connect(AC.destination);
+      const n=Math.floor(AC.sampleRate*0.5);NZ=AC.createBuffer(1,n,AC.sampleRate);
+      const d=NZ.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    }catch(e){AC=null;}
+  }
+  if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}
+  return AC;
+}
+function canPlay(){return !!AC&&!CG.isMuted();}
+// 1音。f0→f1 へ sweep 秒で変える。立ち上がり即時(アタック強め)、残響は短く
+function blip(type,f0,f1,sweep,at,dur,vol){
+  const t=AC.currentTime+(at||0),o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);
+  if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+sweep);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(MG);o.start(t);o.stop(t+dur+0.02);
+}
+function noise(at,dur,ftype,freq,q,vol,f1){
+  const t=AC.currentTime+(at||0),s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=NZ;f.type=ftype;f.frequency.setValueAtTime(freq,t);f.Q.value=q;
+  if(f1)f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+dur+0.02);
+}
+const SND={
+  // 1滴の「ポッ」。p=予兆の強さ 0〜1 で高くなる。滴ごとに少しだけ音程をずらす
+  pop(p,flow){
+    if(!canPlay())return;
+    const f=SND_POP_LOW*Math.pow(SND_POP_HIGH/SND_POP_LOW,clamp01(p))*(1+(Math.random()-.5)*0.04);
+    blip('sine',f,f*1.5,0.03,0,0.075,flow?0.36:0.55);
+    blip('triangle',f*2,f*2.6,0.015,0,0.025,0.10);
+  },
+  pitari(){ // キラッと上がる和音。ヒットストップ中に主な部分が鳴りきる
+    if(!canPlay())return;
+    [1046.5,1318.5,1568,2093].forEach((f,i)=>blip('triangle',f,f,0,i*0.04,0.13,0.30));
+    blip('sine',2637,2637,0,0.15,0.20,0.16);
+    blip('square',523,523,0,0,0.05,0.08);
+  },
+  oshii(){
+    if(!canPlay())return;
+    blip('triangle',880,880,0,0,0.10,0.34);blip('triangle',740,700,0.08,0.08,0.13,0.30);
+  },
+  over(){ // ドボン
+    if(!canPlay())return;
+    blip('sine',320,55,0.26,0,0.30,0.85);
+    noise(0,0.22,'lowpass',900,0.8,0.5,200);
+    blip('sine',190,95,0.12,0.16,0.14,0.30);
+  },
+  fail(){
+    if(!canPlay())return;
+    blip('square',330,250,0.12,0,0.14,0.16);blip('square',247,165,0.12,0.11,0.16,0.16);
+  },
+  time(){
+    if(!canPlay())return;
+    blip('sawtooth',440,220,0.25,0,0.28,0.12);
+  },
+  swap(){ // 入れかえの「シュッ」
+    if(!canPlay())return;
+    noise(0,0.10,'bandpass',900,1.2,0.22,3200);
+  },
+  pick(){
+    if(!canPlay())return;
+    blip('square',660,990,0.04,0,0.07,0.08);
+  }
+};
+
+// ================= 状態 =================
+let S=null;      // 1ゲームの状態
+let R=null;      // いま滴定しているビーカーの状態
+let running=false;
+const cv=$('cv'),cx=cv.getContext('2d'),stageEl=$('stage');
+let W=0,H=0,DPR=1,L={};
+
+function newRound(i){
+  const rd=S.rounds[i],k=KINDS[rd.kind];
+  const r={i:i,kind:rd.kind,veq:rd.veq,c0:c0Of(rd.kind,rd.veq),cdisp:dispConc(rd.kind,rd.veq),choose:rd.choose,ind:rd.ind,
+    emitted:0,landed:0,drops:[],blobs:[],splash:[],flowing:false,holdT:0,flowT:0,cockT:0,hitT:9,
+    omen:0,omenT:9,done:false,j:null,from:i===0?OMEN_FROM_FIRST:OMEN_FROM};
+  r.ph=phOf(r.kind,r.c0,0);
+  if(r.ind)prepInd(r);
+  return r;
+}
+function prepInd(r){
+  r.wrong=isWrong(r.kind,r.ind);
+  r.vc=changeVol(r.kind,r.c0,r.ind);
+  r.flash=flashColor(r.kind,r.ind);
+}
+function makeRounds(){
+  const kinds=planKinds(CG.shuffle).slice(0,ROUNDS);
+  const rs=kinds.map((k,i)=>({kind:k,veq:randVeq(),choose:i>=3,ind:i>=3?null:'PP'}));
+  // ボーナス問題用に、1本目と、2価の1本(2・3本目のどちらか)に「割り切れる」中和点を入れておく
+  rs[0].veq=CG.pick(cleanVeqs(rs[0].kind));
+  let b=rs.findIndex((r,i)=>i>0&&KINDS[r.kind].n===2);
+  if(b<0)b=0;
+  rs[b].veq=CG.pick(cleanVeqs(rs[b].kind));
+  return {rs:rs,bonus:[0,b]};
+}
+
+function startGame(){
+  au();
+  const mr=makeRounds();
+  S={rounds:mr.rs,bonusIdx:mr.bonus,ri:0,score:0,streak:0,tLeft:T_LIMIT,results:[],phase:'swap',phaseT:0,clock:0,
+     held:false,prevR:null,tipShown:false,tipT:0,parts:[],shakeT:0,stopDur:0,resultDur:RESULT_S,lastSec:-1};
+  R=newRound(0);
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  $('ttCard').classList.add('hidden');$('ttChoose').classList.add('hidden');$('ttTip').classList.add('hidden');
+  document.body.classList.add('tt-playing');
+  window.scrollTo(0,0);
+  resize();
+  drawHud(true);drawInfo();
+  SND.swap();
+  if(!running){running=true;last=performance.now();requestAnimationFrame(loop);}
+}
+
+// ================= 入力 =================
+const cock=$('ttCock');
+function press(){
+  if(!S||!running)return;
+  cock.classList.add('on');
+  S.held=true;
+  if(S.phase==='result'){if(S.phaseT>=SKIP_GUARD_S)endResult();return;}
+  if(S.phase!=='run'||R.done)return;
+  R.holdT=0;R.flowing=false;
+  emit(DROP_ML,false);          // 押した瞬間に1滴
+}
+function release(){
+  if(!S)return;
+  S.held=false;cock.classList.remove('on','flow');
+  if(R)R.flowing=false;
+}
+function emit(v,flow){
+  R.emitted+=v;
+  R.drops.push({v:v,t:0,flow:flow,x:(Math.random()-.5)*6});
+  R.cockT=0.09;
+  SND.pop(R.omen,flow);
+}
+cock.addEventListener('pointerdown',e=>{e.preventDefault();au();try{cock.setPointerCapture(e.pointerId);}catch(_){}press();});
+cock.addEventListener('pointerup',release);
+cock.addEventListener('pointercancel',release);
+cock.addEventListener('lostpointercapture',release);
+cock.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+cock.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+cock.addEventListener('contextmenu',e=>e.preventDefault());
+function isSpace(e){return e.code==='Space'||e.key===' ';}
+document.addEventListener('keydown',e=>{
+  if(!isSpace(e)||!running||!S||S.phase==='choose')return;
+  e.preventDefault();if(e.repeat)return;au();press();
+},true);
+document.addEventListener('keyup',e=>{
+  if(!isSpace(e)||!running||!S||S.phase==='choose')return;
+  e.preventDefault();release();
+},true);
+window.addEventListener('blur',release);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
+$('ttCard').addEventListener('pointerdown',e=>{e.preventDefault();if(S&&S.phase==='result'&&S.phaseT>=SKIP_GUARD_S)endResult();});
+document.querySelectorAll('.tt-ch-b').forEach(b=>b.addEventListener('click',()=>{
+  if(!S||S.phase!=='choose')return;
+  au();SND.pick();
+  R.ind=b.dataset.ind;prepInd(R);
+  $('ttChoose').classList.add('hidden');
+  drawInfo();
+  S.phase='run';S.phaseT=0;
+}));
+
+// ================= 進行 =================
+let last=0;
+function loop(t){
+  if(!running)return;
+  let dt=(t-last)/1000;last=t;
+  if(!(dt>0))dt=0;if(dt>0.05)dt=0.05;     // 経過時間で進める(画面の Hz によらない)。タブを離れた後の大きな飛びは切る
+  update(dt);draw();drawHud(false);
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  S.clock+=dt;S.phaseT+=dt;
+  if(S.tipT>0){S.tipT-=dt;if(S.tipT<=0)$('ttTip').classList.add('hidden');}
+  if(S.phase==='stop'){            // ヒットストップ: ふるえ・フラッシュ・文字だけ動かし、ほかは止める
+    if(S.phaseT>=S.stopDur){S.phase='react';S.phaseT=0;onReact();}
+    return;
+  }
+  if(S.shakeT>0)S.shakeT-=dt;
+  if(R)stepRound(R,dt);
+  stepParts(dt);
+  const ph=S.phase;
+  if(ph==='run'){
+    S.tLeft-=dt;
+    if(S.tLeft<=0){S.tLeft=0;timeUp();}
+  }else if(ph==='react'){if(S.phaseT>=REACT_S)showCard();}
+  else if(ph==='result'){if(S.phaseT>=S.resultDur)endResult();}
+  else if(ph==='swap'){if(S.phaseT>=SWAP_S)afterSwap();}
+  else if(ph==='timeup'){if(S.phaseT>=S.stopDur+0.9)finish();}
+}
+function stepRound(r,dt){
+  r.hitT+=dt;r.cockT-=dt;r.omenT+=dt;
+  if(S.phase==='run'&&!r.done&&S.held){
+    r.holdT+=dt;
+    if(!r.flowing&&r.holdT>=HOLD_S){r.flowing=true;r.flowT=0;cock.classList.add('flow');}
+    if(r.flowing){
+      r.flowT-=dt;
+      while(r.flowT<=0&&!r.done&&S.phase==='run'){emit(FLOW_ML_PER_S/FLOW_TEMPO,true);r.flowT+=1/FLOW_TEMPO;}
+    }
+  }
+  for(const d of r.drops){
+    if(d.gone)continue;
+    const t0=d.t;d.t+=dt;
+    if(t0<0&&d.t>=0){r.emitted+=d.v;r.cockT=0.09;SND.pop(1,true);}   // コックが閉まるまでに出た分
+    if(d.t>=FALL_S){d.gone=true;land(r,d);if(S.phase==='stop')break;}
+  }
+  r.drops=r.drops.filter(d=>!d.gone);
+  for(const b of r.blobs)b.age+=dt;
+  r.blobs=r.blobs.filter(b=>b.age<b.life);
+  for(const s of r.splash)s.age+=dt;
+  r.splash=r.splash.filter(s=>s.age<0.2);
+}
+// 滴が液面に落ちた
+function land(r,d){
+  r.landed+=d.v;r.hitT=0;
+  r.ph=phOf(r.kind,r.c0,r.landed);
+  r.splash.push({x:d.x,age:0,big:d.flow});
+  if(r.done||!r.ind)return;
+  // 水酸化バリウム+フェノールフタレインは中和点ちょうど(pH 7)で赤色が消えるので、そこで終点
+  const crossed=r.wrong?(r.landed>=r.vc-1e-9):KINDS[r.kind].endAtEq?(r.landed>=r.veq-1e-9):(r.landed>r.veq+1e-9);
+  if(crossed){judge(r);return;}
+  const dist=r.vc-r.landed;
+  r.omen=omenOf(dist,r.from);r.omenT=0;
+  r.blobs.push({x:d.x+(Math.random()-.5)*10,age:0,life:lingerOf(dist,r.from)});
+  if(r.i===0&&!S.tipShown&&r.omen>=TIP_AT){S.tipShown=true;S.tipT=TIP_S;$('ttTip').classList.remove('hidden');}
+}
+function judge(r){
+  const wasFlow=r.flowing;
+  r.done=true;r.flowing=false;cock.classList.remove('flow');
+  r.blobs=[];
+  let j,pts=0,bonus=0;
+  if(r.wrong){
+    j='fail';pts=PT_FAIL;r.stopV=r.landed;r.over=null;
+  }else{
+    // 落ちている途中の液はこのあと入る。流したままなら、コックが閉まるまでの分も入る
+    if(wasFlow){
+      const n=Math.max(1,Math.round(FLOW_STOP_S*FLOW_TEMPO)),v=FLOW_ML_PER_S*FLOW_STOP_S/n;
+      for(let i=0;i<n;i++)r.drops.push({v:v,t:-i/FLOW_TEMPO-0.001,flow:true,x:(Math.random()-.5)*6,extra:true});
+    }
+    let pend=0;r.drops.forEach(d=>{if(!d.gone)pend+=d.v;});
+    r.finalV=Math.round((r.landed+pend)*1e4)/1e4;
+    r.over=Math.round((r.finalV-r.veq)*1e4)/1e4;
+    r.stopV=r.finalV;r.flowOver=wasFlow;
+    if(r.over<=JUDGE_PITARI+1e-9){j='pitari';pts=PT_PITARI;}
+    else if(r.over<=JUDGE_OSHII+1e-9){
+      j='oshii';
+      const k=(r.over-JUDGE_PITARI)/(JUDGE_OSHII-JUDGE_PITARI);
+      pts=Math.round((PT_OSHII_MAX-(PT_OSHII_MAX-PT_OSHII_MIN)*k)/10)*10;
+    }else{j='over';pts=PT_OVER;}
+  }
+  if(j==='pitari'){S.streak++;bonus=Math.min(PT_STREAK*(S.streak-1),PT_STREAK_MAX);}else S.streak=0;
+  r.j=j;r.pts=pts;r.bonus=bonus;
+  S.score+=pts+bonus;
+  S.results[r.i]={kind:r.kind,ind:r.ind,j:j,over:r.over,pts:pts+bonus,veq:r.veq};
+  r.curve=makeCurve(r);
+  S.phase='stop';S.phaseT=0;S.stopDur=HITSTOP[j];
+  $('ttTip').classList.add('hidden');S.tipT=0;
+  SND[j]();
+}
+function onReact(){
+  const j=R.j;
+  if(j==='pitari')confetti(RM?8:36);
+  if(j==='over'){S.shakeT=SCREEN_SHAKE_S;splashOut(RM?4:12);}
+}
+function timeUp(){
+  R.done=true;R.flowing=false;R.j='time';R.pts=0;R.blobs=[];
+  cock.classList.remove('flow');
+  S.streak=0;
+  S.results[R.i]={kind:R.kind,ind:R.ind,j:'time',over:null,pts:0,veq:R.veq};
+  S.phase='timeup';S.phaseT=0;S.stopDur=HITSTOP.time;
+  $('ttTip').classList.add('hidden');$('ttChoose').classList.add('hidden');
+  SND.time();
+}
+function showCard(){
+  const r=R,j=r.j,k=KINDS[r.kind];
+  $('cJudge').className='tt-jd j-'+j;$('cJudge').textContent=JNAME[j];
+  $('cPts').innerHTML='+'+r.pts+(r.bonus?' <small>連続+'+r.bonus+'</small>':'');
+  const indN=IND[r.ind].name;
+  let v,tx;
+  const eqPH=phOf(r.kind,r.c0,r.veq).toFixed(1);
+  if(j==='fail'){
+    v='中和点 <b class="num">'+r.veq.toFixed(2)+'</b> mL より手前で変色';
+    if(k.base)tx='変色が早すぎ! 中和点はまだ先だった。アンモニア水(弱塩基)と塩酸(強酸)の中和点は<b>酸性</b>(pH '+eqPH+')。変色域が酸性側のメチルオレンジを使う。';
+    else tx='変色が早すぎ! 中和点はまだ先だった。酢酸(弱酸)と水酸化ナトリウム(強塩基)の中和点は<b>塩基性</b>(pH '+eqPH+')。変色域が塩基性側のフェノールフタレインを使う。';
+  }else{
+    v='行きすぎ <b class="num">'+r.over.toFixed(2)+'</b> mL(中和点 '+r.veq.toFixed(2)+' mL)';
+    const mo=r.ind==='MO',fade=k.base&&r.ind==='PP';   // fade: 赤色が消えて無色になるのが終点(水酸化バリウム)
+    if(j==='pitari')tx=mo?'黄色がわずかに赤みをおびて消えなくなった所が終点。ピタリ中和点!'
+                         :fade?'赤色が消えて無色になった所が終点。ピタリ中和点!'
+                         :'うすい赤色が消えなくなった所が終点。ピタリ中和点!';
+    else if(j==='oshii')tx=mo?'少し行きすぎ。黄色が赤みをおびて消えなくなった所で止めよう。'
+                         :fade?'少し行きすぎ。赤色が消えた所で止めよう。'
+                         :'少し行きすぎ。うすい赤色が消えなくなった所で止めよう。';
+    else tx=(r.flowOver?'流したまま中和点をこえた。':'')+(mo?'赤色が濃いのは入れすぎ。塩酸が余っている。'
+                         :fade?'入れすぎ。無色のままなので色では分からないが、塩酸が余っている。'
+                         :'濃い赤紫は入れすぎ。水酸化ナトリウムが余っている。');
+    if(r.choose)tx+=' 指示薬('+indN+')のえらび方は正しい。';
+    if(k.n===2){
+      // 2価: 価数×濃度×体積 で中和点の量が2倍になることを式で見せる
+      const vs=r.veq.toFixed(2),cs=sig2(r.c0);
+      tx+='<br><b>'+k.name+' <span>'+k.f+'</span> は2価</b>なので '
+        +(k.base?'1 × 0.10 × '+vs+' = 2 × <i>c</i> × 10.0':'2 × <i>c</i> × 10.0 = 1 × 0.10 × '+vs)
+        +' → <i>c</i> ≒ '+cs+' mol/L。1価のつもりで見積もった量の2倍が要る。';
+    }
+  }
+  $('cOver').innerHTML=v;$('cText').innerHTML=tx;
+  $('ttCard').classList.remove('hidden');
+  $('ttCard').classList.remove('pop');void $('ttCard').offsetWidth;$('ttCard').classList.add('pop');
+  sizeCurve();
+  S.phase='result';S.phaseT=0;S.resultDur=(j==='fail'||k.n===2)?RESULT_FAIL_S:RESULT_S;
+}
+function endResult(){
+  $('ttCard').classList.add('hidden');
+  nextRound();
+}
+function nextRound(){
+  S.ri++;
+  if(S.ri>=ROUNDS){finish();return;}
+  S.prevR=R;R=newRound(S.ri);
+  S.phase='swap';S.phaseT=0;
+  drawInfo();SND.swap();
+}
+function afterSwap(){
+  S.prevR=null;
+  if(R.choose&&!R.ind){
+    const k=KINDS[R.kind];
+    $('chPair').innerHTML='<span>'+k.name+'</span> を <span>'+k.titName+'</span> で滴定';
+    $('ttChoose').classList.remove('hidden');
+    S.phase='choose';S.phaseT=0;
+  }else{S.phase='run';S.phaseT=0;}
+}
+
+// ================= HUD と情報の行 =================
+function drawHud(force){
+  const no=Math.min(S.ri+1,ROUNDS)+'/'+ROUNDS;
+  if(force||$('hNo').textContent!==no)$('hNo').textContent=no;
+  const sec=Math.ceil(S.tLeft);
+  if(force||sec!==S.lastSec){S.lastSec=sec;$('hTime').textContent=sec;}
+  const sc=String(S.score);
+  if(force||$('hScore').textContent!==sc){
+    const b=$('hScore');b.textContent=sc;
+    if(!force){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+  }
+  const f=$('tfill');
+  f.style.width=(S.tLeft/T_LIMIT*100)+'%';
+  f.classList.toggle('low',S.tLeft<=10&&S.phase==='run');
+  f.classList.toggle('stop',S.phase!=='run');
+}
+function drawInfo(){
+  const k=KINDS[R.kind];
+  // 化学式の下付きは span の中に入れる(flex の直下に置くと下付きが効かなくなる)
+  $('ttInfo').innerHTML='<span><b>'+(R.i+1)+'本目</b> '+k.name+' <span>'+k.f+'</span>(約 '+sig2(R.cdisp)+' mol/L)10.0 mL</span><span>指示薬 '+(R.ind?IND[R.ind].name:'?')+'</span>';
+}
+
+// ================= 描画 =================
+function resize(){
+  const st=$('stage');
+  W=st.clientWidth;H=st.clientHeight;
+  if(!W||!H)return;
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  const bx=Math.round(W*0.34);
+  const tipY=Math.round(H*0.50),bBot=tipY-30,bTop=16;
+  const fBase=H-12;
+  const fs=Math.max(0.45,Math.min((fBase-tipY-14)/158,(W*0.60)/166,1.7));
+  L={bx:bx,bTop:bTop,bBot:bBot,tipY:tipY,fBase:fBase,fs:fs,fx:bx};
+}
+if(window.ResizeObserver)new ResizeObserver(()=>{if(running){resize();if(S&&S.phase==='result')sizeCurve();}}).observe($('stage'));
+window.addEventListener('resize',()=>{if(running)resize();});
+
+const LIQ_BASE=34,LIQ_PER_ML=0.9;    // 液面の高さ(ビーカーの絵の単位)
+function surfY(r){return L.fBase-(LIQ_BASE+r.landed*LIQ_PER_ML)*L.fs;}
+
+function draw(){
+  const c=cx;
+  c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  if(!R||!W)return;
+  // 入れすぎの「ドボン」で画面ごと少しゆらす
+  const st=stageEl;
+  if(S.shakeT>0){
+    const a=SCREEN_SHAKE_PX*FX*(S.shakeT/SCREEN_SHAKE_S),n=Math.floor(S.clock*40);
+    st.style.transform='translate('+((hash(n)-.5)*2*a).toFixed(1)+'px,'+((hash(n+7)-.5)*1.4*a).toFixed(1)+'px)';
+  }else if(st.style.transform)st.style.transform='';
+  const swapOut=SWAP_S*0.38;
+  const showR=(S.phase==='swap'&&S.prevR&&S.phaseT<swapOut)?S.prevR:R;
+  drawBurette(c,showR);
+  if(S.phase==='swap'){
+    if(S.prevR&&S.phaseT<swapOut)drawFlask(c,S.prevR,L.fx-easeIn(S.phaseT/swapOut)*W*0.9);
+    else{
+      const k=S.prevR?(S.phaseT-swapOut)/(SWAP_S-swapOut):S.phaseT/SWAP_S;
+      drawFlask(c,R,L.fx+(1-easeOut(k))*W*0.9);
+    }
+  }else{
+    drawFlask(c,R,L.fx);
+    drawDrops(c,R);
+  }
+  drawParts(c);
+  drawJudge(c);
+  drawFlash(c);
+  if(S.phase==='result')drawCurve();
+}
+
+function drawBurette(c,r){
+  const bx=L.bx,top=L.bTop,bot=L.bBot,hw=9;
+  const y0=top+10,y1=bot-6,BMAX=25;
+  const V=r.emitted;
+  const yl=y0+Math.min(V,BMAX)/BMAX*(y1-y0);
+  // スタンドの腕
+  const ay=Math.round(y0+(y1-y0)*0.1-3);      // 0 と 5 の数字の間
+  c.fillStyle='#b9b5d3';c.fillRect(0,ay,bx-hw,7);
+  c.strokeStyle=NAVY;c.lineWidth=2;c.strokeRect(-2,ay,bx-hw+2,7);
+  // 管
+  c.fillStyle='#fff';c.fillRect(bx-hw,top,hw*2,bot-top);
+  c.fillStyle='#d3eaff';c.fillRect(bx-hw,yl,hw*2,bot-yl);
+  c.strokeStyle='rgba(28,23,64,.55)';c.lineWidth=2;
+  c.beginPath();c.moveTo(bx-hw+1,yl);c.quadraticCurveTo(bx,yl+4,bx+hw-1,yl);c.stroke();   // メニスカス
+  // 目盛り(1 mL ごと、5 mL ごとに数字)
+  c.fillStyle=NAVY;c.font='700 10px '+NUMF;c.textAlign='right';c.textBaseline='middle';
+  for(let m=0;m<=BMAX;m++){
+    const y=y0+m/BMAX*(y1-y0),lg=m%5===0;
+    c.fillRect(bx-hw,y-0.5,lg?9:5,lg?1.6:1);
+    if(lg)c.fillText(String(m),bx-hw-4,y);
+  }
+  c.lineWidth=3;c.strokeStyle=NAVY;
+  c.beginPath();c.moveTo(bx-hw,top);c.lineTo(bx-hw,bot);c.lineTo(bx-4,bot+8);c.lineTo(bx-4,L.tipY-8);c.lineTo(bx-2,L.tipY);
+  c.lineTo(bx+2,L.tipY);c.lineTo(bx+4,L.tipY-8);c.lineTo(bx+4,bot+8);c.lineTo(bx+hw,bot);c.lineTo(bx+hw,top);c.stroke();
+  // コック(押した瞬間に90°回す。なめらかに回さない)
+  const open=r===R&&(r.flowing||r.cockT>0);
+  const cy=bot+13;
+  c.save();c.translate(bx,cy);if(open)c.rotate(Math.PI/2);
+  c.fillStyle='#ffcc00';c.strokeStyle=NAVY;c.lineWidth=2.5;
+  c.beginPath();c.rect(-19,-4.5,38,9);c.fill();c.stroke();
+  c.restore();
+  c.beginPath();c.arc(bx,cy,6,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.lineWidth=2.5;c.stroke();
+  // 滴下量の表示(大きく)
+  const rx=bx+hw+16;
+  c.textAlign='left';c.textBaseline='alphabetic';
+  c.fillStyle='#6b6690';c.font='900 12px '+JPF;c.fillText('滴下量',rx,top+14);
+  const fz=Math.round(Math.max(32,Math.min(58,W*0.13)));
+  c.font='700 '+fz+'px '+NUMF;
+  const s=V.toFixed(2),w=c.measureText(s).width;
+  c.fillStyle=NAVY;c.fillText(s,rx,top+16+fz*0.92);
+  c.font='800 '+Math.round(fz*0.38)+'px '+NUMF;c.fillText(' mL',rx+w,top+16+fz*0.92);
+  c.fillStyle='#6b6690';c.font='800 11px '+JPF;
+  c.fillText('ビュレット: '+CT.toFixed(2)+' mol/L '+KINDS[r.kind].tit,rx,top+16+fz*0.92+18);
+}
+
+// ビーカー(コニカルビーカー)の形。底の中央が原点、上が負
+function flaskPath(c){
+  c.beginPath();
+  c.moveTo(-70,0);c.lineTo(70,0);c.quadraticCurveTo(83,0,78,-11);
+  c.lineTo(25,-108);c.quadraticCurveTo(22,-113,22,-119);c.lineTo(22,-150);c.lineTo(27,-155);
+  c.lineTo(-27,-155);c.lineTo(-22,-150);c.lineTo(-22,-119);c.quadraticCurveTo(-22,-113,-25,-108);
+  c.lineTo(-78,-11);c.quadraticCurveTo(-83,0,-70,0);c.closePath();
+}
+// ポーズは少ない数をパキッと切りかえる
+function poseOf(r){
+  const P={eyes:'normal',mouth:'smile',blush:false,sweat:false,brow:false,dx:0,tilt:0,sx:1,sy:1,jx:0,jy:0,tint:false,mark:''};
+  const ph=S.phase,cur=(r===R);
+  const judged=!!r.j&&(!cur||ph==='stop'||ph==='react'||ph==='result'||ph==='timeup');
+  if(judged){
+    const t=!cur?1:(ph==='stop'||ph==='timeup')?-1:(ph==='react'?S.phaseT:1);
+    const j=r.j;
+    if(j==='pitari'){
+      P.eyes='happy';P.mouth='grin';P.blush=true;
+      if(t<0){P.sx=0.9;P.sy=1.12;}
+      else if(t<0.08){P.jy=-22;P.sx=0.92;P.sy=1.1;}
+      else if(t<0.18){P.jy=-32;}
+      else if(t<0.26){P.jy=-14;}
+      else if(t<0.32){P.sx=1.12;P.sy=0.88;}
+      else{P.tilt=-0.08;P.mark='star';}
+    }else if(j==='oshii'){
+      P.mouth='wavy';P.brow=true;P.sweat=true;
+      if(t>=0&&t<0.1)P.jy=-8;
+    }else if(j==='over'){
+      P.eyes='x';P.mouth='open';P.tint=true;
+      if(t<0){P.sx=1.12;P.sy=0.86;}
+      else if(t<0.3)P.tilt=(Math.floor(t/0.07)%2?1:-1)*0.06;
+    }else if(j==='fail'){
+      P.eyes='wide';P.mouth='o';P.mark='?';
+    }else{ // time
+      P.eyes='wide';P.mouth='wavy';P.sweat=true;
+    }
+    if(cur&&(ph==='stop'||ph==='timeup')){
+      const k=Math.max(0,1-S.phaseT/S.stopDur),a=(SHAKE_PX[j]||5)*k*FX;
+      P.jx=(Math.floor(S.phaseT*40)%2?1:-1)*a*(0.7+0.3*hash(Math.floor(S.phaseT*40)));
+    }
+    return P;
+  }
+  // 待機: 0.5秒ごとに左右へパキッとゆれる
+  P.tilt=(Math.floor(S.clock/0.5)%2?1:-1)*0.035;
+  if(cur&&r.flowing){
+    P.mouth='open';
+    const n=Math.floor(S.clock*30);P.jx=(hash(n)-.5)*3.2;P.jy=(hash(n+3)-.5)*2.4;P.tilt=0;
+  }else if(cur&&r.omen>=0.45&&r.omenT<1.6){
+    P.sweat=true;P.mouth='flat';P.dx=(Math.floor(S.clock/0.22)%2?1:-1)*2.6;
+  }
+  if(cur&&r.hitT<0.06){P.sx=1.12;P.sy=0.86;P.eyes='squint';P.tilt=0;}
+  else if(cur&&r.hitT<0.11){P.sx=0.95;P.sy=1.06;}
+  return P;
+}
+function drawFlask(c,r,x){
+  const P=poseOf(r),fs=L.fs;
+  c.save();
+  c.translate(x+P.jx,L.fBase+P.jy*fs);c.rotate(P.tilt);c.scale(fs*P.sx,fs*P.sy);
+  const lw=3/fs;
+  flaskPath(c);c.fillStyle='rgba(238,247,255,.95)';c.fill();
+  c.save();flaskPath(c);c.clip();
+  const lev=LIQ_BASE+r.landed*LIQ_PER_ML;
+  c.fillStyle=rgb(liqColor(r.ind,r.ph));c.fillRect(-90,-lev,180,lev+2);
+  // 滴が落ちた所の色(予兆)。ぱっと出て、残る時間がすぎると消える
+  if(r.flash)for(const b of r.blobs){
+    const k=b.age/b.life,a=k<0.6?1:1-(k-0.6)/0.4;
+    c.fillStyle=rgb(r.flash,0.9*a);
+    c.beginPath();c.ellipse(b.x,-lev+9+k*6,12+k*26,6+k*10,0,0,Math.PI*2);c.fill();
+  }
+  c.strokeStyle='rgba(28,23,64,.28)';c.lineWidth=2/fs;c.beginPath();c.moveTo(-90,-lev);c.lineTo(90,-lev);c.stroke();
+  for(const s of r.splash){
+    const k=s.age/0.2;c.strokeStyle='rgba(28,23,64,'+(0.5*(1-k))+')';c.lineWidth=2/fs;
+    c.beginPath();c.ellipse(s.x,-lev,(s.big?10:6)+k*16,2+k*4,0,0,Math.PI*2);c.stroke();
+  }
+  if(P.tint){c.fillStyle='rgba(176,16,110,.42)';c.fillRect(-90,-160,180,162);}
+  // ガラスのつや
+  c.fillStyle='rgba(255,255,255,.75)';
+  c.beginPath();c.moveTo(-58,-30);c.lineTo(-48,-30);c.lineTo(-20,-92);c.lineTo(-26,-92);c.closePath();c.fill();
+  c.restore();
+  flaskPath(c);c.lineWidth=lw;c.strokeStyle=NAVY;c.lineJoin='round';c.stroke();
+  face(c,P,lw);
+  c.restore();
+}
+function face(c,P,lw){
+  c.strokeStyle=NAVY;c.fillStyle=NAVY;c.lineCap='round';c.lineJoin='round';
+  const ey=-84,ex=17;
+  for(const s of [-1,1]){
+    const x=s*ex;
+    c.lineWidth=lw*1.15;
+    if(P.eyes==='happy'){c.beginPath();c.moveTo(x-6,ey+3);c.lineTo(x,ey-4);c.lineTo(x+6,ey+3);c.stroke();}
+    else if(P.eyes==='x'){c.beginPath();c.moveTo(x-5,ey-5);c.lineTo(x+5,ey+5);c.moveTo(x+5,ey-5);c.lineTo(x-5,ey+5);c.stroke();}
+    else if(P.eyes==='squint'){c.beginPath();c.moveTo(x-s*5,ey-4);c.lineTo(x+s*3,ey);c.lineTo(x-s*5,ey+4);c.stroke();}
+    else if(P.eyes==='wide'){
+      c.fillStyle='#fff';c.beginPath();c.arc(x,ey,7.5,0,Math.PI*2);c.fill();c.lineWidth=lw*0.8;c.stroke();
+      c.fillStyle=NAVY;c.beginPath();c.arc(x,ey,2.6,0,Math.PI*2);c.fill();
+    }else{
+      c.fillStyle=NAVY;c.beginPath();c.ellipse(x+P.dx,ey,4.6,6.4,0,0,Math.PI*2);c.fill();
+      c.fillStyle='#fff';c.beginPath();c.arc(x+P.dx-1.5,ey-2.4,1.6,0,Math.PI*2);c.fill();
+    }
+    if(P.brow){c.lineWidth=lw*0.9;c.beginPath();c.moveTo(x-6*s,ey-14);c.lineTo(x+5*s,ey-10);c.stroke();}
+  }
+  c.fillStyle=NAVY;c.lineWidth=lw;
+  const my=-64;
+  if(P.mouth==='smile'){c.beginPath();c.arc(0,my-5,7,0.2*Math.PI,0.8*Math.PI);c.stroke();}
+  else if(P.mouth==='grin'){
+    c.beginPath();c.moveTo(-9,my-2);c.quadraticCurveTo(0,my+14,9,my-2);c.closePath();c.fill();
+    c.fillStyle='#ff7aa8';c.beginPath();c.ellipse(0,my+4,4,2.4,0,0,Math.PI*2);c.fill();
+  }
+  else if(P.mouth==='open'){c.beginPath();c.ellipse(0,my,6,7.5,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#ff7aa8';c.beginPath();c.ellipse(0,my+3.5,3.5,2.6,0,0,Math.PI*2);c.fill();}
+  else if(P.mouth==='o'){c.beginPath();c.ellipse(0,my,3.6,4.6,0,0,Math.PI*2);c.fill();}
+  else if(P.mouth==='wavy'){c.beginPath();c.moveTo(-9,my);c.lineTo(-4.5,my-3);c.lineTo(0,my);c.lineTo(4.5,my-3);c.lineTo(9,my);c.stroke();}
+  else{c.beginPath();c.moveTo(-6,my-1);c.lineTo(6,my-1);c.stroke();}
+  if(P.blush){c.fillStyle='rgba(255,90,150,.75)';for(const s of [-1,1]){c.beginPath();c.ellipse(s*31,-72,6,3.4,0,0,Math.PI*2);c.fill();}}
+  if(P.sweat){
+    c.fillStyle='#bfe6ff';c.lineWidth=lw*0.7;
+    c.beginPath();c.moveTo(38,-104);c.quadraticCurveTo(45,-92,38,-89);c.quadraticCurveTo(31,-92,38,-104);c.fill();c.stroke();
+  }
+  if(P.mark==='?'){c.font='900 30px '+JPF;c.textAlign='center';c.fillStyle=NAVY;c.fillText('?',36,-120);}
+  if(P.mark==='star'&&Math.floor(S.clock/0.12)%2===0){
+    c.fillStyle='#ffcc00';c.lineWidth=lw*0.6;
+    for(const p of [[-46,-128],[44,-118]]){star(c,p[0],p[1],9);c.fill();c.stroke();}
+  }
+}
+function star(c,x,y,r){
+  c.beginPath();
+  for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*0.35:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}
+  c.closePath();
+}
+function drawDrops(c,r){
+  const y0=L.tipY+2,ys=surfY(r);
+  c.strokeStyle=NAVY;c.lineWidth=2;c.fillStyle='#d3eaff';
+  for(const d of r.drops){
+    if(d.t<0)continue;
+    const k=d.t/FALL_S,y=y0+(ys-y0)*k*k,rr=d.flow?5.5:4.2;
+    c.beginPath();c.moveTo(L.bx,y-rr*(d.flow?3:2.2));
+    c.quadraticCurveTo(L.bx+rr*1.3,y+rr*0.2,L.bx,y+rr);c.quadraticCurveTo(L.bx-rr*1.3,y+rr*0.2,L.bx,y-rr*(d.flow?3:2.2));
+    c.fill();c.stroke();
+  }
+}
+// 紙ふぶき・しぶき
+function confetti(n){
+  const cols=['#ffcc00','#ff4f8b','#10b3c7','#a070ff','#19c37d'],y=L.fBase-150*L.fs;
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+(Math.random()-.5)*2.2,v=380+Math.random()*380;
+    S.parts.push({x:L.fx,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,rot:Math.random()*6,vr:(Math.random()-.5)*16,col:cols[i%5],age:0,life:0.9+Math.random()*0.4,conf:true});
+  }
+}
+function splashOut(n){
+  const y=L.fBase-150*L.fs,col=rgb(liqColor(R.ind,R.ph));
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+(Math.random()-.5)*1.6,v=220+Math.random()*260;
+    S.parts.push({x:L.fx,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,age:0,life:0.6,col:col,conf:false,r:3+Math.random()*4});
+  }
+}
+function stepParts(dt){
+  for(const p of S.parts){p.age+=dt;p.vy+=1300*dt;p.vx*=Math.pow(0.4,dt);p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.conf)p.rot+=p.vr*dt;}
+  S.parts=S.parts.filter(p=>p.age<p.life&&p.y<H+20);
+}
+function drawParts(c){
+  for(const p of S.parts){
+    c.save();c.translate(p.x,p.y);
+    c.fillStyle=p.col;c.strokeStyle=NAVY;c.lineWidth=1.5;
+    if(p.conf){c.rotate(p.rot);c.fillRect(-3.5,-6,7,12);c.strokeRect(-3.5,-6,7,12);}
+    else{c.beginPath();c.arc(0,0,p.r,0,Math.PI*2);c.fill();c.stroke();}
+    c.restore();
+  }
+}
+// 判定の文字。大きく出て、少し縮んで決まる(段階で切りかえる)
+function drawJudge(c){
+  const ph=S.phase;
+  if(!(ph==='stop'||ph==='react'||ph==='timeup')||!R.j)return;
+  const j=R.j,t=(ph==='react')?S.stopDur+S.phaseT:S.phaseT;
+  const s=t<0.05?1.7:t<0.10?1.25:1;
+  const txt=JNAME[j],long=txt.length>5;
+  const fz=Math.round(Math.min(long?W*0.105:W*0.16,long?46:66));
+  c.save();c.translate(W*0.5,H*0.27);c.rotate(-0.06);c.scale(s,s);
+  c.font='900 '+fz+'px '+JPF;c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  c.fillStyle=NAVY;c.fillText(txt,0,fz*0.09);
+  c.lineWidth=fz*0.17;c.strokeStyle=NAVY;c.strokeText(txt,0,0);
+  c.fillStyle=JCOL[j];c.fillText(txt,0,0);
+  if(ph==='react'&&j!=='time'){
+    const sub=j==='fail'?'中和点はまだ先':'+'+R.over.toFixed(2)+' mL';
+    c.font='800 '+Math.round(fz*0.34)+'px '+NUMF;c.lineWidth=5;c.strokeStyle='#fff';
+    c.strokeText(sub,0,fz*0.78);c.fillStyle=NAVY;c.fillText(sub,0,fz*0.78);
+  }
+  c.restore();
+}
+// フラッシュ。白一色でなく明暗を交互に
+function drawFlash(c){
+  if(!(S.phase==='stop'||S.phase==='timeup'))return;
+  const t=S.phaseT,k=(R.j==='oshii'?0.5:1)*(RM?0.3:1);
+  const seq=[[0.045,'255,255,255',0.55],[0.09,'28,23,64',0.28],[0.14,'255,255,255',0.30],[0.19,'28,23,64',0.12]];
+  for(const q of seq){if(t<q[0]){c.fillStyle='rgba('+q[1]+','+(q[2]*k)+')';c.fillRect(0,0,W,H);break;}}
+}
+
+// ================= 滴定曲線(結果カード) =================
+function makeCurve(r){
+  const stopV=r.stopV;
+  const xmax=Math.min(25,Math.max(r.veq*1.6,stopV+1.5));
+  const n=200,pts=[];
+  for(let i=0;i<=n;i++){const v=xmax*i/n;pts.push([v,phOf(r.kind,r.c0,v)]);}
+  return {xmax:xmax,pts:pts,stopV:stopV,stopPH:phOf(r.kind,r.c0,stopV)};
+}
+const cc=$('cCurve'),ccx=cc.getContext('2d');let CW=0,CH=0;
+function sizeCurve(){
+  CW=cc.clientWidth;CH=cc.clientHeight;
+  cc.width=Math.round(CW*DPR);cc.height=Math.round(CH*DPR);
+}
+function drawCurve(){
+  const r=R,cu=r.curve;if(!cu||!CW)return;
+  const p=clamp01(S.phaseT/CURVE_DRAW_S);
+  const c=ccx;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,CW,CH);
+  const l=24,rt=8,tp=6,bt=17,gw=CW-l-rt,gh=CH-tp-bt;
+  const X=v=>l+v/cu.xmax*gw,Y=ph=>tp+(1-ph/14)*gh;
+  // 指示薬の変色域の帯
+  const ind=IND[r.ind];
+  c.fillStyle=r.ind==='PP'?'rgba(255,79,139,.20)':'rgba(255,140,30,.26)';
+  c.fillRect(l,Y(ind.hi),gw,Y(ind.lo)-Y(ind.hi));
+  c.fillStyle=r.ind==='PP'?'#d0306e':'#c86400';c.font='800 9.5px '+JPF;c.textAlign='right';c.textBaseline='middle';
+  c.fillText(ind.name+'の変色域',l+gw-3,(Y(ind.hi)+Y(ind.lo))/2);
+  // 目盛り
+  c.strokeStyle='rgba(28,23,64,.15)';c.lineWidth=1;
+  c.beginPath();c.moveTo(l,Y(7));c.lineTo(l+gw,Y(7));c.stroke();
+  c.fillStyle='#6b6690';c.font='700 9.5px '+NUMF;c.textAlign='right';
+  [0,7,14].forEach(v=>c.fillText(String(v),l-4,Y(v)));
+  c.textAlign='center';c.textBaseline='top';
+  for(let v=0;v<=cu.xmax+1e-9;v+=5)c.fillText(String(v),X(v),tp+gh+3);
+  c.textAlign='left';c.fillText('pH',2,0);
+  c.textAlign='right';c.fillText('mL',CW-1,tp+gh+3);
+  // 中和点
+  c.setLineDash([3,3]);c.strokeStyle='rgba(28,23,64,.55)';c.lineWidth=1.5;
+  c.beginPath();c.moveTo(X(r.veq),tp);c.lineTo(X(r.veq),tp+gh);c.stroke();c.setLineDash([]);
+  c.fillStyle=NAVY;c.font='800 9.5px '+JPF;c.textAlign='left';c.textBaseline='top';
+  c.fillText('中和点',Math.min(X(r.veq)+3,l+gw-30),tp+1);
+  // 軸
+  c.strokeStyle=NAVY;c.lineWidth=2;c.beginPath();c.moveTo(l,tp);c.lineTo(l,tp+gh);c.lineTo(l+gw,tp+gh);c.stroke();
+  // 曲線(左から描かれる)
+  const nShow=Math.max(1,Math.round(cu.pts.length*p));
+  c.strokeStyle='#ff5f93';c.lineWidth=2.6;c.lineJoin='round';c.beginPath();
+  for(let i=0;i<nShow;i++){const q=cu.pts[i];if(i)c.lineTo(X(q[0]),Y(q[1]));else c.moveTo(X(q[0]),Y(q[1]));}
+  c.stroke();
+  if(p>=1){
+    const sx=X(cu.stopV),sy=Y(cu.stopPH);
+    c.fillStyle=JCOL[r.j];c.strokeStyle=NAVY;c.lineWidth=2;
+    c.beginPath();c.arc(sx,sy,5,0,Math.PI*2);c.fill();c.stroke();
+    c.fillStyle=NAVY;c.font='900 10px '+JPF;c.textBaseline='middle';
+    const lab=r.j==='fail'?'ここで変色':'止めた所';
+    const right=sx<l+gw*0.6;
+    c.textAlign=right?'left':'right';c.fillText(lab,sx+(right?8:-8),Math.min(Math.max(sy,tp+8),tp+gh-8));
+  }
+}
+
+// ================= 結果画面 =================
+function finish(){
+  running=false;
+  release();
+  document.body.classList.remove('tt-playing');
+  $('stage').style.transform='';
+  const done=S.results.filter(x=>x).length;
+  const allDone=done===ROUNDS&&S.results.every(x=>x&&x.j!=='time');
+  const nPita=S.results.filter(r=>r&&r.j==='pitari').length;
+  S.timeBonus=allDone?Math.floor(S.tLeft)*PT_TIME*nPita:0;
+  S.score+=S.timeBonus;
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  window.scrollTo(0,0);
+  $('fTime').textContent=allDone?('残り時間ボーナス '+Math.floor(S.tLeft)+'秒 × '+PT_TIME+' × ピタリ '+nPita+'本 = +'+S.timeBonus):'時間切れ。そこまでの本数で終了';
+  // 5本それぞれ
+  let h='';
+  for(let i=0;i<ROUNDS;i++){
+    const x=S.results[i],k=KINDS[S.rounds[i].kind];
+    let w,jj='—',cls='',pt='';
+    if(!x){w='<small>まだ</small>'+k.name;}
+    else{
+      cls='j-'+x.j;jj=x.j==='fail'?'失敗':JNAME[x.j].replace('!','');pt='+'+x.pts;
+      if(x.j==='fail')w=k.name+'<small>指示薬がちがい、変色が早すぎ</small>';
+      else if(x.j==='time')w=k.name+'<small>時間切れ</small>';
+      else w=k.name+'<small>行きすぎ <b>'+x.over.toFixed(2)+'</b> mL</small>';
+    }
+    h+='<div class="tt-row"><span class="n">'+(i+1)+'</span><span class="w">'+w+'</span><span class="j '+cls+'">'+jj+'</span><span class="p">'+pt+'</span></div>';
+  }
+  $('fList').innerHTML=h;
+  CG.countUp($('fScore'),S.score);
+  S.best0=CG.best('titration',S.score);    // ボーナス問題に答えずに閉じても記録は残す
+  setupBonus();
+  $('fAfter').classList.add('hidden');
+  CG.sfx.fin();
+}
+function setupBonus(){
+  // 割り切れる中和点を入れておいた2本のうち、はじめた方(あとの本を優先)
+  const cand=S.bonusIdx.filter(i=>i<=S.ri&&i<ROUNDS);
+  const bi=cand.length?cand[cand.length-1]:0;
+  const rd=S.rounds[bi],k=KINDS[rd.kind],q=makeBonus(rd.kind,rd.veq);
+  // 価数は書かない(化学式から気づかせる)
+  $('bqQ').innerHTML=(bi+1)+'本目の'+k.name+' <span>'+k.f+'</span> 10.0 mL を 0.10 mol/L の'+k.titName+'で滴定すると、中和点までの滴下量は <b class="num">'+q.veq+' mL</b> だった。この'+k.name+'のモル濃度は何 mol/L か。';
+  const opts=CG.shuffle([q.ans].concat(q.wrong));
+  const box=$('bqCh');box.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');b.type='button';b.className='choice';
+    b.innerHTML='<span class="num">'+o+'</span> mol/L';
+    b.onclick=()=>answerBonus(o,q,b,k);
+    box.appendChild(b);
+  });
+  $('bqEx').classList.add('hidden');
+}
+function answerBonus(o,q,btn,k){
+  const ok=o===q.ans;
+  [...$('bqCh').children].forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.indexOf(q.ans+' ')===0)b.classList.add('correct');
+    else if(b===btn)b.classList.add('wrong');
+  });
+  const ex=$('bqEx');
+  ex.innerHTML=(ok?'<b class="ok">正解! +'+PT_BONUS_Q+'</b>':'<b class="ng">ざんねん</b> 正解は '+q.ans+' mol/L')
+    +'<br>中和点では、酸の出す H<sup>+</sup> の物質量 = 塩基の出す OH<sup>−</sup> の物質量。'
+    +'価数 × 濃度 × 体積 がつり合う(<i>a</i>×<i>c</i>×<i>v</i> = <i>b</i>×<i>c\'</i>×<i>v\'</i>)。<br>'
+    +(k.base?'1 × 0.10 mol/L × '+q.veq+'/1000 L = '+q.n+' × <i>c</i> × 10.0/1000 L'
+            :q.n+' × <i>c</i> × 10.0/1000 L = 1 × 0.10 mol/L × '+q.veq+'/1000 L')
+    +' より <i>c</i> = <b>'+q.ans+' mol/L</b>'
+    +(q.n===2?'<br><span>'+k.f+'</span> は2価。価数の 2 を忘れると '+q.forgot+' mol/L になってしまう。':'');
+  ex.classList.remove('hidden');
+  if(ok){S.score+=PT_BONUS_Q;CG.sfx.ok(5);CG.countUp($('fScore'),S.score,600);}else CG.sfx.ng();
+  showAfter();
+}
+function showAfter(){
+  const sc=S.score,b0=S.best0;
+  CG.best('titration',sc);
+  const rk=sc>=RANK_S?'S':sc>=RANK_A?'A':sc>=RANK_B?'B':'C';
+  const el=$('fRank');el.textContent=rk;el.className='rank'+(rk==='A'?' r-a':rk==='B'?' r-b':rk==='C'?' r-c':'');
+  let bl='';
+  if(b0&&b0.ok){
+    if(b0.first)bl='<span>はじめての記録</span>';
+    else if(sc>b0.prev)bl='<span class="new">自己ベスト更新!</span> <span>これまで '+CG.fmt(b0.prev)+'点</span>';
+    else bl='<span>自己ベスト '+CG.fmt(b0.prev)+'点</span>';
+  }
+  $('fBest').innerHTML=bl;
+  const np=S.results.filter(x=>x&&x.j==='pitari').length;
+  const say=rk==='S'?'見事。うすい赤色が消えなくなる、その1滴を見きわめたな。'
+    :rk==='A'?'いい腕だ。赤色が消えにくくなったら、流すのをやめて1滴ずつ。'
+    :rk==='B'?'中和点の近くでは、落ちた所の赤色がなかなか消えなくなる。そこが合図だ。'
+    :'あせらず、赤色が残る時間を見よう。流したまま中和点をこえると入れすぎになる。';
+  $('fSay').innerHTML=CG.mascot('ピタリ '+np+'本。'+say);
+  $('fAfter').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
