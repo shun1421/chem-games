@@ -123,8 +123,7 @@
 .nextbtn.hidden{display:none} /* .hidden より後に書くので打ち消される。明示的に消す */
 .nextbtn.ng{background:linear-gradient(135deg,#ff8fb0,#ffc531);box-shadow:0 4px 0 #a33a63}
 .paused .timefill{filter:grayscale(.7) brightness(.8)}
-.pausemark{font-size:10px;color:var(--neon);letter-spacing:.08em;margin-top:2px}
-.pausemark.off{visibility:hidden}
+.paused .timefill.warn{animation:none} /* 残り10秒以下でも、止まっているあいだは点滅をやめて灰色にする */
 #fb{min-height:40px;margin-top:9px;font-size:13.5px;font-weight:800;text-align:center;line-height:1.7;
  position:relative;z-index:6}
 #fb .good{color:var(--lime)}#fb .ng{color:var(--pink)}
@@ -175,6 +174,7 @@ main.game{max-width:680px}
     <li>mol をはさむ<b>2段階</b>の問題は +100点</li>
     <li>5問連続で正解すると <b>FEVER</b>（得点2倍）</li>
     <li>まちがえると残り時間が<b><span id="penSec">3</span>秒</b>へる（コンボと FEVER も終わる）</li>
+    <li>答え合わせの間は時間が止まる</li>
     <li>原子量: H=1.0, He=4.0, C=12, N=14, O=16, Ne=20, Na=23, Mg=24, Al=27, S=32, Cl=35.5, Ca=40, Fe=56, Cu=64</li>
     <li>標準状態の気体 1 mol = 22.4 L、アボガドロ定数 6.0×10<sup>23</sup> /mol</li>
   </ul>
@@ -184,7 +184,7 @@ main.game{max-width:680px}
 <section id="play" class="panel hidden">
   <div id="flash"></div>
   <div class="topbar">
-    <div class="tb tm" id="timebox">のこり<b id="time">60</b><div class="tpen" id="tpen"></div><div class="pausemark off" id="pausemark">⏸ 計算中は時間が止まる</div></div>
+    <div class="tb tm" id="timebox">のこり<b id="time">60</b><div class="tpen" id="tpen"></div></div>
     <div class="tb combo" id="combobox">コンボ<b id="combo">0</b></div>
     <div class="tb sc" style="text-align:right">スコア<b id="score">0</b></div>
   </div>
@@ -463,7 +463,6 @@ function goNext(){ // 「次の問題へ」で時間を再開する
   if(tLeft<=0){finish();return;}
   paused=false;
   $('play').classList.remove('paused');
-  $('pausemark').classList.add('off');
   $('nextBtn').classList.add('hidden');
   nextQ();
 }
@@ -527,7 +526,6 @@ function answer(f,btn){
   // 約分の様子をじっくり見られるよう、時間を止めてボタン待ちにする
   paused=true;
   $('play').classList.add('paused');
-  $('pausemark').classList.remove('off');
   const nb=$('nextBtn');
   nb.classList.remove('hidden');
   nb.classList.toggle('ng',!correct);
@@ -551,7 +549,6 @@ function penalize(){
 function finish(){
   clearInterval(timer);clearTimeout(strikeT);locked=true;paused=false;
   $('play').classList.remove('paused');
-  $('pausemark').classList.add('off');
   $('nextBtn').classList.add('hidden');
   $('play').classList.add('hidden');$('end').classList.remove('hidden');
   $('fscore').textContent=score;showBest(score);
