@@ -15,50 +15,75 @@ body.lv-light .lv-app{background:#f6f4ff}
 #stage{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;outline:none;cursor:grab;
  -webkit-user-select:none;user-select:none}
 #stage:active{cursor:grabbing}
+/* 切り出し表示を WebGL で描くときだけ使う下の2枚(背景と奥の枠/粒子)。操作は上の #stage が受ける */
+#stageBk,#stageGL{position:absolute;inset:0;display:none;width:100%;height:100%;pointer-events:none}
 #stage:focus-visible{box-shadow:inset 0 0 0 4px var(--yellow)}
 
 /* 3Dの操作ボタン(左上。パネルと重ならない) */
+/* 上の帯の「？」と、押すと出る「操作のしかた」 */
+.top .lv-q{flex:0 0 40px;height:40px;padding:0;background:#fff;color:var(--navy);border:var(--bd);border-radius:50%;box-shadow:0 4px 0 var(--navy);font-size:19px;font-weight:900;line-height:1;cursor:pointer}
+.top .lv-q:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.top .lv-q[aria-expanded="true"]{background:var(--yellow)}
+.lv-howto{position:absolute;right:10px;top:10px;z-index:20;width:min(340px,calc(100% - 20px));max-height:calc(100% - 20px);overflow-y:auto;background:#fff;border:3px solid var(--navy);border-radius:16px;box-shadow:0 5px 0 var(--navy);padding:10px 12px 12px;font-size:13.5px;font-weight:600;line-height:1.7;color:var(--navy)}
+.lv-howto-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:15px}
+.lv-howto ul{margin:0;padding-left:1.2em}
+.lv-howto li{margin:3px 0}
 .lv-tools{position:absolute;left:10px;top:54px;display:flex;gap:8px;z-index:4}
 .lv-tool{width:46px;height:44px;padding:0;border:2px solid var(--navy);border-radius:12px;background:#fff;color:var(--navy);
  font-size:21px;font-weight:900;line-height:1;box-shadow:0 3px 0 var(--navy);cursor:pointer}
 .lv-tool:active{transform:translateY(3px);box-shadow:0 0 0 var(--navy)}
 
-/* 設定パネル(右に重なる。スマホでは下から出る) */
-.lv-panel{position:absolute;top:10px;right:10px;bottom:10px;width:min(370px,calc(100% - 120px));z-index:6;display:flex;flex-direction:column;
+/* 4つのタブ(画面の端に常に並ぶ。PC は右端に縦、スマホは下端に横) */
+.lv-app{--rw:54px;--rh:54px}
+.lv-rail{position:absolute;right:0;top:10px;z-index:7;display:flex;flex-direction:column;gap:8px;max-height:calc(100% - 20px);overflow-y:auto}
+.lv-rail>button{width:var(--rw);min-height:64px;padding:12px 0 12px 3px;border:3px solid var(--navy);border-right:0;border-radius:14px 0 0 14px;
+ background:#fff;color:var(--navy);writing-mode:vertical-rl;font-weight:900;font-size:15px;letter-spacing:.18em;line-height:1;
+ box-shadow:-3px 4px 0 var(--navy);cursor:pointer;transition:transform .06s,box-shadow .06s}
+.lv-rail>button:active{transform:translate(-2px,3px);box-shadow:-1px 1px 0 var(--navy)}
+.lv-rail>button.on{background:var(--yellow)}
+.lv-rail>button.dim{color:#9a95bd}
+.lv-rail>button.dim.on{color:var(--navy)}
+.lv-rail>button:focus-visible{outline:3px solid var(--u);outline-offset:-7px}
+/* タブの内容のパネル(PC はタブの左、スマホはタブの上) */
+.lv-panel{position:absolute;top:10px;right:calc(var(--rw) + 8px);bottom:10px;width:min(370px,calc(100% - 120px - var(--rw)));z-index:6;display:flex;flex-direction:column;
  background:#fff;border:3px solid var(--navy);border-radius:18px;box-shadow:0 5px 0 var(--navy);
  transition:transform .25s ease,visibility 0s linear 0s}
-.lv-app.closed .lv-panel{transform:translateX(calc(100% + 24px));visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s}
-.lv-ph{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px 7px 14px;
- background:var(--yellow);border-bottom:3px solid var(--navy);border-radius:15px 15px 0 0}
-.lv-ph b{font-size:16px;font-weight:900;letter-spacing:.1em}
-.lv-close{border:2px solid var(--navy);border-radius:10px;background:#fff;color:var(--navy);font-weight:900;font-size:14px;
- padding:6px 11px;box-shadow:0 2px 0 var(--navy);cursor:pointer}
-.lv-close:active{transform:translateY(2px);box-shadow:none}
-.lv-pb{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px 12px 18px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-/* たたんだときのつまみ */
-.lv-tab{display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:5;writing-mode:vertical-rl;
- padding:16px 9px;border:3px solid var(--navy);border-right:0;border-radius:14px 0 0 14px;background:var(--yellow);color:var(--navy);
- font-weight:900;font-size:16px;letter-spacing:.25em;box-shadow:-3px 4px 0 var(--navy);cursor:pointer}
-.lv-app.closed .lv-tab{display:block}
+.lv-app.closed .lv-panel{transform:translateX(calc(100% + var(--rw) + 30px));visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s}
+.lv-pb{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 12px 18px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .lv-m{display:none}
 @media(max-width:600px){
- .lv-panel{top:auto;left:0;right:0;bottom:0;width:auto;height:52%;border-radius:18px 18px 0 0;border-bottom:0;box-shadow:0 -4px 0 rgba(28,23,64,.35)}
- .lv-app.closed .lv-panel{transform:translateY(calc(100% + 12px))}
- .lv-tab{top:auto;bottom:10px;right:10px;transform:none;writing-mode:horizontal-tb;border-right:3px solid var(--navy);
-  border-radius:14px;letter-spacing:.06em;padding:9px 15px;box-shadow:0 4px 0 var(--navy)}
+ .lv-app{--rh:58px}
+ .lv-rail{top:auto;left:0;right:0;bottom:0;height:var(--rh);box-sizing:border-box;flex-direction:row;align-items:flex-start;gap:6px;max-height:none;overflow:visible;
+  padding:4px 6px 0;background:rgba(28,23,64,.22)}
+ .lv-rail>button{flex:1 1 0;min-width:0;width:auto;min-height:46px;padding:4px 2px;writing-mode:horizontal-tb;letter-spacing:.04em;font-size:15px;
+  border:3px solid var(--navy);border-radius:12px;box-shadow:0 4px 0 var(--navy)}
+ .lv-rail>button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+ .lv-panel{top:auto;left:0;right:0;bottom:var(--rh);width:auto;height:50%;border-radius:18px 18px 0 0;border-bottom:3px solid var(--navy);box-shadow:none}
+ .lv-app.closed .lv-panel{transform:translateY(calc(100% + var(--rh) + 12px))}
  .lv-d{display:none}.lv-m{display:inline}
 }
-/* たたんでいるときだけ、いまの様子を3Dの上に出す */
-.lv-toast{display:none;position:absolute;right:12px;bottom:12px;max-width:min(480px,46%);z-index:4;background:rgba(255,255,255,.95);
+/* 全部閉じているときだけ、いまの様子を3Dの上に出す */
+.lv-toast{display:none;position:absolute;right:calc(var(--rw) + 12px);bottom:12px;max-width:min(480px,46%);z-index:4;background:rgba(255,255,255,.95);
  border:3px solid var(--navy);border-radius:14px;box-shadow:0 4px 0 var(--navy);padding:8px 12px;font-size:14px;font-weight:600;line-height:1.6}
 .lv-app.closed .lv-toast{display:block}
 .lv-toast b{color:#0a7d8c}
 @media(max-width:600px){.lv-toast{top:106px;bottom:auto;left:10px;right:10px;max-width:none;font-size:13.5px}}
 
 /* パネルの中身 */
-.lv-pb .mascot{margin:0 0 8px;gap:10px}
-.lv-pb .mascot img{flex:0 0 52px;width:52px;height:52px}
-.lv-pb .mascot .bubble{min-height:0;margin-bottom:6px;padding:7px 11px;font-size:13px;line-height:1.6}
+/* パネルのいちばん上: キャラクターの吹き出しに、いまの様子(ヒント)を出す。どのタブでも同じ位置。右に閉じるボタン */
+.lv-hd{flex:0 0 auto;display:flex;align-items:flex-start;gap:6px;padding:8px 8px 2px 12px}
+.lv-hd>#mascot{flex:1;min-width:0}
+.lv-x{flex:0 0 auto;width:40px;height:40px;padding:0;border:2px solid var(--navy);border-radius:11px;background:#fff;color:var(--navy);
+ font-size:18px;font-weight:900;line-height:1;box-shadow:0 3px 0 var(--navy);cursor:pointer}
+.lv-x:active{transform:translateY(3px);box-shadow:none}
+.lv-hd .mascot{margin:0;gap:10px}
+.lv-hd .mascot img{flex:0 0 46px;width:46px;height:46px}
+.lv-hd .mascot .bubble{min-height:50px;display:flex;align-items:center;margin-bottom:6px;padding:6px 4px 6px 11px;font-size:13px;line-height:1.6;font-weight:600}
+.lv-say{flex:1;min-width:0;max-height:7.4em;overflow-y:auto;padding-right:6px;overscroll-behavior:contain}
+.lv-say b{color:#0a7d8c}
+.lv-sec.lv-first{border-top:0;padding-top:2px}
+.lv-ttl{display:block;font-size:15px;font-weight:900;letter-spacing:.06em;margin:4px 0 8px;padding-bottom:6px;border-bottom:3px solid var(--navy)}
+@media(max-width:600px){.lv-say{max-height:3.3em}.lv-hd{padding-top:6px}.lv-hd .mascot img{flex-basis:38px;width:38px;height:38px}}
 .lv-structs{display:flex;flex-direction:column;gap:7px}
 .lv-grp{display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px}
 .lv-gl{flex:0 0 100%;font-size:11.5px;font-weight:900;color:var(--mut);letter-spacing:.06em}
@@ -68,11 +93,9 @@ body.lv-light .lv-app{background:#f6f4ff}
 .lv-b.on{background:var(--u);color:#fff;transform:translateY(2px);box-shadow:0 1px 0 var(--navy)}
 .lv-b.act{background:var(--yellow)}
 .lv-b:disabled{opacity:.4;cursor:default;transform:none;box-shadow:0 3px 0 var(--navy)}
-.lv-status{margin:10px 0 2px;background:#f3f1ff;border:2px solid var(--navy);border-radius:12px;padding:8px 11px;
- font-size:13.5px;font-weight:600;line-height:1.7;min-height:48px}
-.lv-status b{color:#0a7d8c}
 .lv-sec{padding:11px 0 11px;border-top:2px dashed #ddd8f3}
 .lv-lab{display:block;font-size:12.5px;font-weight:900;color:var(--mut);margin-bottom:6px;letter-spacing:.04em}
+.lv-cd{display:inline-block;width:.85em;height:.85em;border-radius:50%;border:1.5px solid var(--navy);vertical-align:-.1em;margin-right:3px}
 .lv-help{font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.6;margin-top:6px}
 .lv-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 
@@ -140,8 +163,10 @@ body.lv-light .lv-app{background:#f6f4ff}
 </style>
 </head>
 <body data-u="teal" class="lv-page">
-<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">結晶格子ラボ</div><span class="chip">結晶格子</span></header>
-<div id="app" class="lv-app">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">結晶格子ラボ</div><span class="chip">結晶格子</span><button type="button" class="lv-q" id="bHelp" aria-label="操作のしかた" title="操作のしかた" aria-expanded="false" aria-controls="help">？</button></header>
+<div id="app" class="lv-app closed">
+  <canvas id="stageBk" aria-hidden="true"></canvas>
+  <canvas id="stageGL" aria-hidden="true"></canvas>
   <canvas id="stage" tabindex="0" aria-label="結晶格子の3D表示。ドラッグや矢印キーで回せます"></canvas>
   <div class="lv-tools">
     <button id="bZin" class="lv-tool" type="button" aria-label="拡大" title="拡大">＋</button>
@@ -150,115 +175,149 @@ body.lv-light .lv-app{background:#f6f4ff}
     <button id="bFs" class="lv-tool hidden" type="button" aria-label="全画面" title="全画面">⤢</button>
   </div>
   <div id="toast" class="lv-toast" aria-live="polite"></div>
-  <button id="tab" class="lv-tab" type="button" aria-expanded="false" aria-controls="panel"><span class="lv-d">設定 ‹</span><span class="lv-m">▲ 設定</span></button>
+  <div id="help" class="lv-howto hidden" role="dialog" aria-label="操作のしかた">
+    <div class="lv-howto-h"><b>操作のしかた</b><button type="button" class="lv-x" id="bHelpX" aria-label="閉じる">✕</button></div>
+    <ul>
+          <li>ドラッグで回転。矢印キーでも回せます。</li>
+          <li>拡大・縮小は左上の「＋」「−」、ホイール、2本指のピンチ。「↺」で向きと大きさを元に戻します。</li>
+          <li>見せ方や色分けは「表示」、限界半径比は「<span class="lv-d">限界半径比</span><span class="lv-m">半径比</span>」、断面は「断面」のタブにあります。</li>
+          <li>開いているタブをもう一度押すか「✕」で閉じると、3Dが画面いっぱいになります。</li>
+            </ul>
+  </div>
+  <!-- 4つのタブ。押すとその内容のパネルが開く。開いているタブをもう一度押すと閉じる -->
+  <nav class="lv-rail" id="rail" role="tablist" aria-label="設定のタブ" aria-orientation="vertical">
+    <button type="button" role="tab" id="t-crys" data-p="crys" aria-controls="panel" aria-selected="false" aria-expanded="false">結晶</button>
+    <button type="button" role="tab" id="t-view" data-p="view" aria-controls="panel" aria-selected="false" aria-expanded="false">表示</button>
+    <button type="button" role="tab" id="t-ion" data-p="ion" aria-controls="panel" aria-selected="false" aria-expanded="false"><span class="lv-d">限界半径比</span><span class="lv-m">半径比</span></button>
+    <button type="button" role="tab" id="t-sec" data-p="sec" aria-controls="panel" aria-selected="false" aria-expanded="false">断面</button>
+  </nav>
 
-  <aside id="panel" class="lv-panel" aria-label="設定">
-    <div class="lv-ph"><b>設定</b><button id="bClose" class="lv-close" type="button"><span class="lv-d">たたむ ›</span><span class="lv-m">たたむ ▼</span></button></div>
-    <div class="lv-pb" id="pbody">
+  <section id="panel" class="lv-panel" role="tabpanel" aria-labelledby="t-crys">
+    <div class="lv-hd">
       <div id="mascot"></div>
-      <div id="structs" class="lv-structs"></div>
-      <div id="status" class="lv-status" aria-live="polite"></div>
-
-      <div class="lv-sec">
-        <span class="lv-lab">見せ方</span>
-        <div class="lv-bar" id="barView">
-          <button type="button" data-v="whole">粒子<small>単位格子</small></button>
-          <button type="button" data-v="clip">切り取る<small>単位格子</small></button>
-          <button type="button" data-v="n4">4コ<small>2×2×1</small></button>
-          <button type="button" data-v="n8">8コ<small>2×2×2</small></button>
-        </div>
-        <div class="lv-help" id="viewNote"></div>
-      </div>
-      <div class="lv-sec">
-        <span class="lv-lab">粒子の大きさ</span>
-        <div class="lv-bar" id="barModel">
-          <button type="button" data-v="touch">接触モデル<small>実際の大きさ</small></button>
-          <button type="button" data-v="small">小さい球<small>位置が見やすい</small></button>
-        </div>
-      </div>
-      <div class="lv-sec" id="secLayer">
-        <span class="lv-lab">色分け</span>
-        <div class="lv-bar" id="barLayer">
-          <button type="button" data-v="none">ふつう</button>
-          <button type="button" data-v="layer" id="bLayerName">ABC層</button>
-        </div>
-        <div class="lv-help" id="layerNote"></div>
-      </div>
-      <div class="lv-sec" id="secIon">
-        <div id="ionOff" class="lv-offmsg hidden">限界半径比は<b>接触モデル</b>のときに確かめられます。
-          <div class="lv-row"><button id="bToTouch" class="lv-b act" type="button">接触モデルにする</button></div></div>
-        <div id="ionOn" class="lv-ratio">
-          <div class="lv-rh"><span class="lv-lab">半径比 r<sup>+</sup>/r<sup>−</sup></span><span id="rhoVal" class="lv-rv">0.525</span><span id="judge" class="lv-jd st">安定</span></div>
-          <input type="range" id="rho" class="lv-range" min="0.15" max="1" step="0.001" value="0.525" aria-label="半径比">
-          <div class="lv-zone" id="zone"><i id="zoneMark"></i></div>
-          <div class="lv-zl"><span>← 陽イオンが小さい</span><span id="zoneLab">限界 0.414</span><span>大きい →</span></div>
-          <div class="lv-jt" id="judgeTx"></div>
-          <div class="lv-pred" id="predTx"></div>
-          <div class="lv-exs"><button id="bLim" class="lv-b act" type="button">限界半径比に合わせる</button>
-            <button id="bSecCheck" class="lv-b" type="button">この断面で確かめる</button></div>
-          <div class="lv-exs" id="exBtns"></div>
-          <div class="lv-src">実在の物質の値は、ポーリングのイオン半径(資料集にのっている代表的な値の一つ。資料によって少しちがう)から求めた比。</div>
-          <span class="lv-lab" style="margin-top:9px">何を固定して変える?</span>
-          <div class="lv-bar" id="barFix">
-            <button type="button" data-v="anion">陰イオンの大きさ</button>
-            <button type="button" data-v="lattice">格子の大きさ</button>
-          </div>
-          <label class="lv-chk"><input type="checkbox" id="chkContact" checked> 接している所を線で示す</label>
-          <div class="lv-leg"><span><i class="lv-ln" style="border-color:#ffe14d"></i>陽−陰が接する</span><span><i class="lv-ln" style="border-color:#ff4f5e"></i>陰−陰が接する</span><span><i class="lv-ln" style="border-color:#ff4f5e;border-top-style:dotted"></i>すき間</span></div>
-        </div>
-      </div>
-      <div class="lv-sec">
-        <span class="lv-lab">粒子をタップすると</span>
-        <div class="lv-bar" id="barTap">
-          <button type="button" data-v="coord">光る<small>接する粒子(配位数)</small></button>
-          <button type="button" data-v="erase">消える<small>中を見る・数える</small></button>
-        </div>
-        <div class="lv-row"><button class="lv-b" id="bRestore" type="button" disabled>消した粒子をもどす</button></div>
-      </div>
-      <div class="lv-sec" id="secCut">
-        <span class="lv-lab">断面(「切り取る」で見る)</span>
-        <div class="lv-bar" id="barSec">
-          <button type="button" data-v="none">なし</button>
-          <button type="button" data-v="face">正面の面</button>
-          <button type="button" data-v="diag">対角の面<small>体対角線をふくむ</small></button>
-        </div>
-        <div id="cutwrap" class="hidden">
-          <div class="lv-cuthead" id="cuthead"></div>
-          <canvas id="cut"></canvas>
-        </div>
-      </div>
-      <div class="lv-sec">
-        <span class="lv-lab">向き</span>
-        <div class="lv-row" id="views" style="margin-top:0">
-          <button class="lv-b" data-v="oblique" type="button">ななめ</button>
-          <button class="lv-b" data-v="front" type="button">正面</button>
-          <button class="lv-b" data-v="top" type="button">真上</button>
-          <button class="lv-b" data-v="body" type="button">体対角線の方向</button>
-          <button class="lv-b" data-v="sec" type="button">断面の正面</button>
-          <button class="lv-b" id="bAuto" type="button">ゆっくり回す</button>
-        </div>
-        <div class="lv-help" id="viewHint"></div>
-      </div>
-      <div class="lv-sec">
-        <span class="lv-lab">こさ(不透明度)</span>
-        <div id="opac"></div>
-      </div>
-      <div class="lv-sec">
-        <span class="lv-lab">背景</span>
-        <div class="lv-bar" id="barBg">
-          <button type="button" data-v="dark">暗い</button>
-          <button type="button" data-v="light">明るい</button>
-        </div>
-      </div>
-      <details class="lv-det" id="detCount"><summary>数え方と配位数</summary><div class="lv-dc" id="expCount"></div></details>
-      <details class="lv-det" id="detIon"><summary>限界半径比の求め方</summary><div class="lv-dc" id="expIon"></div></details>
-      <details class="lv-det"><summary>操作のしかた</summary><div class="lv-dc"><ul>
-        <li>ドラッグで回転。矢印キーでも回せます。</li>
-        <li>拡大・縮小は左上の「＋」「−」、ホイール、2本指のピンチ。「↺」で向きと大きさを元に戻します。</li>
-        <li>この設定は「たたむ」で閉じられます。閉じると、3Dが画面いっぱいになります。</li>
-      </ul></div></details>
+      <button id="bClose" class="lv-x" type="button" aria-label="閉じる" title="閉じる">✕</button>
     </div>
-  </aside>
+    <div class="lv-pb" id="pbody">
+      <div class="lv-pane" data-p="crys">
+        <span class="lv-ttl">結晶の選択</span>
+        <div id="structs" class="lv-structs"></div>
+        <details class="lv-det" id="detCount" open><summary>数え方と配位数</summary><div class="lv-dc" id="expCount"></div></details>
+      </div>
+
+      <div class="lv-pane hidden" data-p="view">
+        <span class="lv-ttl">表示の設定</span>
+        <div class="lv-sec lv-first">
+          <span class="lv-lab">範囲</span>
+          <div class="lv-bar" id="barRange">
+            <button type="button" data-v="cell">単位格子</button>
+            <button type="button" data-v="n4">4コ<small>2×2×1</small></button>
+            <button type="button" data-v="n8">8コ<small>2×2×2</small></button>
+          </div>
+          <div class="lv-help" id="viewNote"></div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">粒子の出し方</span>
+          <div class="lv-bar" id="barShow">
+            <button type="button" data-v="atoms">粒子<small>まるごと</small></button>
+            <button type="button" data-v="clip">切り出し<small>外側の面で切る</small></button>
+          </div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">粒子の大きさ</span>
+          <div class="lv-bar" id="barModel">
+            <button type="button" data-v="touch">接触モデル<small>実際の大きさ</small></button>
+            <button type="button" data-v="small">小さい球<small>位置が見やすい</small></button>
+          </div>
+        </div>
+        <div class="lv-sec" id="secLayer">
+          <span class="lv-lab">色分け</span>
+          <div class="lv-bar" id="barLayer">
+            <button type="button" data-v="none" id="bBaseName">頂点・面心</button>
+            <button type="button" data-v="layer" id="bLayerName">ABC層</button>
+          </div>
+          <div class="lv-help" id="layerNote"></div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">こさ(不透明度)</span>
+          <div id="opac"></div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">粒子をタップすると</span>
+          <div class="lv-bar" id="barTap">
+            <button type="button" data-v="coord">光る<small>接する粒子(配位数)</small></button>
+            <button type="button" data-v="erase">消える<small>中を見る・数える</small></button>
+          </div>
+          <div class="lv-row"><button class="lv-b" id="bRestore" type="button" disabled>消した粒子をもどす</button></div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">向き</span>
+          <div class="lv-row" id="views" style="margin-top:0">
+            <button class="lv-b" data-v="oblique" type="button">ななめ</button>
+            <button class="lv-b" data-v="front" type="button">正面</button>
+            <button class="lv-b" data-v="top" type="button">真上</button>
+            <button class="lv-b" data-v="body" type="button">体対角線の方向</button>
+            <button class="lv-b" data-v="sec" type="button">断面の正面</button>
+            <button class="lv-b" id="bAuto" type="button">ゆっくり回す</button>
+          </div>
+          <div class="lv-help" id="viewHint"></div>
+        </div>
+        <div class="lv-sec">
+          <span class="lv-lab">背景</span>
+          <div class="lv-bar" id="barBg">
+            <button type="button" data-v="dark">暗い</button>
+            <button type="button" data-v="light">明るい</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lv-pane hidden" data-p="ion">
+        <span class="lv-ttl">限界半径比</span>
+        <div id="ionNA" class="lv-offmsg hidden">イオン結晶(CsCl型・NaCl型・ZnS型)を選ぶと使えます。</div>
+        <div class="lv-sec lv-first" id="secIon">
+          <div id="ionOff" class="lv-offmsg hidden">限界半径比は<b>接触モデル</b>のときに確かめられます。
+            <div class="lv-row"><button id="bToTouch" class="lv-b act" type="button">接触モデルにする</button></div></div>
+          <div id="ionOn" class="lv-ratio">
+            <div class="lv-rh"><span class="lv-lab">半径比 r<sup>+</sup>/r<sup>−</sup></span><span id="rhoVal" class="lv-rv">0.525</span><span id="judge" class="lv-jd st">安定</span></div>
+            <input type="range" id="rho" class="lv-range" min="0.15" max="1" step="0.001" value="0.525" aria-label="半径比">
+            <div class="lv-zone" id="zone"><i id="zoneMark"></i></div>
+            <div class="lv-zl"><span>← 陽イオンが小さい</span><span id="zoneLab">限界 0.414</span><span>大きい →</span></div>
+            <div class="lv-jt" id="judgeTx"></div>
+            <div class="lv-pred" id="predTx"></div>
+            <div class="lv-exs"><button id="bLim" class="lv-b act" type="button">限界半径比に合わせる</button>
+              <button id="bSecCheck" class="lv-b" type="button">この断面で確かめる</button></div>
+            <div class="lv-exs" id="exBtns"></div>
+            <div class="lv-src">実在の物質の値は、ポーリングのイオン半径(資料集にのっている代表的な値の一つ。資料によって少しちがう)から求めた比。</div>
+            <span class="lv-lab" style="margin-top:9px">何を固定して変える?</span>
+            <div class="lv-bar" id="barFix">
+              <button type="button" data-v="anion">陰イオンの大きさ</button>
+              <button type="button" data-v="lattice">格子の大きさ</button>
+            </div>
+            <label class="lv-chk"><input type="checkbox" id="chkContact" checked> 接している所を線で示す</label>
+            <div class="lv-leg"><span><i class="lv-ln" style="border-color:#ffe14d"></i>陽−陰が接する</span><span><i class="lv-ln" style="border-color:#ff4f5e"></i>陰−陰が接する</span><span><i class="lv-ln" style="border-color:#ff4f5e;border-top-style:dotted"></i>すき間</span></div>
+            <div class="lv-help">接している所の線は「単位格子」のときに出ます(4コ・8コでは出しません)。</div>
+          </div>
+          <details class="lv-det" id="detIon"><summary>限界半径比の求め方</summary><div class="lv-dc" id="expIon"></div></details>
+        </div>
+      </div>
+
+      <div class="lv-pane hidden" data-p="sec">
+        <span class="lv-ttl">断面</span>
+        <div id="secNA" class="lv-offmsg hidden">六方最密構造の単位格子は立方体ではないので、断面(正面の面・対角の面)は使えません。立方体の単位格子の結晶を選ぶと使えます。</div>
+        <div class="lv-sec lv-first" id="secCut">
+          <div class="lv-bar" id="barSec">
+            <button type="button" data-v="none">なし</button>
+            <button type="button" data-v="face">正面の面</button>
+            <button type="button" data-v="diag">対角の面<small>体対角線をふくむ</small></button>
+          </div>
+          <div class="lv-help">断面は<b>「単位格子」の「切り出し」</b>で見ます(4コ・8コや「粒子」では使えません)。選ぶと、見せ方もそのように切りかわります。</div>
+          <div id="cutwrap" class="hidden">
+            <div class="lv-cuthead" id="cuthead"></div>
+            <canvas id="cut"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script src="common.js"></script>
@@ -376,6 +435,17 @@ function hexFracOld(p){ // 六角柱: 上下の面で1/2、側面の辺で1/2、
 const COLS={metal:'#a9bccf',cat:'#8c7bff',an:'#4cc38a',cov:'#7fd1e8'};
 // 層の色(A・B・C)。青・オレンジ・緑で、明るさもちがう組み合わせ
 const LAYER_COLS=['#3b6fe0','#f59a23','#1f9e72'];
+// 位置の色(頂点・面の中心/中心・内部)。明るい灰青・赤みの強い橙・こい青で、明るさもちがう組み合わせ
+const SITE_COLS={v:'#a9bccf',f:'#e8743b',i:'#2f62c8'};
+const cdot=c=>'<i class="lv-cd" style="background:'+c+'"></i>';
+// 単位格子の中の位置(各成分を1で割った余り)で分ける。v=頂点 f=面の中心 c=立方体の中心 i=内部(1/4の位置) e=辺の中点
+function siteOf(p){
+  const q=p.map(v=>((Math.round((v-Math.floor(v+1e-6))*4)%4)+4)%4); // 1/4 単位の余り(0〜3)
+  const h=q.filter(x=>x===2).length,o=q.filter(x=>x%2===1).length;
+  if(o===3)return 'i';
+  if(o>0)return '';
+  return h===0?'v':h===1?'e':h===2?'f':'c';
+}
 // 断面のきまった選び方(立方体の角の番号)。対角の面は x=z の面(体対角線と面対角線をふくむ)
 const SECS={face:[4,5,6,7],diag:[0,5,6,3]};
 const CUBE={frame:cubeFrame(),viewPlanes:CUBE_PLANES,center:[.5,.5,.5],inCell:inBox,frac:cubeFrac,cubic:true,cellWord:'単位格子'};
@@ -386,52 +456,66 @@ const ST={
    ex:'Po(ポロニウム)など。立方体の頂点だけに粒子があり、となりの粒子とは辺にそって接する。'}),
  bcc:Object.assign({},CUBE,{grp:'metal',btn:'体心立方',name:'体心立方格子',
    gen:()=>genCubic([[0,0,0,0],[.5,.5,.5,0]],GLO,GHI),rT:[SQ3/4],rS:[.11],col:[COLS.metal],
-   n:2,coord:8,cnt:'頂点 1/8 × 8 + 中心 1 × 1 = <b>2</b>',
+   sites:{nm:'頂点・中心',k:{v:0,c:1},lab:['頂点','中心'],col:[SITE_COLS.v,SITE_COLS.f]},
+   n:2,coord:8,cnt:cdot(SITE_COLS.v)+'頂点 1/8 × 8 + '+cdot(SITE_COLS.f)+'中心 1 × 1 = <b>2</b>',
    ex:'Na、K、Fe など。中心の粒子は、頂点の8個の粒子と体対角線にそって接する。'}),
  fcc:Object.assign({},CUBE,{grp:'metal',btn:'面心立方',name:'面心立方格子',layers:'ABC',
    gen:()=>genCubic(withT(FCC,0),GLO,GHI),rT:[SQ2/4],rS:[.11],col:[COLS.metal],
-   n:4,coord:12,cnt:'頂点 1/8 × 8 + 面 1/2 × 6 = <b>4</b>',
+   sites:{nm:'頂点・面心',k:{v:0,f:1},lab:['頂点','面の中心'],col:[SITE_COLS.v,SITE_COLS.f]},
+   n:4,coord:12,cnt:cdot(SITE_COLS.v)+'頂点 1/8 × 8 + '+cdot(SITE_COLS.f)+'面 1/2 × 6 = <b>4</b>',
    ex:'Cu、Ag、Al など。面の中心の粒子が、面対角線にそって頂点の粒子と接する。最密構造の一つ。'}),
  hcp:{grp:'metal',btn:'六方最密',name:'六方最密構造',cubic:false,cellWord:'六角柱',layers:'AB',
    gen:genHCP,rT:[.5],rS:[.11],col:[COLS.metal],
    frame:rhombFrame(),sub:hexFrame(),viewPlanes:HEX_PLANES,center:[0,HC/2,0],
    inCell:p=>inHexOld(hcpUnmap(p)),frac:p=>hexFracOld(hcpUnmap(p)),
    n:2,coord:12,
-   cnt:'六角柱: 頂点 1/6 × 12 + 上下の面 1/2 × 2 + 内部 1 × 3 = 6<br>単位格子(太い枠。六角柱の1/3)は <b>2</b>',
-   ex:'Mg、Zn など。ABAB…と層が重なる最密構造。<b>太い枠が単位格子</b>で、点線の六角柱のちょうど1/3。'},
+   cnt:'六角柱: 頂点 1/6 × 12 + 上下の面 1/2 × 2 + 内部 1 × 3 = 6<br>単位格子(実線の枠。六角柱の1/3)は <b>2</b>',
+   ex:'Mg、Zn など。ABAB…と層が重なる最密構造。<b>実線の枠が単位格子</b>で、点線の六角柱のちょうど1/3。'},
  cscl:Object.assign({},CUBE,{grp:'ion',btn:'CsCl型',name:'塩化セシウム型(CsCl型)',
    gen:()=>genCubic([[0,0,0,1],[.5,.5,.5,0]],GLO,GHI),col:[COLS.cat,COLS.an],
    ion:{kCA:SQ3/2,kAA:1,lim:SQ3-1,limTx:'√3 − 1',def:.934,key:'diag',cat:'Cs⁺',an:'Cl⁻',cn:8},
-   coord:8,cnt:'陽イオン: 中心 1 × 1 = <b>1</b><br>陰イオン: 頂点 1/8 × 8 = <b>1</b>',
+   coord:8,cnt:cdot(COLS.cat)+'陽イオン: 中心 1 × 1 = <b>1</b><br>'+cdot(COLS.an)+'陰イオン: 頂点 1/8 × 8 = <b>1</b>',
    comp:'陽イオン 1 : 陰イオン 1 = 1 : 1 → <b>CsCl</b>',
    ex:'CsCl など。陽イオンが立方体の中心、陰イオンが頂点にある。体心立方格子と形は同じだが、中心と頂点は<b>別のイオン</b>。'}),
  nacl:Object.assign({},CUBE,{grp:'ion',btn:'NaCl型',name:'塩化ナトリウム型(NaCl型)',
    gen:()=>genCubic(withT(FCC,1).concat([[.5,0,0,0],[0,.5,0,0],[0,0,.5,0],[.5,.5,.5,0]]),GLO,GHI),col:[COLS.cat,COLS.an],
    ion:{kCA:.5,kAA:SQ2/2,lim:SQ2-1,limTx:'√2 − 1',def:.525,key:'face',cat:'Na⁺',an:'Cl⁻',cn:6},
-   coord:6,cnt:'陽イオン: 辺 1/4 × 12 + 中心 1 × 1 = <b>4</b><br>陰イオン: 頂点 1/8 × 8 + 面 1/2 × 6 = <b>4</b>',
+   coord:6,cnt:cdot(COLS.cat)+'陽イオン: 辺 1/4 × 12 + 中心 1 × 1 = <b>4</b><br>'+cdot(COLS.an)+'陰イオン: 頂点 1/8 × 8 + 面 1/2 × 6 = <b>4</b>',
    comp:'陽イオン 4 : 陰イオン 4 = 1 : 1 → <b>NaCl</b>',
    ex:'NaCl、KCl、MgO など。陽イオンと陰イオンが辺にそって交互に並ぶ。ここでは陰イオンを頂点と面の中心に置いた(逆に置いた図の教科書もある。数は同じ)。'}),
  zns:Object.assign({},CUBE,{grp:'ion',btn:'ZnS型',name:'閃亜鉛鉱型(ZnS型)',
    gen:()=>genCubic(withT(FCC,1).concat(withT(TET,0)),GLO,GHI),col:[COLS.cat,COLS.an],
    ion:{kCA:SQ3/4,kAA:SQ2/2,lim:Math.sqrt(1.5)-1,limTx:'√(3/2) − 1',def:.402,key:'diag',cat:'Zn²⁺',an:'S²⁻',cn:4},
-   coord:4,cnt:'陽イオン: 内部 1 × 4 = <b>4</b><br>陰イオン: 頂点 1/8 × 8 + 面 1/2 × 6 = <b>4</b>',
+   coord:4,cnt:cdot(COLS.cat)+'陽イオン: 内部 1 × 4 = <b>4</b><br>'+cdot(COLS.an)+'陰イオン: 頂点 1/8 × 8 + 面 1/2 × 6 = <b>4</b>',
    comp:'陽イオン 4 : 陰イオン 4 = 1 : 1 → <b>ZnS</b>',
    ex:'ZnS(閃亜鉛鉱)など。陰イオンは面心立方格子の位置。陽イオンは、立方体を8つに分けた小さな立方体のうち4つの中心にあり、4個の陰イオンに正四面体の形で囲まれる。'}),
  dia:Object.assign({},CUBE,{grp:'cov',btn:'ダイヤモンド',name:'ダイヤモンド',
    gen:()=>genCubic(withT(FCC,0).concat(withT(TET,0)),GLO,GHI),rT:[SQ3/8],rS:[.08],col:[COLS.cov],
-   n:8,coord:4,cnt:'頂点 1/8 × 8 + 面 1/2 × 6 + 内部 1 × 4 = <b>8</b>',
+   sites:{nm:'頂点・面心・内部',k:{v:0,f:1,i:2},lab:['頂点','面の中心','内部'],col:[SITE_COLS.v,SITE_COLS.f,SITE_COLS.i]},
+   n:8,coord:4,cnt:cdot(SITE_COLS.v)+'頂点 1/8 × 8 + '+cdot(SITE_COLS.f)+'面 1/2 × 6 + '+cdot(SITE_COLS.i)+'内部 1 × 4 = <b>8</b>',
    ex:'ダイヤモンド(C)、ケイ素(Si)など。それぞれの原子が4個の原子と共有結合で結びつき、正四面体の形をつくる。ZnS型と同じ並び方で、すべて同じ原子。'}),
 };
-// 見せ方の範囲。4コ=2×2×1(横2・奥2・高さ1)、8コ=2×2×2。範囲の中(境界上をふくむ)に中心がある粒子を出す
+// 見せる範囲(rng)。'cell'=単位格子、4コ=2×2×1(横2・奥2・高さ1)、8コ=2×2×2。範囲の中(境界上をふくむ)に中心がある粒子を出す
 const REGION={n4:[[0,2],[0,1],[0,2]],n8:[[0,2],[0,2],[0,2]]};
-function inRegion(s,view,p){
-  const R=REGION[view];
+// 4コ・8コを切り出すときの面(外枠の直方体の6面。法線は内向き)
+const REGION_PLANES={};
+for(const k in REGION){
+  const R=REGION[k],a=[];
+  for(let d=0;d<3;d++){
+    const lo=[0,0,0],hi=[0,0,0],n=[0,0,0];lo[d]=R[d][0];hi[d]=R[d][1];n[d]=1;
+    a.push({p:lo,n:n.slice()},{p:hi,n:n.map(v=>-v)});
+  }
+  REGION_PLANES[k]=a;
+}
+function inRegion(s,rng,p){
+  const R=REGION[rng];
   if(R)return p.every((v,k)=>v>R[k][0]-1e-6&&v<R[k][1]+1e-6);
   return s.inCell(p);
 }
-function viewCenter(s,view){const R=REGION[view];return R?R.map(r=>(r[0]+r[1])/2):s.center;}
-function regionCorners(s,view){
-  const R=REGION[view];
+function rangePlanes(s,rng){return REGION_PLANES[rng]||s.viewPlanes;}
+function viewCenter(s,rng){const R=REGION[rng];return R?R.map(r=>(r[0]+r[1])/2):s.center;}
+function regionCorners(s,rng){
+  const R=REGION[rng];
   if(R){const o=[];for(const x of R[0])for(const y of R[1])for(const z of R[2])o.push([x,y,z]);return o;}
   return s.frame.v.concat(s.sub?s.sub.v:[]);
 }
@@ -492,12 +576,12 @@ function predictType(rho){
 }
 // 表示する物(枠と粒子)が全部入る球の半径(実際の大きさ)。どの向きに回しても、この球の中に収まる
 // radOf(t): 粒子の半径(実際の大きさ)
-function fitRadius(s,pts,view,A,radOf){
-  const C=viewCenter(s,view);
+function fitRadius(s,pts,rng,clip,A,radOf){
+  const C=viewCenter(s,rng);
   let R=0;
-  for(const v of regionCorners(s,view))R=Math.max(R,vlen(vsub(v,C))*A);
-  if(view!=='clip')for(const a of pts){ // 切り取る表示は粒子が枠の外へ出ないので枠だけでよい
-    if(inRegion(s,view,a.p))R=Math.max(R,vlen(vsub(a.p,C))*A+radOf(a.t));
+  for(const v of regionCorners(s,rng))R=Math.max(R,vlen(vsub(v,C))*A);
+  if(!clip)for(const a of pts){ // 切り出しは粒子が枠の外へ出ないので枠だけでよい
+    if(inRegion(s,rng,a.p))R=Math.max(R,vlen(vsub(a.p,C))*A+radOf(a.t));
   }
   return R;
 }
@@ -520,10 +604,11 @@ const EXS=[ // ポーリングのイオン半径(nm)
  {f:'CsCl',c:'Cs⁺',rc:.169,a:'Cl⁻',ra:.181},
  {f:'ZnS',c:'Zn²⁺',rc:.074,a:'S²⁻',ra:.184}];
 const VIEWS={oblique:[.65,.42],front:[0,0],top:[0,Math.PI/2],body:[-Math.PI/4,Math.atan(1/SQ2)]};
-const VIEW_NAME={whole:'粒子',clip:'切り取る',n4:'4コ',n8:'8コ'};
+const RANGE_NAME={cell:'単位格子',n4:'4コ',n8:'8コ'};
 
 let key='fcc',S=ST.fcc,pts=[];
-let view='n8',model='touch',tapMode='coord',layerMode=false;
+// 見せ方は2つの組み合わせ: range=範囲('cell'|'n4'|'n8')、clipOn=切り出し(false なら粒子をまるごと)
+let range='n8',clipOn=false,model='touch',tapMode='coord',layerMode=false,pane='crys';
 let selected=-1,nbrs=new Set(),erased=new Set();
 let secKind='none',corners=[],cutPlane=null; // cutPlane は a=1 の座標(残す側を向く法線)
 let rho=.525,fix='anion',showContact=true,geo=null,A=1,Cw=[.5,.5,.5],keyP={ca:[],aa:[]};
@@ -534,7 +619,7 @@ let interacting=false,idleTimer=null,dirty=true,lastT=0;
 let screenPts=[],rp=[],fsOK=false;
 // 模型の大きさの基準: fitR=表示する物が全部入る球の半径、Lc=模型の中心を置く画面の点と使える領域
 // (どちらも目標 fitT / LT に向かってなめらかに変わる)
-let fitR=1,fitT=1,Lc={cx:0,cy:0,m:1,y1:0},LT={cx:0,cy:0,m:1,y1:0};
+let fitR=1,fitT=1,Lc={cx:0,cy:0,m:1,y1:0},LT={cx:0,cy:0,m:1,y1:0,x1:1};
 
 try{if(localStorage.getItem('chemgames:lattice-viewer:bg')==='light')dark=false;}catch(e){}
 
@@ -544,7 +629,7 @@ function markInteract(){ // 動かしている間は粗く描き、止まった�
   idleTimer=setTimeout(()=>{interacting=false;dirty=true;},170);
   dirty=true;
 }
-function status(t){$('status').innerHTML=t;$('toast').innerHTML=t;}
+function status(t){const s=$('status');s.innerHTML=t;s.scrollTop=0;$('toast').innerHTML=t;}
 function hint(){
   if(tapMode==='erase')return '粒子をタップすると<b>消えます</b>。「消した粒子をもどす」で元どおり。';
   return '粒子をタップすると、<b>接する粒子</b>が光ります。';
@@ -577,24 +662,31 @@ function computeFit(){
   let R=0;
   if(S.ion){
     const rs=[S.ion.lim];for(let v=.15;v<=1.0001;v+=.05)rs.push(v);
-    for(const r of rs){const g=ionGeom(S.ion,r,fix);R=Math.max(R,fitRadius(S,pts,view,g.A,t=>radG(g,t)));}
-  }else R=fitRadius(S,pts,view,1,t=>radG(null,t));
+    for(const r of rs){const g=ionGeom(S.ion,r,fix);R=Math.max(R,fitRadius(S,pts,range,clipOn,g.A,t=>radG(g,t)));}
+  }else R=fitRadius(S,pts,range,clipOn,1,t=>radG(null,t));
   fitT=R;
   if(REDUCED)fitR=fitT;
   dirty=true;
 }
-// 模型を置く領域。設定パネルが開いているときは、パネルにかくれていない側(右パネルなら左、下パネルなら上)の中央に寄せる。
-// パネルは動いている途中があるので、位置は CSS の決まり(幅・高さ)から求める
+// 模型を置く領域。タブ(PC は右端、スマホは下端)と、開いているパネル(タブの左/上)にかくれていない所の中央に寄せる。
+// パネルは動いている途中があるので、位置は CSS の決まり(right/bottom と幅・高さ。transform は入らない)から求める
 function panelOpen(){return !$('app').classList.contains('closed');}
-function layoutTarget(){
+function coverEdge(){ // かくれない所の右端 x1(PC)と下端 y1(スマホ)
+  const rl=$('rail'),pn=$('panel');
   let x1=W,y1=H;
-  if(panelOpen()){
-    const pn=$('panel');
-    if(SHEET.matches)y1=H-pn.offsetHeight-6;
-    else x1=W-10-pn.offsetWidth-8;
+  if(SHEET.matches){
+    y1=H-rl.offsetHeight;
+    if(panelOpen())y1=H-(parseFloat(getComputedStyle(pn).bottom)||0)-pn.offsetHeight;
+  }else{
+    x1=W-rl.offsetWidth;
+    if(panelOpen())x1=W-(parseFloat(getComputedStyle(pn).right)||0)-pn.offsetWidth;
   }
+  return {x1:x1-8,y1:y1-6};
+}
+function layoutTarget(){
+  let {x1,y1}=coverEdge();
   x1=Math.max(x1,W*.3);y1=Math.max(y1,H*.3);
-  LT={cx:x1/2,cy:y1/2,m:Math.min(x1,y1),y1:y1};
+  LT={cx:x1/2,cy:y1/2,m:Math.min(x1,y1),y1:y1,x1:x1};
 }
 function inPlanesW(planes,pw,eps){
   for(const pl of planes){
@@ -603,20 +695,22 @@ function inPlanesW(planes,pw,eps){
   }
   return true;
 }
-// 切り取る表示に入る粒子(球の一部でも単位格子と断面の内側にあれば入れる)
+// 切り出す面(範囲の外側の面。単位格子のときは断面もふくむ)
+function clipPlanes(){return rangePlanes(S,range).concat(cutPlane?[cutPlane]:[]);}
+// 切り出し表示に入る粒子(球の一部でも範囲と断面の内側にあれば入れる)
 function inClip(i){
   const pw=wp(pts[i].p),r=rad(pts[i].t)+1e-6;
-  return inPlanesW(S.viewPlanes,pw,r)&&(!cutPlane||inPlanesW([cutPlane],pw,r));
+  return inPlanesW(clipPlanes(),pw,r);
 }
-// いま画面に描く粒子か。選んだ粒子に接する粒子は、範囲の外でも出す(切り取る表示をのぞく)
+// いま画面に描く粒子か。選んだ粒子に接する粒子は、範囲の外でも出す(切り出しをのぞく)
 function shown(i){
   if(erased.has(i))return false;
-  if(view==='clip')return inClip(i);
-  return inRegion(S,view,pts[i].p)||i===selected||nbrs.has(i);
+  if(clipOn)return inClip(i);
+  return inRegion(S,range,pts[i].p)||i===selected||nbrs.has(i);
 }
 function applyGeom(){
   if(S.ion){geo=ionGeom(S.ion,rho,fix);A=geo.A;}else{geo=null;A=1;}
-  Cw=viewCenter(S,view).map(v=>v*A);
+  Cw=viewCenter(S,range).map(v=>v*A);
   dirty=true;
 }
 
@@ -625,10 +719,10 @@ function setStruct(k,quiet){
   key=k;S=ST[k];pts=S.gen();
   selected=-1;nbrs=new Set();erased=new Set();
   secKind='none';corners=[];cutPlane=null;
-  if(!S.cubic&&REGION[view])view='whole'; // 六方最密は 4コ・8コ を使わない
+  if(!S.cubic&&REGION[range])range='cell'; // 六方最密は 4コ・8コ を使わない
   if(!S.layers)layerMode=false;
   if(S.ion){rho=S.ion.def;$('rho').value=rho;}
-  alphaT=S.ion?[.7,.6]:[.85,.85]; // 不透明度の初期値
+  alphaT=S.ion?[.8,.85]:[.85,.85]; // 不透明度の初期値(イオン結晶は 陽イオン・陰イオン)
   applyGeom();
   keyP=keyPairs(S,pts);
   computeFit();
@@ -636,8 +730,14 @@ function setStruct(k,quiet){
   $('secIon').classList.toggle('hidden',!S.ion);
   $('detIon').classList.toggle('hidden',!S.ion);
   $('secCut').classList.toggle('hidden',!S.cubic);
+  // 使えないタブは消さずに、うすくして理由を1行出す(タブの位置が動かないように)
+  $('ionNA').classList.toggle('hidden',!!S.ion);
+  $('secNA').classList.toggle('hidden',S.cubic);
+  $('t-ion').classList.toggle('dim',!S.ion);
+  $('t-sec').classList.toggle('dim',!S.cubic);
   $('secLayer').classList.toggle('hidden',!S.layers);
   $('bLayerName').textContent=S.layers==='AB'?'AB層':'ABC層';
+  $('bBaseName').textContent=S.sites?S.sites.nm:'1色';
   document.querySelector('#views [data-v="body"]').classList.toggle('hidden',!S.cubic);
   buildOpac();buildExplain();updRatioUI();updViewUI();updSecUI();updRestore();updLayerUI();updIonUI();
   $('cutwrap').classList.add('hidden');
@@ -652,17 +752,19 @@ function shade(hex){
   return 'rgb('+Math.round(c[0]*.4)+','+Math.round(c[1]*.4)+','+Math.round(c[2]*.4)+')';
 }
 function theme(){
-  return dark?{bg:'#141833',frame:'#ffcc00',frameBack:'rgba(255,204,0,.32)',grid:'rgba(255,204,0,.55)',sub:'rgba(255,204,0,.5)',
+  // 単位格子の枠は粒子のじゃまにならないよう、細く・うすく(背景になじむ白/紺)
+  return dark?{bg:'#141833',frame:'rgba(255,255,255,.32)',frameBack:'rgba(255,255,255,.16)',grid:'rgba(255,255,255,.2)',sub:'rgba(255,255,255,.28)',
                text:'#ffffff',pill:'rgba(20,24,51,.85)',ring:'#ffffff',line:'#ffffff'}
-             :{bg:'#f6f4ff',frame:'#1c1740',frameBack:'rgba(28,23,64,.28)',grid:'rgba(28,23,64,.5)',sub:'rgba(28,23,64,.45)',
+             :{bg:'#f6f4ff',frame:'rgba(28,23,64,.32)',frameBack:'rgba(28,23,64,.16)',grid:'rgba(28,23,64,.2)',sub:'rgba(28,23,64,.28)',
                text:'#1c1740',pill:'rgba(255,255,255,.9)',ring:'#1c1740',line:'#1c1740'};
 }
 function baseColor(i){
   if(layerMode&&S.layers)return LAYER_COLS[layerOf(S,pts[i].p)];
+  if(S.sites){const k=S.sites.k[siteOf(pts[i].p)];if(k!==undefined)return S.sites.col[k];}
   return S.col[pts[i].t];
 }
-// 層で色分けしているときは、接する粒子を層の色のままふちどる(切り取る表示はふちどれないのでオレンジにする)
-function ringHi(){return layerMode&&!!S.layers&&view!=='clip';}
+// 層・位置で色分けしているときは、接する粒子をその色のままふちどる(切り出し表示はふちどれないのでオレンジにする)
+function ringHi(){return ((layerMode&&!!S.layers)||(!layerMode&&!!S.sites))&&!clipOn;}
 function colorOf(i){
   if(i===selected)return '#ff4f8b';
   if(nbrs.has(i)&&!ringHi())return '#ffae2b';
@@ -677,7 +779,7 @@ function depthOrder(list){
   return idx.map(k=>list[k]);
 }
 
-// 単位格子(と断面)の面で切り取った粒子を1ピクセルずつ描く。
+// 範囲の外側の面(と断面)で切り出した粒子を1ピクセルずつ描く。
 // 画面の各点から視線を飛ばし、球と単位格子の共通部分の手前の面を求める。球面なら丸く、切り口なら平らに陰影をつける。
 // 不透明な粒子を先に(Zバッファ)、半透明の粒子は奥から順に重ねる。
 let rcCv=null,rcCtx=null,rcImg=null,rcZ=null,RW=0,RH=0,RS=1;
@@ -692,7 +794,7 @@ function drawClip(ord){
   const w=RW,h=RH,data=rcImg.data;
   data.fill(0);rcZ.fill(1e9);
   const sc=scale(),f=FOC;
-  const src=S.viewPlanes.concat(cutPlane?[cutPlane]:[]);
+  const src=clipPlanes();
   const planes=src.map(pl=>{
     const n=rotDir(pl.n),p=rot(wp(pl.p));
     return {n:n,on:(0-p[0])*n[0]+(0-p[1])*n[1]+(f-p[2])*n[2]};
@@ -762,6 +864,195 @@ function drawClip(ord){
   ctx.imageSmoothingEnabled=true;
   ctx.drawImage(rcCv,0,0,W,H);
 }
+
+// ==== 切り出し表示を WebGL2 で描く ====
+// 粒子1個につき画面の四角を1枚描き、フラグメントシェーダーで drawClip と同じ計算(視線と球の交差区間を面でせばめる)をする。
+// 輪郭・切り口の縁は、被覆率をシェーダーの中で解析的に求めてぼかす(gl_FragDepth を書くので MSAA は効かないため)。
+// WebGL2 が使えない・シェーダーの失敗・コンテキストを失った・?cpu=1 のときは drawClip(CPU)を使う。
+const GLX={ok:false,gl:null,cv:null,bk:null,bctx:null,prog:null,vao:null,ibuf:null,u:{},shown:false,chk:3,data:new Float32Array(0)};
+const GL_MAXP=10; // 面の数の上限(立方体6・六角柱8 + 断面1)
+const GL_VS=`#version 300 es
+precision highp float;
+in vec2 aQ;in vec4 aC;in vec4 aCol;in float aDim;
+uniform vec2 uView;uniform vec3 uCam;uniform float uF;
+out vec2 vP;flat out vec4 vC;flat out vec4 vCol;flat out float vDim;
+void main(){
+  float k=uF/max(uF-aC.z,1e-3);
+  vec2 ctr=vec2(uCam.x+aC.x*uCam.z*k,uCam.y-aC.y*uCam.z*k);
+  float hw=aC.w*uCam.z*k*1.15+3.0;
+  vec2 p=ctr+aQ*hw;
+  vP=p;vC=aC;vCol=aCol;vDim=aDim;
+  gl_Position=vec4(p.x/uView.x*2.0-1.0,1.0-p.y/uView.y*2.0,0.0,1.0);
+}`;
+const GL_FS=`#version 300 es
+precision highp float;
+in vec2 vP;flat in vec4 vC;flat in vec4 vCol;flat in float vDim;
+uniform vec3 uCam;uniform float uF;uniform vec3 uL;
+uniform vec4 uPl[${GL_MAXP}];uniform int uNP;
+out vec4 oCol;
+void main(){
+  vec3 D=vec3((vP.x-uCam.x)/uCam.z,(uCam.y-vP.y)/uCam.z,-uF);
+  vec3 c=vC.xyz;float r=vC.w;
+  vec3 O=vec3(-c.x,-c.y,uF-c.z);
+  float Aq=dot(D,D),Bq=2.0*dot(O,D),Qc=dot(O,O)-r*r;
+  float disc=Bq*Bq-4.0*Aq*Qc;
+  float sq=sqrt(max(disc,0.0));
+  float t1s=(-Bq-sq)/(2.0*Aq),t2s=(-Bq+sq)/(2.0*Aq);
+  float tp=-1e9,t2=t2s;vec3 nh=vec3(0.0);bool empty=false;
+  for(int k=0;k<${GL_MAXP};k++){
+    if(k>=uNP)break;
+    vec4 pl=uPl[k];
+    float dn=dot(D,pl.xyz);
+    if(abs(dn)<1e-12){if(pl.w<0.0)empty=true;continue;}
+    float tt=-pl.w/dn;
+    if(dn>0.0){if(tt>tp){tp=tt;nh=pl.xyz;}}
+    else t2=min(t2,tt);
+  }
+  float t1=max(t1s,tp);
+  // 被覆率: 球の輪郭は判別式、面で切れた縁は見える区間の長さ(t2-t1)、切り口と球面の境目は (tp-t1s) で、それぞれ1ピクセルぶんぼかす
+  float h=clamp(t2-t1,-1.0,1.0),e=clamp(tp-t1s,-1.0,1.0);
+  float gS=length(vec2(dFdx(disc),dFdy(disc)));
+  float gH=length(vec2(dFdx(h),dFdy(h)));
+  float gE=length(vec2(dFdx(e),dFdy(e)));
+  float covS=clamp(0.5+disc/max(gS,1e-20),0.0,1.0);
+  bool lim=(tp>t1s)||(t2<t2s);
+  float covI=lim?clamp(0.5+h/max(gH,1e-9),0.0,1.0):1.0;
+  float cov=empty?0.0:min(covS,covI);
+  if(cov<=0.003)discard;
+  float wF=clamp(0.5+e/max(gE,1e-9),0.0,1.0);
+  vec3 ns=(vec3(t1s*D.x,t1s*D.y,uF+t1s*D.z)-c)/r;
+  float ds=max(0.0,dot(ns,uL));
+  float shS=0.3+ds*0.75+pow(ds,20.0)*0.5;
+  float df=max(0.0,dot(-nh,uL));
+  float shF=0.62+df*0.3;
+  float sh=mix(shS,shF,wF)*vDim;
+  oCol=vec4(min(vec3(1.0),vCol.rgb*sh),vCol.a*cov);
+  gl_FragDepth=clamp((t1-0.4)*0.8,0.0,1.0); // t1 は視点からの距離の比(模型の範囲で 0.5〜1.5 ほど)
+}`;
+function glOff(why,err){
+  if(GLX.ok)console.warn('[lattice-viewer] WebGL をやめて CPU で描きます: '+why,err||'');
+  GLX.ok=false;glShow(false);dirty=true;
+}
+function glShow(on){
+  if(GLX.shown===on||!GLX.cv)return;
+  GLX.shown=on;GLX.cv.style.display=on?'block':'none';GLX.bk.style.display=on?'block':'none';
+}
+function glSetup(){ // コンテキストの上にプログラムとバッファを作る。成功で true
+  const gl=GLX.gl;
+  GLX.chk=3;
+  const mk=(type,src)=>{
+    const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.warn('[lattice-viewer] シェーダーのコンパイルに失敗',gl.getShaderInfoLog(s));return null;}
+    return s;
+  };
+  const vs=mk(gl.VERTEX_SHADER,GL_VS),fs=mk(gl.FRAGMENT_SHADER,GL_FS);
+  if(!vs||!fs)return false;
+  const pr=gl.createProgram();
+  gl.attachShader(pr,vs);gl.attachShader(pr,fs);gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){console.warn('[lattice-viewer] シェーダーのリンクに失敗',gl.getProgramInfoLog(pr));return false;}
+  GLX.prog=pr;
+  for(const n of ['uView','uCam','uF','uL','uPl','uNP'])GLX.u[n]=gl.getUniformLocation(pr,n);
+  GLX.vao=gl.createVertexArray();gl.bindVertexArray(GLX.vao);
+  const qb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qb);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const aQ=gl.getAttribLocation(pr,'aQ');
+  gl.enableVertexAttribArray(aQ);gl.vertexAttribPointer(aQ,2,gl.FLOAT,false,0,0);
+  GLX.ibuf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,GLX.ibuf);
+  const att=[['aC',4,0],['aCol',4,16],['aDim',1,32]];
+  for(const a of att){
+    const loc=gl.getAttribLocation(pr,a[0]);
+    if(loc<0)continue;
+    gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,a[1],gl.FLOAT,false,36,a[2]);gl.vertexAttribDivisor(loc,1);
+  }
+  gl.bindVertexArray(null);
+  return !gl.isContextLost();
+}
+function glInit(){
+  GLX.cv=$('stageGL');GLX.bk=$('stageBk');GLX.bctx=GLX.bk.getContext('2d');
+  let force=false;
+  try{force=new URLSearchParams(location.search).get('cpu')==='1';}catch(e){}
+  if(force){console.warn('[lattice-viewer] ?cpu=1 なので切り出し表示は CPU で描きます');return;}
+  try{
+    const gl=GLX.cv.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:false,depth:true,stencil:false,preserveDrawingBuffer:false});
+    if(!gl){console.warn('[lattice-viewer] WebGL2 が使えないので CPU で描きます');return;}
+    GLX.gl=gl;
+    GLX.cv.addEventListener('webglcontextlost',e=>{e.preventDefault();glOff('webglcontextlost');},false);
+    GLX.cv.addEventListener('webglcontextrestored',()=>{
+      try{if(glSetup()){GLX.ok=true;dirty=true;console.warn('[lattice-viewer] WebGL を元にもどしました');}}catch(e){console.warn('[lattice-viewer] WebGL の復帰に失敗',e);}
+    },false);
+    GLX.ok=glSetup();
+    if(!GLX.ok)console.warn('[lattice-viewer] WebGL の準備に失敗したので CPU で描きます');
+  }catch(e){GLX.ok=false;console.warn('[lattice-viewer] WebGL の準備でエラー。CPU で描きます',e);}
+}
+function glResize(){
+  if(!GLX.cv)return;
+  const w=Math.max(1,Math.round(W*DPR)),h=Math.max(1,Math.round(H*DPR));
+  for(const c of [GLX.cv,GLX.bk])if(c.width!==w||c.height!==h){c.width=w;c.height=h;}
+  GLX.bctx.setTransform(w/W,0,0,h/H,0,0);
+}
+// drawClip と同じ順(不透明を先に、半透明は奥から順)で描く。失敗したら false
+function glDrawClip(ord){
+  const gl=GLX.gl;
+  if(!gl||gl.isContextLost())return false;
+  const f=FOC,sc=scale();
+  const src=clipPlanes();
+  if(src.length>GL_MAXP)return false;
+  const P=new Float32Array(GL_MAXP*4);
+  src.forEach((pl,k)=>{
+    const n=rotDir(pl.n),p=rot(wp(pl.p));
+    P.set([n[0],n[1],n[2],(0-p[0])*n[0]+(0-p[1])*n[1]+(f-p[2])*n[2]],k*4);
+  });
+  const hasSel=selected>=0;
+  const opq=[],trn=[];
+  for(const i of ord)(alphaOf(i)>=.999?opq:trn).push(i);
+  const list=opq.concat(trn);
+  if(GLX.data.length<list.length*9)GLX.data=new Float32Array(list.length*9+90);
+  const d=GLX.data;
+  list.forEach((i,k)=>{
+    const c=rp[i],col=hexRGB(colorOf(i)),o=k*9;
+    d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=rad(pts[i].t);
+    d[o+4]=col[0]/255;d[o+5]=col[1]/255;d[o+6]=col[2]/255;d[o+7]=alphaOf(i);
+    d[o+8]=(hasSel&&!isHi(i))?.45:1;
+  });
+  gl.viewport(0,0,GLX.cv.width,GLX.cv.height);
+  gl.clearColor(0,0,0,0);gl.clearDepth(1);
+  gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  if(!list.length)return true;
+  gl.useProgram(GLX.prog);
+  gl.uniform2f(GLX.u.uView,W,H);
+  gl.uniform3f(GLX.u.uCam,Lc.cx,Lc.cy,sc);
+  gl.uniform1f(GLX.u.uF,f);
+  const L=vnorm([-.42,.55,.72]);
+  gl.uniform3f(GLX.u.uL,L[0],L[1],L[2]);
+  gl.uniform4fv(GLX.u.uPl,P);
+  gl.uniform1i(GLX.u.uNP,src.length);
+  gl.bindVertexArray(GLX.vao);
+  gl.bindBuffer(gl.ARRAY_BUFFER,GLX.ibuf);
+  gl.bufferData(gl.ARRAY_BUFFER,d.subarray(0,list.length*9),gl.DYNAMIC_DRAW);
+  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LESS);
+  gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  if(opq.length){gl.depthMask(true);gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,opq.length);}
+  if(trn.length){ // 半透明は不透明の奥行きとだけくらべ、奥行きは書かない
+    gl.depthMask(false);
+    for(const a of [['aC',0],['aCol',16],['aDim',32]]){
+      const loc=gl.getAttribLocation(GLX.prog,a[0]);
+      if(loc>=0)gl.vertexAttribPointer(loc,a[0]==='aDim'?1:4,gl.FLOAT,false,36,a[1]+opq.length*36);
+    }
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,trn.length);
+    for(const a of [['aC',0],['aCol',16],['aDim',32]]){ // もとにもどす
+      const loc=gl.getAttribLocation(GLX.prog,a[0]);
+      if(loc>=0)gl.vertexAttribPointer(loc,a[0]==='aDim'?1:4,gl.FLOAT,false,36,a[1]);
+    }
+    gl.depthMask(true);
+  }
+  gl.bindVertexArray(null);
+  if(GLX.chk>0){ // getError は待ちが出るので、はじめの数回だけ調べる
+    GLX.chk--;
+    const err=gl.getError();
+    if(err!==gl.NO_ERROR&&err!==gl.CONTEXT_LOST_WEBGL){console.warn('[lattice-viewer] WebGL のエラー '+err);return false;}
+  }
+  return true;
+}
 function drawSprites(ord,th){
   const hasSel=selected>=0;
   for(const i of ord){
@@ -791,9 +1082,9 @@ function drawEdges(fr,P,col,lw,dash){
   ctx.stroke();ctx.setLineDash([]);
 }
 function scr(q){return proj(rot(q));}
-// 4コ・8コの枠: ならべた単位格子の線(単位格子1つぶんは太く)
+// 4コ・8コの枠: ならべた単位格子の線(単位格子1つぶんは少しだけ太く)
 function drawGrid(col,lw){
-  const R=REGION[view];if(!R)return;
+  const R=REGION[range];if(!R)return;
   ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();
   const line=(a,b)=>{const p=scr(wp(a)),q=scr(wp(b));ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);};
   for(let y=R[1][0];y<=R[1][1];y++)for(let z=R[2][0];z<=R[2][1];z++)line([R[0][0],y,z],[R[0][1],y,z]);
@@ -804,6 +1095,7 @@ function drawGrid(col,lw){
 // 限界半径比の断面の上で、陽−陰・陰−陰が接しているかを線で示す(接触モデルのときだけ)
 function drawContacts(th){
   if(!S.ion||!showContact||!touchOn())return;
+  if(REGION[range])return; // 4コ・8コでは出さない(点が多くなり、粒子より目立つため)
   const touchCA=Math.abs(geo.gapCA)<1e-7,touchAA=Math.abs(geo.gapAA)<1e-7;
   ctx.lineCap='round';
   for(const pr of keyP.ca){
@@ -812,18 +1104,18 @@ function drawContacts(th){
     const C=wp(pts[ic].p),An=wp(pts[ia].p),d=vlen(vsub(C,An)),u=vsub(C,An).map(v=>v/d);
     const pc=scr(C),pa=scr(An);
     if(touchCA){
-      ctx.strokeStyle=th.line;ctx.globalAlpha=.75;ctx.lineWidth=2;
+      ctx.strokeStyle=th.line;ctx.globalAlpha=.4;ctx.lineWidth=1.5;
       ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pc.x,pc.y);ctx.stroke();ctx.globalAlpha=1;
       const q=scr([An[0]+u[0]*geo.rA,An[1]+u[1]*geo.rA,An[2]+u[2]*geo.rA]);
-      ctx.beginPath();ctx.arc(q.x,q.y,6,0,7);ctx.fillStyle='#ffe14d';ctx.fill();
-      ctx.lineWidth=2;ctx.strokeStyle='#1c1740';ctx.stroke();
+      ctx.beginPath();ctx.arc(q.x,q.y,3.5,0,7);ctx.fillStyle='#ffe14d';ctx.fill();
+      ctx.lineWidth=1;ctx.strokeStyle='rgba(28,23,64,.55)';ctx.stroke();
     }else{
-      ctx.strokeStyle=th.line;ctx.globalAlpha=.6;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      ctx.strokeStyle=th.line;ctx.globalAlpha=.4;ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
       ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pc.x,pc.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
       // 陰イオンの表面から陽イオンの表面までの「すき間」
       const q1=scr([An[0]+u[0]*geo.rA,An[1]+u[1]*geo.rA,An[2]+u[2]*geo.rA]);
       const q2=scr([An[0]+u[0]*(d-geo.rC),An[1]+u[1]*(d-geo.rC),An[2]+u[2]*(d-geo.rC)]);
-      ctx.strokeStyle='#ff4f5e';ctx.lineWidth=5;ctx.setLineDash([2,5]);
+      ctx.strokeStyle='#ff4f5e';ctx.lineWidth=3;ctx.setLineDash([2,4]);
       ctx.beginPath();ctx.moveTo(q1.x,q1.y);ctx.lineTo(q2.x,q2.y);ctx.stroke();ctx.setLineDash([]);
     }
   }
@@ -831,10 +1123,10 @@ function drawContacts(th){
     if(erased.has(pr[0])||erased.has(pr[1]))continue;
     const P1=wp(pts[pr[0]].p),P2=wp(pts[pr[1]].p);
     const a=scr(P1),b=scr(P2),m=scr([(P1[0]+P2[0])/2,(P1[1]+P2[1])/2,(P1[2]+P2[2])/2]);
-    ctx.strokeStyle='#ff4f5e';ctx.lineWidth=3;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-    ctx.beginPath();ctx.arc(m.x,m.y,6,0,7);ctx.fillStyle='#ff4f5e';ctx.fill();
-    ctx.lineWidth=2;ctx.strokeStyle=th.ring;ctx.stroke();
+    ctx.strokeStyle='#ff4f5e';ctx.lineWidth=2;ctx.globalAlpha=.7;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.globalAlpha=1;
+    ctx.beginPath();ctx.arc(m.x,m.y,3.5,0,7);ctx.fillStyle='#ff4f5e';ctx.fill();
+    ctx.lineWidth=1;ctx.strokeStyle=th.ring;ctx.stroke();
   }
   ctx.lineCap='butt';
 }
@@ -853,7 +1145,7 @@ function drawLabels(th){
   const big=Math.min(W,H)>=560;
   const fs=big?17:15;
   // 左上: いまの構造の名前(大きめ)
-  const nm=S.name+(view==='whole'||view==='clip'?'':' ・ '+VIEW_NAME[view]);
+  const nm=S.name+(REGION[range]?' ・ '+RANGE_NAME[range]:'');
   pill(10,8,nm,big?21:18,th.pill,th.text,th.ring);
   // まだ触っていないときの手がかり
   if(!touched)pill(10,108,'ドラッグで回せるよ',fs,'#ffcc00','#1c1740','#1c1740');
@@ -872,6 +1164,7 @@ function drawLabels(th){
     items.push([LAYER_COLS[0],'A層'],[LAYER_COLS[1],'B層']);
     if(S.layers==='ABC')items.push([LAYER_COLS[2],'C層']);
   }else if(S.ion)items.push([S.col[0],'陽イオン('+S.ion.cat+'など)'],[S.col[1],'陰イオン('+S.ion.an+'など)']);
+  else if(S.sites)S.sites.lab.forEach((l,k)=>items.push([S.sites.col[k],l]));
   if(selected>=0){
     items.push(['#ff4f8b','選んだ粒子']);
     items.push([ringHi()?'':'#ffae2b',(ringHi()?'ふちどり: ':'')+'接する粒子 '+nbrs.size+'個']);
@@ -880,7 +1173,7 @@ function drawLabels(th){
   ctx.font='700 '+fs+'px sans-serif';
   // 1行に入るだけ並べ、入らなければ上の行へ
   const rows=[[]];let x=10;
-  const maxX=(SHEET.matches||!panelOpen())?W-10:W-10-$('panel').offsetWidth-18;
+  const maxX=LT.x1-4; // タブ・パネルにかくれない所まで
   for(const it of items){
     const wdt=ctx.measureText(it[1]).width+fs*2;
     if(x+wdt>maxX&&rows[rows.length-1].length){rows.push([]);x=10;}
@@ -909,6 +1202,11 @@ function drawLabels(th){
 }
 function draw(){
   const th=theme();
+  // 切り出し表示を WebGL で描くときは、下から 背景と奥の枠(#stageBk)→ 粒子(#stageGL)→ 手前の枠・文字(#stage)
+  const useGL=clipOn&&GLX.ok;
+  glShow(useGL);
+  const ctx0=ctx;
+  if(useGL){ctx.clearRect(0,0,W,H);ctx=GLX.bctx;}
   ctx.fillStyle=th.bg;ctx.fillRect(0,0,W,H);
   const list=[];
   for(let i=0;i<pts.length;i++)if(shown(i))list.push(i);
@@ -917,14 +1215,19 @@ function draw(){
   const cp=S.frame.v.map(q=>scr(wp(q)));
   const sp2=S.sub?S.sub.v.map(q=>scr(wp(q))):null;
   // 枠の奥側をうすく
-  if(sp2)drawEdges(S.sub,sp2,th.frameBack,1.5,[5,4]);
-  drawEdges(S.frame,cp,th.frameBack,2);
+  if(sp2)drawEdges(S.sub,sp2,th.frameBack,1,[5,4]);
+  drawEdges(S.frame,cp,th.frameBack,1);
+  ctx=ctx0;
   const ord=depthOrder(list);
-  if(view==='clip')drawClip(ord);else drawSprites(ord,th);
+  if(useGL){
+    let ok=false;
+    try{ok=glDrawClip(ord);}catch(e){console.warn('[lattice-viewer] WebGL で描けませんでした',e);}
+    if(!ok){glOff('描画に失敗');draw();return;} // CPU で描き直す
+  }else if(clipOn)drawClip(ord);else drawSprites(ord,th);
   // 枠(手前に重ね描き)
-  drawGrid(th.grid,1.6);
-  if(sp2)drawEdges(S.sub,sp2,th.sub,1.5,[5,4]);
-  drawEdges(S.frame,cp,th.frame,REGION[view]?3.5:2.5);
+  drawGrid(th.grid,1);
+  if(sp2)drawEdges(S.sub,sp2,th.sub,1,[5,4]);
+  drawEdges(S.frame,cp,th.frame,REGION[range]?1.5:1);
   // 断面の輪郭
   if(corners.length===4){
     const poly=orderCorners(corners).map(ci=>cp[ci]);
@@ -977,10 +1280,14 @@ function setSec(kind,quiet){
   corners=kind==='face'||kind==='diag'?SECS[kind].slice():[];
   cutPlane=null;
   let msg='';
-  if(kind!=='none'&&view!=='clip'){setView('clip',true);msg='見せ方を<b>「切り取る」</b>にしました。';}
+  // 断面は単位格子を切り出したときだけ使う。ほかの見せ方なら切りかえる
+  if(kind!=='none'&&(!clipOn||REGION[range])){
+    setRange('cell',true);setClip(true,true);
+    msg='見せ方を<b>「単位格子」「切り出し」</b>にしました。';
+  }
   if(corners.length===4){
     buildCut();
-    msg+=(kind==='face'?'<b>正面の面</b>':'<b>対角の面</b>(体対角線をふくむ面)')+'で切りました。断面図は「断面」の下にあります。「断面の正面」で正面から見られます。';
+    msg+=(kind==='face'?'<b>正面の面</b>':'<b>対角の面</b>(体対角線をふくむ面)')+'で切りました。断面図は「断面」のタブにあります。「表示」の「断面の正面」で正面から見られます。';
   }else{
     $('cutwrap').classList.add('hidden');
     msg+='断面の表示をやめました。';
@@ -1024,9 +1331,8 @@ function drawCut(){
   circles.forEach(c=>{
     const px=X(c.x),py=Y(c.y),pr=c.r*sc;
     const col=colorOf(c.i);
-    const g=cutCtx.createRadialGradient(px-pr*.3,py-pr*.35,pr*.1,px,py,pr);
-    g.addColorStop(0,'#fff');g.addColorStop(.35,col);g.addColorStop(1,shade(col));
-    cutCtx.beginPath();cutCtx.arc(px,py,pr,0,7);cutCtx.fillStyle=g;cutCtx.fill();
+    // 断面図は平面の図なので、光沢や陰影をつけずに1色でぬる
+    cutCtx.beginPath();cutCtx.arc(px,py,pr,0,7);cutCtx.fillStyle=col;cutCtx.fill();
     cutCtx.lineWidth=1.5;cutCtx.strokeStyle='rgba(28,23,64,.5)';cutCtx.stroke();
   });
   // 接している所に点(陰−陰は赤、それ以外は黄)
@@ -1082,11 +1388,11 @@ function selectAtom(i){
   let m='<b>'+who+'</b>(ピンク)に接する'+what+hl+'は <b>'+n+'個</b>。'
     +(S.ion?'<b>'+who+'のまわりの'+what+'の数</b>(配位数)は '+n+'。':'配位数は <b>'+n+'</b>。')
     +'(中心間の距離 '+fmtLen(r.d)+')';
-  if(view==='clip'){
+  if(clipOn){
     const vis=r.list.filter(j=>!erased.has(j)&&inClip(j)).length;
-    if(vis<n)m+='<br>切り取った表示で見えているのは <b>'+vis+' / '+n+'個</b>。'+(S.cubic?'「8コ」':'「粒子」')+'にすると全部見えます。';
+    if(vis<n)m+='<br>切り出した表示で見えているのは <b>'+vis+' / '+n+'個</b>。「粒子(まるごと)」にすると全部見えます。';
   }else{
-    const out=r.list.filter(j=>!inRegion(S,view,pts[j].p)).length;
+    const out=r.list.filter(j=>!inRegion(S,range,pts[j].p)).length;
     if(out)m+='<br>そのうち '+out+'個は表示の範囲の外にあるので、その粒子だけを出しています。';
   }
   status(m);dirty=true;refreshCut();
@@ -1110,8 +1416,9 @@ function eraseAt(i){
   if(selected===i||nbrs.has(i)){selected=-1;nbrs=new Set();}
   const f=S.frac(pts[i].p);
   updRestore();
-  status((f>0?'消した粒子は'+S.cellWord+'(太い枠)に <b>'+fracTx(f)+'</b> だけ入っていました。'
-             :S.cellWord+'(太い枠)の外の粒子を消しました(太い枠の中の数は変わりません)。')+'<br>'+remainTx());
+  const fw=S.cubic?'枠':'点線の枠'; // 六方最密の六角柱は点線の枠
+  status((f>0?'消した粒子は'+S.cellWord+'('+fw+')に <b>'+fracTx(f)+'</b> だけ入っていました。'
+             :S.cellWord+'('+fw+')の外の粒子を消しました('+fw+'の中の数は変わりません)。')+'<br>'+remainTx());
   refreshCut();dirty=true;
 }
 function updRestore(){
@@ -1126,7 +1433,7 @@ function hitAtom(p,inRangeOnly){
   for(let i=0;i<pts.length;i++){
     if(!shown(i))continue;
     const a=pts[i];
-    if(inRangeOnly&&view!=='clip'&&!inRegion(S,view,a.p))continue;
+    if(inRangeOnly&&!clipOn&&!inRegion(S,range,a.p))continue;
     const sp=screenPts[i];if(!sp)continue;
     const r=Math.max(12,rad(a.t)*sp.s*sp.k);
     if((p.x-sp.x)**2+(p.y-sp.y)**2<r*r&&rp[i][2]>bz){bz=rp[i][2];best=i;}
@@ -1142,7 +1449,7 @@ function onTap(p){
     return;
   }
   if(tapMode==='erase'){eraseAt(i);return;}
-  if(view!=='clip'&&!inRegion(S,view,pts[i].p)){
+  if(!clipOn&&!inRegion(S,range,pts[i].p)){
     status('表示の範囲の外の粒子は、そのまわりの粒子がそろっていないので選べません。<b>枠の中の粒子</b>をタップしよう。');
     return;
   }
@@ -1258,10 +1565,34 @@ function onFs(){
   fit();
 }
 
-// ==== 設定パネルの開閉 ====
+// ==== 4つのタブ(結晶 / 表示 / 限界半径比 / 断面)とパネル ====
+// タブを押す: 閉じていれば開く。別のタブなら中身を切りかえる。開いているタブをもう一度押すと閉じる
+function updRail(){
+  const open=panelOpen();
+  document.querySelectorAll('#rail>button').forEach(b=>{
+    const sel=b.dataset.p===pane,on=sel&&open;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-selected',String(sel));
+    b.setAttribute('aria-expanded',String(on));
+  });
+  $('panel').setAttribute('aria-labelledby','t-'+pane);
+  $('rail').setAttribute('aria-orientation',SHEET.matches?'horizontal':'vertical');
+}
+function setPane(p){
+  pane=p;
+  document.querySelectorAll('.lv-pane').forEach(d=>d.classList.toggle('hidden',d.dataset.p!==p));
+  $('pbody').scrollTop=0;
+  updRail();
+  if(p==='sec')setTimeout(refreshCut,0); // 断面図はかくれている間は大きさが測れないので、出たときに描く
+}
+function onRail(p){
+  if(panelOpen()&&p===pane){setPanel(false);return;}
+  setPane(p);
+  if(!panelOpen())setPanel(true);
+}
 function setPanel(open){
   $('app').classList.toggle('closed',!open);
-  $('tab').setAttribute('aria-expanded',String(open));
+  updRail();
   layoutTarget();if(REDUCED)Lc=Object.assign({},LT);
   dirty=true;
   if(open)setTimeout(refreshCut,280);
@@ -1274,6 +1605,7 @@ function fit(){
   DPR=Math.min(2,window.devicePixelRatio||1);
   cv.width=Math.max(1,Math.round(W*DPR));cv.height=Math.max(1,Math.round(H*DPR));
   ctx.setTransform(cv.width/W,0,0,cv.height/H,0,0);
+  glResize();updRail();
   layoutTarget();Lc=Object.assign({},LT); // 大きさが変わったときは、すぐ合わせる
   dirty=true;
 }
@@ -1288,27 +1620,40 @@ function fitCut(){
 
 // ==== 操作パネル ====
 function barOn(id,val){document.querySelectorAll('#'+id+'>button').forEach(b=>b.classList.toggle('on',b.dataset.v===val));}
-function setView(v,quiet){
-  if(REGION[v]&&!S.cubic){
-    status('六方最密構造は、教科書と同じ<b>六角柱</b>の形(「粒子」)で見よう。4コ・8コは立方体の単位格子をならべる見せ方なので、ここでは使いません。');
+// いまの見せ方(範囲 × 粒子の出し方)の説明
+function viewMsg(){
+  const arr={n4:'横2×奥2×高さ1',n8:'2×2×2'}[range];
+  if(!REGION[range])return clipOn
+    ?'<b>単位格子・切り出し</b>: 粒子を'+S.cellWord+'の面で切り出します。'+(S.cubic?'頂点は1/8、辺は1/4、面は1/2':'六角柱の頂点は1/6、上下の面の中心は1/2')+'だけ入っていることを確かめよう。'
+    :'<b>単位格子・粒子</b>: 中心が'+S.cellWord+'の中(面や辺の上もふくむ)にある粒子を、まるごと出します。';
+  const nm='<b>'+RANGE_NAME[range]+(clipOn?'・切り出し':'')+'</b>: 単位格子を '+arr+' にならべました。';
+  if(clipOn)return nm+'いちばん外側の面で切り出しました。内側の粒子はまるごと見えます。少し太い線の枠が単位格子1つぶん。';
+  return nm+(range==='n8'?'真ん中の粒子をタップすると、接する粒子が全部そろって見えます。':'少し太い線の枠が単位格子1つぶん。');
+}
+function setRange(r,quiet){
+  if(REGION[r]&&!S.cubic){
+    status('六方最密構造は、教科書と同じ<b>六角柱</b>の形(「単位格子」)で見よう。4コ・8コは立方体の単位格子をならべる見せ方なので、ここでは使いません。');
     return;
   }
-  view=v;
-  if(v!=='clip'&&secKind!=='none')setSec('none',true); // 断面は「切り取る」のときだけ
-  if(selected>=0&&v!=='clip'&&!inRegion(S,v,pts[selected].p))clearSel();
+  range=r;
+  if(REGION[r]&&secKind!=='none')setSec('none',true); // 断面は単位格子のときだけ
+  if(selected>=0&&!clipOn&&!inRegion(S,r,pts[selected].p))clearSel();
   applyGeom();computeFit();updViewUI();
-  if(!quiet){
-    const t={whole:'<b>粒子</b>: 中心が'+S.cellWord+'の中(面や辺の上もふくむ)にある粒子を、まるごと出します。',
-             clip:'<b>切り取る</b>: 粒子を'+S.cellWord+'の面で切り取ります。頂点は1/8、辺は1/4、面は1/2だけ入っていることを確かめよう。',
-             n4:'<b>4コ</b>: 単位格子を 横2×奥2×高さ1 にならべました。太い枠が単位格子1つぶん。',
-             n8:'<b>8コ</b>: 単位格子を 2×2×2 にならべました。真ん中の粒子をタップすると、接する粒子が全部そろって見えます。'}[v];
-    status(t+'<br>'+hint());
-  }
+  if(!quiet)status(viewMsg()+'<br>'+hint());
+  refreshCut();dirty=true;
+}
+function setClip(on,quiet){
+  clipOn=on;
+  if(!on&&secKind!=='none')setSec('none',true); // 断面は切り出しのときだけ
+  if(selected>=0&&!on&&!inRegion(S,range,pts[selected].p))clearSel();
+  applyGeom();computeFit();updViewUI();
+  if(!quiet)status(viewMsg()+'<br>'+hint());
   refreshCut();dirty=true;
 }
 function updViewUI(){
-  barOn('barView',view);
-  document.querySelectorAll('#barView>button').forEach(b=>b.classList.toggle('off',!!REGION[b.dataset.v]&&!S.cubic));
+  barOn('barRange',range);
+  barOn('barShow',clipOn?'clip':'atoms');
+  document.querySelectorAll('#barRange>button').forEach(b=>b.classList.toggle('off',!!REGION[b.dataset.v]&&!S.cubic));
   $('viewNote').textContent=S.cubic?'':'六方最密構造は六角柱で見るので、4コ・8コは使えません。';
 }
 function updSecUI(){
@@ -1419,8 +1764,10 @@ function loop(t){
 
 window.addEventListener('load',()=>{
   cv=$('stage');ctx=cv.getContext('2d');
+  glInit();
   cutCv=$('cut');cutCtx=cutCv.getContext('2d');
-  $('mascot').innerHTML=CG.mascot('回してみよう。粒子をタップすると、となりの粒子が光るよ。');
+  // 吹き出しの中身は、いまの様子(status)。最初は説明
+  $('mascot').innerHTML=CG.mascot('<div class="lv-say" id="status" aria-live="polite">回してみよう。粒子をタップすると、となりの粒子が光るよ。</div>');
   // 構造のボタン(種類ごと)
   const G=[['metal','金属の結晶'],['ion','イオン結晶'],['cov','共有結合の結晶']];
   $('structs').innerHTML=G.map(g=>'<div class="lv-grp"><div class="lv-gl">'+g[1]+'</div>'
@@ -1455,15 +1802,24 @@ window.addEventListener('load',()=>{
     status(fix==='anion'?'<b>陰イオンの大きさを固定</b>: 陽イオンを小さくすると格子も縮み、やがて陰イオンどうしがぶつかって止まります。'
                         :'<b>格子の大きさを固定</b>: 枠の大きさは変えず、半径比に合わせてイオンの大きさを変えます。');
   });
+  // 「？」: 操作のしかたを出す。もう一度押す・✕・外側を押す・Esc で閉じる
+  const setHelp=on=>{$('help').classList.toggle('hidden',!on);$('bHelp').setAttribute('aria-expanded',on?'true':'false');};
+  $('bHelp').onclick=e=>{e.stopPropagation();setHelp($('help').classList.contains('hidden'));};
+  $('bHelpX').onclick=()=>setHelp(false);
+  document.addEventListener('pointerdown',e=>{if(!$('help').classList.contains('hidden')&&!e.target.closest('#help,#bHelp'))setHelp(false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')setHelp(false);});
   $('chkContact').onchange=()=>{showContact=$('chkContact').checked;dirty=true;};
-  $('barView').querySelectorAll('button').forEach(b=>b.onclick=()=>setView(b.dataset.v));
+  $('barRange').querySelectorAll('button').forEach(b=>b.onclick=()=>setRange(b.dataset.v));
+  $('barShow').querySelectorAll('button').forEach(b=>b.onclick=()=>setClip(b.dataset.v==='clip'));
+  document.querySelectorAll('#rail>button').forEach(b=>b.onclick=()=>onRail(b.dataset.p));
   $('barModel').querySelectorAll('button').forEach(b=>b.onclick=()=>setModel(b.dataset.v));
   $('bToTouch').onclick=()=>setModel('touch');
   $('barLayer').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     layerMode=b.dataset.v==='layer';updLayerUI();refreshCut();dirty=true;
     status(layerMode?(S.layers==='ABC'?'<b>ABC層</b>で色分けしました。「体対角線の方向」のボタンで、層が3つごとにくり返すのを見よう。'
                                       :'<b>AB層</b>で色分けしました。「真上」のボタンで、層が2つごとにくり返すのを見よう。')
-                    :'色分けをやめました。');
+                    :S.sites?'<b>'+S.sites.nm+'</b>で色分けしました。左下の色の説明と、粒子数の数え方をくらべよう。'
+                    :'層の色分けをやめて、1色にしました。');
   });
   $('barTap').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     tapMode=b.dataset.v;barOn('barTap',tapMode);
@@ -1488,7 +1844,6 @@ window.addEventListener('load',()=>{
   $('bZin').onclick=()=>{stopAuto();zoomBy(1.15);};
   $('bZout').onclick=()=>{stopAuto();zoomBy(1/1.15);};
   $('bClose').onclick=()=>setPanel(false);
-  $('tab').onclick=()=>setPanel(true);
   // 全画面ボタンは、全画面にできる環境でだけ出す
   const el=document.documentElement;
   fsOK=!!((document.fullscreenEnabled||document.webkitFullscreenEnabled)&&(el.requestFullscreen||el.webkitRequestFullscreen));
@@ -1517,7 +1872,7 @@ window.addEventListener('load',()=>{
   barOn('barModel',model);barOn('barTap',tapMode);barOn('barBg',dark?'dark':'light');
   document.body.classList.toggle('lv-light',!dark);
   $('bAuto').classList.toggle('on',autoRot);
-  $('tab').setAttribute('aria-expanded','true');
+  setPanel(!SHEET.matches); // PC は「結晶」を開いた状態、スマホは閉じた状態(3Dを広く)
   fit();
   setStruct('fcc',true);
   fitR=fitT; // 開いたときは大きさのアニメーションなし
