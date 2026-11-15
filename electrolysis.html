@@ -211,7 +211,7 @@ function renderChips(){
   cur.sp.forEach(s=>{
     const d=document.createElement('div');
     d.className='sp'+(s.w?' elecchip':'');
-    d.innerHTML=s.h;d.dataset.id=s.id;
+    d.innerHTML='<span>'+s.h+'</span>';d.dataset.id=s.id; // span で包む(inline-flex の中では文字と上付き・下付きが別々に中央へそろってしまうため)
     if(xSel.has(s.id))d.classList.add('x');
     d.onclick=()=>tap(s.id,d);
     (s.w==='A'?$('anodeBox'):s.w==='C'?$('cathodeBox'):$('solution')).appendChild(d);

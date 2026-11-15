@@ -161,7 +161,7 @@ function next(){
       $('qa').appendChild(b);
     });
   }else{
-    f.innerHTML=cur[0];f.classList.remove('mystery');
+    f.innerHTML='<span>'+cur[0]+'</span>';f.classList.remove('mystery'); // span で包む(flex の中では文字と下付きが別々に中央へそろってしまうため)
     $('sub').textContent='この物質の結晶は？';
   }
   const tdiv=$('types');tdiv.innerHTML='';

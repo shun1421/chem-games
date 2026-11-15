@@ -20,10 +20,10 @@
     {"q":"オレンジ色の原子の酸化数は？<br>K<span style=\"color:#e8a13d\">Mn</span>O<sub>4</sub>","a":"+7","ex":"K:+1, O:−2×4 → Mn=+7"},
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Mn</span>O<sub>2</sub>","a":"+4","ex":"O:−2×2 → Mn=+4"},
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Mn</span><sup>2+</sup>","a":"+2","ex":"単原子イオンは電荷がそのまま酸化数"},
-    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Cr</span><sub>2</sub>O<sub>7</sub><sup>2−</sup>","a":"+6","ex":"O:−2×7、全体−2 → Cr2個で+12 → +6"},
+    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Cr</span><sub>2</sub>O<sub>7</sub><sup>2−</sup>","a":"+6","ex":"O:−2×7、全体−2 → Cr 2個で+12 → +6"},
     {"q":"オレンジ色の原子の酸化数は？<br>H<sub>2</sub><span style=\"color:#e8a13d\">O</span><sub>2</sub>","a":"−1","ex":"過酸化水素のOは例外的に−1！"},
     {"q":"オレンジ色の原子の酸化数は？<br>Fe<sub>2</sub><span style=\"color:#e8a13d\">O</span><sub>3</sub>…のO","a":"−2","ex":"化合物中のOはふつう−2"},
-    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Fe</span><sub>2</sub>O<sub>3</sub>","a":"+3","ex":"O:−2×3 → Fe2個で+6 → +3"},
+    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Fe</span><sub>2</sub>O<sub>3</sub>","a":"+3","ex":"O:−2×3 → Fe 2個で+6 → +3"},
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Fe</span>SO<sub>4</sub>","a":"+2","ex":"SO<sub>4</sub><sup>2−</sup>とみて Fe=+2"},
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Cl</span><sub>2</sub>","a":"0","ex":"単体の酸化数は0"},
     {"q":"オレンジ色の原子の酸化数は？<br>H<span style=\"color:#e8a13d\">Cl</span>O","a":"+1","ex":"次亜塩素酸。H:+1, O:−2 → Cl=+1"},
@@ -33,6 +33,6 @@
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">C</span>O<sub>2</sub>","a":"+4","ex":"O:−2×2 → C=+4"},
     {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">C</span>H<sub>4</sub>","a":"−4","ex":"H:+1×4 → C=−4"},
     {"q":"オレンジ色の原子の酸化数は？<br>Cu<sub>2</sub><span style=\"color:#e8a13d\">O</span>…のO","a":"−2","ex":"Oは−2。ちなみにCuは+1。"},
-    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Cu</span><sub>2</sub>O","a":"+1","ex":"O:−2 → Cu2個で+2 → +1"}
+    {"q":"オレンジ色の原子の酸化数は？<br><span style=\"color:#e8a13d\">Cu</span><sub>2</sub>O","a":"+1","ex":"O:−2 → Cu 2個で+2 → +1"}
   ]
 }
