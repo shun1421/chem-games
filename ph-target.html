@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pH ねらい撃ち | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
+<style>
+main.game{max-width:540px}
+body.ph-playing main.game{padding-bottom:0}
+
+/* ===== プレイ画面(1画面に収める) ===== */
+#play{display:flex;flex-direction:column;height:calc(100vh - 83px);height:calc(100dvh - 83px);min-height:520px;max-height:800px}
+#play .hud{flex:0 0 auto}
+#play .hud>div{padding:4px 4px 3px;box-shadow:0 4px 0 var(--navy);border-radius:14px}
+#play .hud b{font-size:23px}
+
+/* 問題の行(はじめの液 + 目標) */
+.ph-task{flex:0 0 auto;display:flex;align-items:stretch;gap:8px;margin:10px 0 9px}
+.ph-from{flex:1;min-width:0;display:block;background:#fff;border:3px solid var(--navy);border-radius:14px;box-shadow:0 4px 0 var(--navy);
+ padding:4px 10px 5px;font-size:13px;font-weight:900;line-height:1.45}
+.ph-from .ph-k{display:block;font-size:10.5px;letter-spacing:.12em;color:var(--mut)}
+.ph-from .ph-nt{display:block;font-size:11px;font-weight:800;color:#b0106e}
+.ph-goal{flex:0 0 auto;min-width:86px;display:block;text-align:center;background:var(--yellow);border:3px solid var(--navy);border-radius:14px;
+ box-shadow:0 4px 0 var(--navy);padding:3px 8px 2px}
+.ph-goal .ph-k{display:block;font-size:10.5px;font-weight:900;letter-spacing:.1em}
+.ph-goal b{display:block;font-family:var(--numf);font-size:32px;font-weight:700;line-height:1.05}
+
+/* 主役のステージ(ビーカー・pH メーター・目盛りの帯) */
+.ph-stage{position:relative;flex:1 1 auto;min-height:196px;border:3px solid var(--navy);border-radius:20px;box-shadow:0 6px 0 var(--navy);overflow:hidden;
+ background:radial-gradient(circle at 10px 10px,rgba(111,93,255,.10) 2px,transparent 3px) 0 0/22px 22px,#f7f5ff}
+#pcv{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.ph-read{position:absolute;top:8px;right:10px;left:42%;text-align:right;pointer-events:none;z-index:2}
+.ph-read .ph-rl{display:block;font-size:11px;font-weight:900;letter-spacing:.12em;color:var(--mut)}
+.ph-meter{display:inline-block;margin-top:2px;background:var(--navy);color:#fff;border-radius:12px;padding:2px 10px 3px;box-shadow:0 4px 0 rgba(28,23,64,.35)}
+.ph-meter small{font-family:var(--numf);font-size:16px;font-weight:700;margin-right:4px;color:#b9b5d3}
+.ph-big{font-family:var(--numf);font-variant-numeric:tabular-nums;font-size:50px;font-weight:700;line-height:1.05;display:inline-block}
+.ph-big.ph-bump{animation:ph-bump .22s}
+@keyframes ph-bump{0%{transform:scale(1.18);color:var(--yellow)}100%{transform:none}}
+.ph-conc{display:block;margin-top:5px;font-size:12.5px;font-weight:800;line-height:1.55;color:var(--navy)}
+.ph-conc .num{font-size:14.5px}
+.ph-liq{display:block;margin-top:3px;font-size:11.5px;font-weight:800;line-height:1.45;color:var(--mut)}
+
+/* 棚(液をえらぶ) */
+.ph-shelf{position:absolute;left:8px;right:8px;top:8px;z-index:5;background:#fff;border:3px solid var(--navy);border-radius:16px;box-shadow:0 5px 0 var(--navy);
+ padding:8px 9px 10px}
+.ph-sh-h{text-align:center;font-size:13px;font-weight:900;margin-bottom:7px}
+.ph-sh-h small{display:block;font-size:11px;color:var(--mut)}
+.ph-sh-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ph-sh-b{display:block;width:100%;padding:7px 5px 6px;background:#fff;color:var(--navy);border:3px solid var(--navy);border-radius:13px;box-shadow:0 4px 0 var(--navy);
+ font-weight:900;font-size:13.5px;line-height:1.35;cursor:pointer;text-align:center}
+.ph-sh-b:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.ph-sh-b small{display:block;font-size:11px;color:var(--mut)}
+.ph-sh-b i{display:block;height:8px;margin:4px auto 0;width:60%;border:2px solid var(--navy);border-radius:99px;background:#e3f2ff}
+.ph-sh-x{display:block;margin:9px auto 0;background:none;border:0;font-size:12.5px;font-weight:900;color:var(--mut);text-decoration:underline;cursor:pointer;padding:3px 10px}
+
+/* 操作の記録(1行) */
+.ph-log{flex:0 0 auto;min-height:2.9em;margin:10px 2px 3px;color:#fff;font-size:12.5px;font-weight:800;line-height:1.45;text-shadow:0 2px 0 var(--navy)}
+.ph-log b{color:var(--yellow)}
+
+/* 手札(操作カード) */
+.ph-hand{flex:0 0 auto;display:grid;gap:9px;margin-top:12px}
+.ph-card{position:relative;display:block;height:76px;padding:6px 3px 4px;background:#fff;color:var(--navy);border:3px solid var(--navy);border-radius:16px;
+ box-shadow:0 5px 0 var(--navy);cursor:pointer;text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ph-card.k-dil{background:#e3f4ff}.ph-card.k-mix{background:#ffe6f0}.ph-card.k-swap{background:#fff3c4}
+.ph-card .ph-cb{display:block;font-family:var(--numf);font-size:25px;font-weight:700;line-height:1.15;white-space:nowrap}
+.ph-card .ph-cb svg{width:17px;height:21px;vertical-align:-2px;margin-right:2px}
+.ph-card .ph-cs{display:block;font-size:11.5px;font-weight:900;line-height:1.3}
+.ph-card .ph-cs small{display:block;font-size:9.5px;color:var(--mut)}
+.ph-card .ph-cn{position:absolute;top:-10px;right:-6px;min-width:34px;background:var(--pink);color:#fff;border:2px solid var(--navy);border-radius:99px;
+ font-size:11px;font-weight:900;padding:1px 6px;white-space:nowrap}
+.ph-card.ph-on{transform:translateY(4px);box-shadow:0 1px 0 var(--navy)}
+.ph-card.ph-empty{opacity:.42;cursor:default}
+.ph-card.ph-empty .ph-cn{background:#6b6690}
+.ph-card.ph-ban{background:repeating-linear-gradient(-45deg,#f1eff8 0 8px,#e6e3f2 8px 16px);color:#8c88ad}
+.ph-card.ph-shake{animation:ph-shake .28s}
+@keyframes ph-shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+
+/* 下のボタン */
+.ph-ctrl{flex:0 0 auto;display:grid;grid-template-columns:1fr 1.9fr;gap:10px;margin:14px 0 12px}
+.ph-ctrl .btn{margin-top:0;padding:13px 6px;font-size:18px}
+.ph-ctrl .btn.white{font-size:13.5px;letter-spacing:.02em;line-height:1.25}
+.ph-ctrl .btn.white small{display:block;font-size:10.5px;color:var(--mut)}
+
+/* 判定のカード(手札の場所に出る) */
+.ph-judge{flex:0 0 auto;margin:10px 0 12px;background:#fff;border:3px solid var(--navy);border-radius:18px;box-shadow:0 5px 0 var(--navy);padding:8px 12px 10px}
+.ph-jh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ph-jl{font-size:19px;font-weight:900;padding:1px 14px;border:3px solid var(--navy);border-radius:99px;color:#fff;background:var(--ok);white-space:nowrap}
+.ph-jl.j-miss{background:#6b6690}
+.ph-jp{font-family:var(--numf);font-size:26px;font-weight:700;white-space:nowrap}
+.ph-jp small{font-size:12px}
+.ph-jt{font-size:12.5px;font-weight:700;line-height:1.6;margin:5px 0 9px}
+.ph-judge .btn{padding:11px 8px;font-size:16px}
+
+/* ===== 結果画面 ===== */
+.ph-tm{font-size:12.5px;font-weight:900;color:var(--mut);min-height:1.4em}
+.ph-list{display:grid;gap:6px;margin:12px 0 4px;text-align:left}
+.ph-row{display:grid;grid-template-columns:22px 1fr auto 44px;gap:6px;align-items:center;background:#f3f1ff;border-radius:12px;padding:6px 8px;font-size:12.5px;font-weight:800}
+.ph-row .n{font-family:var(--numf);font-size:18px;font-weight:700;text-align:center;color:var(--mut)}
+.ph-row .w b{font-family:var(--numf);font-size:15px;color:var(--navy)}
+.ph-row .w small{display:block;font-size:11.5px;color:var(--mut)}
+.ph-row .j{padding:1px 9px;border:2px solid var(--navy);border-radius:99px;color:#fff;font-size:11.5px;font-weight:900;white-space:nowrap;background:#6b6690}
+.ph-row .j.j-hit{background:var(--ok)}
+.ph-row .p{font-family:var(--numf);font-size:17px;font-weight:700;text-align:right}
+.ph-why{margin:14px 0 6px;padding:11px 12px;border:3px solid var(--navy);border-radius:16px;background:#fffbe6;text-align:left;box-shadow:0 4px 0 var(--navy)}
+.ph-why-h{display:inline-block;background:var(--pink);color:#fff;font-weight:900;font-size:12px;padding:2px 11px;border-radius:99px;border:2px solid var(--navy)}
+.ph-why-i{font-size:13px;font-weight:700;line-height:1.7;margin-top:8px}
+.ph-why-i b{color:#b0106e}
+#end .btn{margin-top:14px}
+@media(max-width:380px){
+ .ph-big{font-size:44px}.ph-card .ph-cb{font-size:22px}.ph-goal b{font-size:28px}
+ .ph-row{grid-template-columns:20px 1fr auto 40px;gap:4px}
+}
+@media(max-height:620px){#play .hud b{font-size:20px}.ph-card{height:68px}.ph-ctrl{margin:11px 0 9px}.ph-ctrl .btn{padding:11px 6px}}
+</style>
+</head>
+<body data-u="rose" data-game="ph-target">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">pH ねらい撃ち</div><span class="chip">水素イオン濃度と pH</span></header>
+<main class="game">
+
+<section id="start" class="panel start">
+  <h1>pH ねらい撃ち</h1>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">pH が 1 ちがうと、[H<sup>+</sup>] は <b>10倍</b>ちがう。
+  うすめすぎたら<b>もう戻れない</b>。何倍にすればよいか、考えてからカードを切れ。</div></div>
+  <ul class="rules">
+    <li>全 <b id="rN">8</b> 問。液を変えて、<b>目標の pH</b> に合わせる。差が <b id="rW">0.05</b> 以内なら命中</li>
+    <li>下の<b>操作カード</b>を押すと液が変わる(うすめる・中和する・取りかえる)。カードの枚数は問題ごとに決まっていて、<b>うすめた液は元に戻せない</b></li>
+    <li>失敗したと思ったら「やり直す」ですぐ最初の状態へ(1回 −<span id="rRe">10</span>点)</li>
+    <li>命中 <span id="rHit">100</span>点。いちばん少ない手数(パー)で命中なら +<span id="rPar">50</span>点。連続命中でボーナス</li>
+    <li>25 ℃、水のイオン積 <i>K</i><sub>w</sub> = 1.0×10<sup>−14</sup> (mol/L)<sup>2</sup>。電離度は問題に書いてある値を使う</li>
+  </ul>
+  <button class="btn" type="button" onclick="startGame()">スタート</button>
+</section>
+
+<section id="play" class="hidden">
+  <div class="hud">
+    <div><span class="lb">問題</span><b id="hNo">1/8</b></div>
+    <div><span class="lb">スコア</span><b id="hScore">0</b></div>
+    <div><span class="lb">手数/パー</span><b id="hMove">0/1</b></div>
+  </div>
+  <div class="ph-task">
+    <div class="ph-from"><span class="ph-k" id="tFromK">はじめの液</span><span id="tFrom"></span><span class="ph-nt" id="tNote"></span></div>
+    <div class="ph-goal"><span class="ph-k">目標 pH</span><b id="tGoal">3</b></div>
+  </div>
+  <div class="ph-stage" id="stage">
+    <canvas id="pcv"></canvas>
+    <div class="ph-read">
+      <span class="ph-rl">pH メーター</span>
+      <span class="ph-meter"><small>pH</small><span class="ph-big" id="rPH">--</span></span>
+      <span class="ph-conc" id="rConc"></span>
+      <span class="ph-liq" id="rLiq"></span>
+    </div>
+    <div class="ph-shelf hidden" id="shelf">
+      <div class="ph-sh-h" id="shH"></div>
+      <div class="ph-sh-list" id="shList"></div>
+      <button type="button" class="ph-sh-x hidden" id="shX">やめる(手数は使わない)</button>
+    </div>
+  </div>
+  <div class="ph-log" id="log"></div>
+  <div class="ph-hand" id="hand"></div>
+  <div class="ph-ctrl" id="ctrl">
+    <button class="btn white" type="button" id="bRetry">やり直す<small>−<span id="bRePt">10</span>点</small></button>
+    <button class="btn" type="button" id="bGo">これで決定!</button>
+  </div>
+  <div class="ph-judge hidden" id="judge">
+    <div class="ph-jh"><span class="ph-jl" id="jL"></span><span class="ph-jp" id="jP"></span></div>
+    <div class="ph-jt" id="jT"></div>
+    <button class="btn" type="button" id="bNext">次の問題へ</button>
+  </div>
+</section>
+
+<section id="end" class="panel res hidden">
+  <div class="lb">RESULT</div>
+  <div class="score num" id="fScore">0</div>
+  <div class="ph-tm" id="fTime"></div>
+  <div class="rank" id="fRank">A</div>
+  <div class="bestline" id="fBest"></div>
+  <div class="ph-list" id="fList"></div>
+  <div class="ph-why" id="fWhy"></div>
+  <div id="fSay"></div>
+  <button class="btn" type="button" onclick="startGame()">もう一度</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<script src="common.js"></script>
+<script>
+'use strict';
+/*PURE-BEGIN*/
+// ================= 調整値(ここの数字を変えて調整する) =================
+const N_Q=8;                   // 【問題数】
+const HIT_W=0.05;              // 【ぴたりの幅】|pH − 目標| がこれ以内なら命中
+const PT_HIT=100;              // 【点数】命中
+const PT_PAR=50;               // 【点数】パー(最少の手数)で命中したときの上乗せ
+const PT_RETRY=10;             // 【点数】やり直し1回の減点
+const RETRY_CAP=50;            // 【減点の上限】1問あたり。点はその問題で 0 より下がらない
+const PT_COMBO=10, COMBO_MAX=10; // 【連続命中ボーナス】コンボ×10点(コンボは10まで)
+const RANK_S=1350, RANK_A=1050, RANK_B=650; // 【ランク】の下限点(満点 1560)
+const HITSTOP_HIT=0.30;        // 【ヒットストップ】命中(秒)
+const HITSTOP_MISS=0.12;       // 【ヒットストップ】はずれ(秒)
+const SHAKE_HIT_PX=6, SHAKE_MISS_PX=3; // 【ヒットストップ中の画面のふるえ】px
+const REACT_S=0.40;            // 【判定の文字を見せてから判定カードを出すまで】秒
+const NEEDLE_KEYS=[[0,0.10],[0.05,-0.16],[0.11,0.06],[0.17,-0.02],[0.23,0]]; // 【針の動き】[秒, のこりの割合]。1コマ目で9割進み、少し行きすぎて戻る
+const SQUASH_S=0.14;           // 【操作したときのビーカーのつぶれ】秒
+const KW=1.0e-14;              // 水のイオン積 (mol/L)^2, 25℃
+
+// ================= 液 =================
+// k: SA=強酸(塩酸) SB=強塩基(水酸化ナトリウム) WA=弱酸(酢酸) WB=弱塩基(アンモニア水) N=中和した液(塩化ナトリウム水溶液)
+// c: モル濃度 mol/L、a: 電離度(弱酸・弱塩基だけ)
+const LIQS={
+  HCl1:{k:'SA',c:0.1},  HCl2:{k:'SA',c:0.01}, HCl3:{k:'SA',c:1e-3}, HCl4:{k:'SA',c:1e-4},
+  NaOH1:{k:'SB',c:0.1}, NaOH2:{k:'SB',c:0.01}, NaOH4:{k:'SB',c:1e-4},
+  AcOH:{k:'WA',c:0.1,a:0.01}, NH3:{k:'WB',c:0.1,a:0.01}
+};
+const KNAME={SA:'塩酸',SB:'水酸化ナトリウム水溶液',WA:'酢酸',WB:'アンモニア水',N:'塩化ナトリウム水溶液'};
+function mkLiq(key){const L=LIQS[key];return {k:L.k,c:L.c,a:L.a||null};}
+// [H+](mol/L)。強酸・強塩基は水の電離をふくめる: [H+]=(c+√(c²+4Kw))/2(塩基は [OH-] について同じ式)
+// 弱酸・弱塩基は高校の扱い [H+]=cα、[OH-]=cα。中和した液は 1.0×10^-7
+function hOf(st){
+  if(st.k==='SA')return (st.c+Math.sqrt(st.c*st.c+4*KW))/2;
+  if(st.k==='SB')return KW/((st.c+Math.sqrt(st.c*st.c+4*KW))/2);
+  if(st.k==='WA')return st.c*st.a;
+  if(st.k==='WB')return KW/(st.c*st.a);
+  return Math.sqrt(KW);
+}
+function phOf(st){return -Math.log10(hOf(st));}
+function isHit(ph,target){return Math.abs(ph-target)<=HIT_W+1e-9;}
+
+// ================= 操作カード =================
+// f: うすめる倍率。mix: まぜる液(同じ濃度・同じ体積・1価)。swap: 棚の液に取りかえる
+const CARDS={
+  d2:   {f:2,   big:'×2',    sub:'にうすめる',note:'同じ体積の水',  done:'2倍にうすめた(同じ体積の水を加えた)',kind:'dil'},
+  d10:  {f:10,  big:'×10',   sub:'にうすめる',note:'',              done:'10倍にうすめた',kind:'dil'},
+  d100: {f:100, big:'×100',  sub:'にうすめる',note:'',              done:'100倍にうすめた',kind:'dil'},
+  d1000:{f:1000,big:'×1000', sub:'にうすめる',note:'',              done:'1000倍にうすめた',kind:'dil'},
+  naoh: {mix:'SB',big:'+NaOH',sub:'をまぜる',note:'同じ濃度・同じ体積',done:'同じ濃度・同じ体積の水酸化ナトリウム水溶液をまぜた',kind:'mix'},
+  hcl:  {mix:'SA',big:'+HCl', sub:'をまぜる',note:'同じ濃度・同じ体積',done:'同じ濃度・同じ体積の塩酸をまぜた',kind:'mix'},
+  swap: {swap:true,big:'⇄',  sub:'取りかえる',note:'棚の液に',      done:'液を取りかえた',kind:'swap'}
+};
+const CARD_ORDER=['swap','d2','d10','d100','d1000','naoh','hcl'];
+const CARD_LONG={d2:'2倍にうすめる(同じ体積の水を加える)',d10:'10倍にうすめる',d100:'100倍にうすめる',d1000:'1000倍にうすめる',
+  naoh:'同じ濃度・同じ体積の水酸化ナトリウム水溶液をまぜる',hcl:'同じ濃度・同じ体積の塩酸をまぜる',swap:'液を取りかえる(棚から)'};
+// カードを使ったあとの液。使えないときは {st:null, why:理由}(手数は使わない)
+function applyCard(st,id){
+  const cd=CARDS[id];
+  if(cd.f){
+    if(st.k==='WA'||st.k==='WB')return {st:null,why:(st.k==='WA'?'酢酸':'アンモニア水')+'(弱'+(st.k==='WA'?'酸':'塩基')+')はうすめると電離度が変わるので、このゲームではうすめない'};
+    if(st.k==='N')return {st:{k:'N',c:null,a:null}};
+    return {st:{k:st.k,c:st.c/cd.f,a:null}};
+  }
+  if(cd.mix){
+    const tgt=cd.mix==='SB'?'SA':'SB';      // NaOH は塩酸と、塩酸は NaOH と中和する
+    if(st.k===tgt)return {st:{k:'N',c:null,a:null}};
+    if(st.k==='N')return {st:null,why:'もう中和してある(pH 7)'};
+    if(st.k===cd.mix)return {st:null,why:(cd.mix==='SB'?'塩基に塩基':'酸に酸')+'をまぜても中和しない'};
+    return {st:null,why:'このカードは'+(cd.mix==='SB'?'塩酸(強酸)':'水酸化ナトリウム水溶液(強塩基)')+'と中和するときだけ使える'};
+  }
+  return {st:null,why:'棚から液をえらぶ'};
+}
+
+// ================= 問題 =================
+// start: はじめの液(null なら最初に棚からえらぶ。0手)。shelf: 棚の液。target: 目標 pH。hand: 手札と枚数。par: 最少手数
+// trap: うすめるだけでは命中しない(中和が要る)問題。tip: 問題が出たときのひとこと。ex: 考え方
+const SHELF4=['HCl1','AcOH','NaOH1','NH3'];
+const FIXED=[
+  {id:'f1',start:'HCl1',target:3,hand:{d10:3,d100:1},par:1,
+   tip:'10倍にうすめると pH はいくつ変わる? 少ない手数でねらおう。',
+   ex:'10倍にうすめるごとに [H<sup>+</sup>] は 1/10 になり、pH は 1 上がる。pH 1→3 は 100倍で1手(10倍を2回でも届くが2手)。'},
+  {id:'f2',start:'NaOH1',target:11,hand:{d10:3,d100:1},par:1,
+   tip:'こんどは塩基。うすめると pH はどちらへ動く?',
+   ex:'塩基をうすめると [OH<sup>−</sup>] が 1/10 になり、pH は 1 <b>下がる</b>。pH 13→11 は 100倍で1手。'},
+  {id:'f3',start:null,shelf:SHELF4,target:3,hand:{d10:2,d100:1},par:0,
+   tip:'まず棚から液をえらぶ(えらぶのは手数に入らない)。',
+   ex:'酢酸は弱酸。0.10 mol/L でも電離度 0.010 なので [H<sup>+</sup>] = 0.10×0.010 = 1.0×10<sup>−3</sup> mol/L、pH 3。えらぶだけで0手。塩酸なら100倍にうすめて1手。'},
+  {id:'f4',start:'HCl4',target:7,hand:{d1000:1,naoh:1},par:1,trap:true,
+   tip:'pH 4 の塩酸を pH 7 に。うすめれば届く…?',
+   ex:'酸はうすめても pH 7 をこえない(水の電離による H<sup>+</sup> があるので、7 に近づくだけ)。1000倍でも pH 6.79。pH 7 にするには、同じ濃度・同じ体積の水酸化ナトリウム水溶液で中和する。'}
+];
+// 5問目からは、この順にグループから1問ずつランダムに出す
+const POOL_ORDER=['big','weak','seven','log2'];
+const POOL={
+  big:[
+    {id:'b1',start:'HCl2',target:5,hand:{d10:3,d100:1,d1000:1},par:1,
+     ex:'pH 2→5 は 3 上げるので 10<sup>3</sup> = 1000倍。pH の差が n なら 10<sup>n</sup> 倍にうすめる。'},
+    {id:'b2',start:'HCl1',target:4,hand:{d10:3,d100:1,d1000:1},par:1,
+     ex:'pH 1→4 は 3 上げるので 1000倍。100倍+10倍でも届くが2手。'},
+    {id:'b3',start:'NaOH1',target:9,hand:{d10:2,d100:2,d1000:1},par:2,
+     ex:'pH 13→9 は 4 下げるので 10<sup>4</sup> 倍。1000倍+10倍、または 100倍を2回。'},
+    {id:'b4',start:'HCl3',target:6,hand:{d10:3,d1000:1,naoh:1},par:1,
+     ex:'pH 3→6 は 1000倍。中和すると pH 7 まで行ってしまう。'}
+  ],
+  weak:[
+    {id:'w1',start:null,shelf:SHELF4,target:11,hand:{d10:2,d100:1},par:0,
+     ex:'アンモニア水は弱塩基。0.10 mol/L でも電離度 0.010 なので [OH<sup>−</sup>] = 1.0×10<sup>−3</sup> mol/L、pH 11。えらぶだけで0手。'},
+    {id:'w2',start:null,shelf:SHELF4,target:12,hand:{d10:2,d100:1},par:1,
+     ex:'0.10 mol/L アンモニア水(電離度 0.010)は pH 11 で、12 にはならない。0.10 mol/L 水酸化ナトリウム水溶液(pH 13)を10倍にうすめて1手。'},
+    {id:'w3',start:null,shelf:['AcOH','HCl1','NH3','NaOH1'],target:2,hand:{d10:2,d100:1},par:1,
+     ex:'0.10 mol/L 酢酸は電離度 0.010 で pH 3。同じ 0.10 mol/L でも塩酸はほぼ完全に電離して pH 1。塩酸を10倍にうすめて pH 2。'},
+    {id:'w4',start:'NaOH1',shelf:['HCl1','AcOH'],target:3,hand:{swap:1,d10:2,d100:1},par:1,
+     ex:'塩基をうすめても酸性にはならない。0.10 mol/L 酢酸(電離度 0.010、pH 3)に取りかえれば1手。塩酸に取りかえて100倍だと2手。'}
+  ],
+  seven:[
+    {id:'s1',start:'NaOH4',target:7,hand:{d1000:1,hcl:1},par:1,trap:true,
+     ex:'塩基はうすめても pH 7 より下がらない。1000倍でも pH 7.21。同じ濃度・同じ体積の塩酸で中和すれば pH 7。'},
+    {id:'s2',start:'HCl1',target:7,hand:{d100:2,naoh:1},par:1,trap:true,
+     ex:'同じ濃度・同じ体積の水酸化ナトリウム水溶液をまぜると、H<sup>+</sup> と OH<sup>−</sup> が同じ物質量で、ちょうど中和して pH 7。'},
+    {id:'s3',start:'NaOH1',target:7,hand:{d1000:2,hcl:1},par:1,trap:true,
+     ex:'1000倍を2回(100万倍)にしても pH 7.21。塩基はうすめても 7 に近づくだけ。中和なら1手。'},
+    {id:'s4',start:'NaOH2',target:7,hand:{d1000:1,d10:2,hcl:1},par:1,trap:true,
+     ex:'10万倍にうすめても pH 7.21。塩基はうすめても 7 より下がらない。同じ濃度・同じ体積の塩酸で中和すれば pH 7。'}
+  ],
+  log2:[
+    {id:'l1',start:'HCl1',target:1.3,hand:{d2:2,d10:1},par:1,log2:true,
+     ex:'2倍にうすめると [H<sup>+</sup>] は 1/2。pH は log<sub>10</sub>2 = 0.30 だけ上がる。pH 1→1.3。'},
+    {id:'l2',start:'NaOH1',target:12.7,hand:{d2:2,d10:1},par:1,log2:true,
+     ex:'塩基を2倍にうすめると [OH<sup>−</sup>] は 1/2。pH は 0.30 下がる。pH 13→12.7。'},
+    {id:'l3',start:'HCl1',target:2.3,hand:{d2:1,d10:2},par:2,log2:true,
+     ex:'10倍で +1、2倍で +0.30。合わせて 20倍にうすめると pH 1→2.3。'},
+    {id:'l4',start:'HCl1',target:1.6,hand:{d2:3,d10:1},par:2,log2:true,
+     ex:'2倍を2回で 4倍。pH は 0.30×2 = 0.60 上がる(log<sub>10</sub>4 = 0.60)。pH 1→1.6。'},
+    {id:'l5',start:'NaOH2',target:11.7,hand:{d2:2,d10:1},par:1,log2:true,
+     ex:'0.010 mol/L 水酸化ナトリウム水溶液は pH 12。2倍にうすめると 0.30 下がって pH 11.7。'}
+  ]
+};
+function planProblems(shuffle){
+  const qs=FIXED.slice();
+  POOL_ORDER.forEach(g=>qs.push(shuffle(POOL[g].slice())[0]));
+  return qs.slice(0,N_Q);
+}
+// 問題の注意書き(電離度、log10 2)
+function noteOf(p){
+  const ks=(p.shelf||[]).concat(p.start?[p.start]:[]);
+  const w=[];
+  if(ks.indexOf('AcOH')>=0||ks.indexOf('NH3')>=0)w.push('酢酸・アンモニア水の電離度は 0.010 とする');
+  if(p.log2)w.push('log<sub>10</sub>2 = 0.30');
+  return w.join('。');
+}
+// はずれたときの一言(いまの液と目標から)
+function missHint(p,st){
+  const t=p.target,ph=phOf(st),k=st.k;
+  const acid=k==='SA'||k==='WA',base=k==='SB'||k==='WB';
+  const frac=Math.abs(t-Math.round(t))>0.01;
+  if(t===7&&(k==='SA'||k==='WA'))return '酸はうすめても pH 7 をこえない(7 に近づくだけ)。pH 7 にするには<b>中和</b>。';
+  if(t===7&&(k==='SB'||k==='WB'))return '塩基はうすめても pH 7 より下がらない(7 に近づくだけ)。pH 7 にするには<b>中和</b>。';
+  if(t<7&&!acid)return '目標は酸性(pH 7 より小さい)。いまの液は'+(k==='N'?'中性':'塩基性')+'。液のえらび方から考えよう。';
+  if(t>7&&!base)return '目標は塩基性(pH 7 より大きい)。いまの液は'+(k==='N'?'中性':'酸性')+'。液のえらび方から考えよう。';
+  if(k==='WA')return '酢酸は電離度 0.010 なので、0.10 mol/L でも [H<sup>+</sup>] = 1.0×10<sup>−3</sup> mol/L、pH 3。目標 '+t+' には別の液が要る。';
+  if(k==='WB')return 'アンモニア水は電離度 0.010 なので、0.10 mol/L でも [OH<sup>−</sup>] = 1.0×10<sup>−3</sup> mol/L、pH 11。目標 '+t+' には別の液が要る。';
+  const two=frac?' 2倍にうすめると pH は 0.30 変わる(log<sub>10</sub>2 = 0.30)。':'';
+  if(k==='SA'){
+    if(ph>t)return '<b>うすめすぎ</b>。酸は10倍にうすめるごとに pH が 1 上がる。うすめた液は戻せない。'+two;
+    return 'まだ濃い。目標まで pH をあと '+(t-ph).toFixed(1)+' 上げる。pH を n 上げるには 10<sup>n</sup> 倍。'+two;
+  }
+  if(ph<t)return '<b>うすめすぎ</b>。塩基は10倍にうすめるごとに pH が 1 下がる。うすめた液は戻せない。'+two;
+  return 'まだ濃い。目標まで pH をあと '+(ph-t).toFixed(1)+' 下げる。塩基は10倍にうすめると pH が 1 下がる。'+two;
+}
+/*PURE-END*/
+// ================= ここまで純粋な計算(node で確かめられる) =================
+
+const $=CG.$;
+const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const FX=RM?0.25:1;            // ゆれ・フラッシュの強さ(動きをへらす設定のときは弱く)
+const NAVY='#1c1740';
+const NUMF='"Bahnschrift","DIN Alternate","Avenir Next Condensed","Roboto Condensed","Arial Narrow",sans-serif';
+const JPF='"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif';
+document.querySelector('.top').appendChild(CG.soundButton());
+$('rN').textContent=N_Q;$('rW').textContent=HIT_W.toFixed(2);$('rRe').textContent=PT_RETRY;$('rHit').textContent=PT_HIT;$('rPar').textContent=PT_PAR;
+$('bRePt').textContent=PT_RETRY;
+function clamp01(x){return x<0?0:x>1?1:x;}
+function hash(n){const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);}
+
+// ================= 表示用の書き方 =================
+// 有効数字2桁の指数表示(HTML)。例 1.0×10<sup>−3</sup>
+function sci(x){
+  let e=Math.floor(Math.log10(x)),m=x/Math.pow(10,e);
+  m=Math.round(m*10)/10;if(m>=10){m=1;e++;}
+  return m.toFixed(1)+'×10<sup>'+(e<0?'−'+(-e):e)+'</sup>';
+}
+function concStr(c){return c>=0.01-1e-12?c.toPrecision(2):sci(c);}
+function liqName(st){
+  if(st.k==='N')return '中和した液(塩化ナトリウム水溶液)';
+  return '<span class="num">'+concStr(st.c)+'</span> mol/L '+KNAME[st.k]+(st.a?'(電離度 '+st.a.toFixed(3)+')':'');
+}
+function liqKeyName(key){return liqName(mkLiq(key));}
+// 万能指示薬ふうの色 [r,g,b]
+const IND_STOPS=[[0,[214,32,48]],[2,[240,72,40]],[3,[250,122,40]],[4,[255,170,40]],[5,[250,210,50]],[6,[196,214,52]],[7,[64,182,82]],
+  [8,[30,160,130]],[9,[40,124,204]],[10,[62,84,204]],[11,[98,62,184]],[12,[120,50,164]],[14,[104,30,128]]];
+function indColor(ph){
+  if(ph<=0)return IND_STOPS[0][1];
+  for(let i=1;i<IND_STOPS.length;i++){
+    const a=IND_STOPS[i-1],b=IND_STOPS[i];
+    if(ph<=b[0]){const t=(ph-a[0])/(b[0]-a[0]);return [a[1][0]+(b[1][0]-a[1][0])*t,a[1][1]+(b[1][1]-a[1][1])*t,a[1][2]+(b[1][2]-a[1][2])*t];}
+  }
+  return IND_STOPS[IND_STOPS.length-1][1];
+}
+function rgb(c,a){return 'rgba('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+','+(a==null?1:a)+')';}
+
+// ================= 音(Web Audio。最初の操作で作る。音の ON/OFF は CG に従う) =================
+let AC=null,MG=null,NZ=null;
+function au(){
+  if(!AC){
+    try{
+      const K=window.AudioContext||window.webkitAudioContext;AC=new K();
+      MG=AC.createGain();MG.gain.value=0.6;MG.connect(AC.destination);
+      const n=Math.floor(AC.sampleRate*0.5);NZ=AC.createBuffer(1,n,AC.sampleRate);
+      const d=NZ.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    }catch(e){AC=null;}
+  }
+  if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}
+  return AC;
+}
+function canPlay(){return !!AC&&!CG.isMuted();}
+function blip(type,f0,f1,sweep,at,dur,vol){
+  const t=AC.currentTime+(at||0),o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);
+  if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+sweep);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(MG);o.start(t);o.stop(t+dur+0.02);
+}
+function noise(at,dur,ftype,freq,q,vol,f1){
+  const t=AC.currentTime+(at||0),s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=NZ;f.type=ftype;f.frequency.setValueAtTime(freq,t);f.Q.value=q;
+  if(f1)f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+dur+0.02);
+}
+const SND={
+  pour(f){ // 水を注ぐ「チャポ」。倍率が大きいほど長く低い
+    if(!canPlay())return;
+    const n=f>=1000?3:f>=100?2:1;
+    for(let i=0;i<n;i++){const b=780-i*110;blip('sine',b,b*1.6,0.04,i*0.07,0.08,0.45);}
+    noise(0,0.10+0.06*n,'bandpass',1400,1.1,0.22,500);
+  },
+  mix(){ // 中和の「シュワッ」
+    if(!canPlay())return;
+    noise(0,0.28,'highpass',2600,0.7,0.30,5200);
+    blip('triangle',520,780,0.10,0,0.14,0.26);blip('triangle',780,1040,0.08,0.10,0.14,0.22);
+  },
+  hit(){ // 刺さる「トン」+ キラッと上がる和音
+    if(!canPlay())return;
+    blip('sine',190,80,0.08,0,0.11,0.85);
+    noise(0,0.05,'lowpass',1800,0.7,0.35,400);
+    [1046.5,1318.5,1568,2093].forEach((f,i)=>blip('triangle',f,f,0,0.03+i*0.045,0.14,0.28));
+    blip('sine',2637,2637,0,0.22,0.22,0.15);
+  },
+  miss(){ // 「スカッ」と空を切る
+    if(!canPlay())return;
+    noise(0,0.20,'bandpass',2600,2.2,0.42,500);
+    blip('square',330,220,0.12,0.06,0.14,0.10);
+  },
+  no(){ if(!canPlay())return;blip('square',230,180,0.08,0,0.10,0.14); },
+  pick(){ if(!canPlay())return;blip('square',660,990,0.04,0,0.07,0.08); },
+  retry(){ // 巻きもどし
+    if(!canPlay())return;
+    blip('triangle',1200,500,0.08,0,0.09,0.24);blip('triangle',900,400,0.06,0.06,0.08,0.18);
+  },
+  next(){ if(!canPlay())return;noise(0,0.10,'bandpass',900,1.2,0.22,3200); }
+};
+
+// ================= 状態 =================
+let S=null,running=false;
+const cv=$('pcv'),cx=cv.getContext('2d'),stageEl=$('stage');
+let W=0,H=0,DPR=1,L={};
+
+function startGame(){
+  au();
+  S={qs:planProblems(CG.shuffle),qi:0,score:0,combo:0,maxCombo:0,t0:performance.now(),results:[],
+     parts:[],pops:[],drops:[],phase:'play',phaseT:0,clock:0,squashT:9,nd:null};
+  $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
+  document.body.classList.add('ph-playing');
+  window.scrollTo(0,0);
+  loadQ(0);
+  resize();
+  if(!running){running=true;last=performance.now();requestAnimationFrame(loop);}
+}
+function loadQ(i){
+  S.qi=i;S.p=S.qs[i];S.retries=0;
+  const p=S.p;
+  $('tFrom').innerHTML=p.start?liqKeyName(p.start):'棚からえらぶ(0手)';
+  $('tNote').innerHTML=noteOf(p);
+  $('tGoal').textContent=String(p.target);
+  $('judge').classList.add('hidden');$('hand').classList.remove('hidden');$('ctrl').classList.remove('hidden');
+  S.nd=null;
+  resetQ();
+  log(p.tip||'目標の pH に合ったら「これで決定!」。');
+}
+// 問題の最初の状態にする(やり直しも同じ)
+function resetQ(){
+  const p=S.p;
+  S.moves=0;S.hand=Object.assign({},p.hand);S.ops=[];
+  S.st=p.start?mkLiq(p.start):null;
+  S.phase='play';S.phaseT=0;S.drops=[];S.pops=[];
+  if(S.st)setNeedle(phOf(S.st));else S.nd=null;
+  if(S.st)closeShelf();else openShelf('start');
+  renderAll(false);
+}
+function renderAll(bump){renderRead(bump);renderHand();drawHud();}
+
+// ---- 針(1コマ目で9割進み、少し行きすぎて戻る) ----
+function setNeedle(ph){
+  const cur=needlePos();
+  S.nd={from:cur==null?ph:cur,to:ph,t:cur==null?9:0};
+}
+function needlePos(){
+  const n=S&&S.nd;if(!n)return null;
+  const K=NEEDLE_KEYS;let g=0;
+  if(n.t<K[K.length-1][0]){
+    for(let i=1;i<K.length;i++){
+      if(n.t<K[i][0]){const a=K[i-1],b=K[i],k=(n.t-a[0])/(b[0]-a[0]);g=a[1]+(b[1]-a[1])*k;break;}
+    }
+    if(RM)g=Math.max(0,g);       // 動きをへらす設定では行きすぎない
+  }
+  return n.to+(n.from-n.to)*g;
+}
+
+// ---- 読みとり(pH の数字と濃度) ----
+function renderRead(bump){
+  const st=S.st,el=$('rPH');
+  if(!st){el.textContent='--';$('rConc').innerHTML='';$('rLiq').innerHTML='液をえらんでいない';return;}
+  const ph=phOf(st),h=hOf(st);
+  el.textContent=ph.toFixed(2);
+  if(bump){el.classList.remove('ph-bump');void el.offsetWidth;el.classList.add('ph-bump');}
+  // 化学式・指数は span の中に入れる(flex の直下に置くと下付きが効かなくなる)
+  let cc='<span>[H<sup>+</sup>] = <span class="num">'+sci(h)+'</span> mol/L</span>';
+  if(ph>7.0001)cc+='<br><span>[OH<sup>−</sup>] = <span class="num">'+sci(KW/h)+'</span> mol/L</span>';
+  $('rConc').innerHTML=cc;
+  $('rLiq').innerHTML='<span>'+liqName(st)+'</span>';
+}
+
+// ---- 手札 ----
+function renderHand(){
+  const p=S.p,ids=CARD_ORDER.filter(id=>p.hand[id]!=null);
+  const box=$('hand');
+  if(box.dataset.q!==p.id){
+    box.dataset.q=p.id;box.innerHTML='';
+    box.style.gridTemplateColumns='repeat('+Math.min(ids.length,4)+',1fr)';
+    ids.forEach((id,i)=>{
+      const cd=CARDS[id],b=document.createElement('button');
+      b.type='button';b.className='ph-card k-'+cd.kind;b.dataset.id=id;
+      b.setAttribute('aria-label',CARD_LONG[id]+'(キー '+(i+1)+')');b.title=CARD_LONG[id];
+      const ic=cd.kind==='dil'?'<svg viewBox="0 0 17 21" aria-hidden="true"><path d="M8.5 1.5C8.5 1.5 2 9.5 2 13.5a6.5 6.5 0 0 0 13 0C15 9.5 8.5 1.5 8.5 1.5z" fill="#7cc8ff" stroke="#1c1740" stroke-width="2.2" stroke-linejoin="round"/></svg>':'';
+      b.innerHTML='<span class="ph-cb">'+ic+cd.big+'</span><span class="ph-cs">'+cd.sub+(cd.note?'<small>'+cd.note+'</small>':'')+'</span><span class="ph-cn"></span>';
+      bindCard(b);
+      box.appendChild(b);
+    });
+  }
+  [...box.children].forEach(b=>{
+    const id=b.dataset.id,n=S.hand[id];
+    b.querySelector('.ph-cn').textContent='あと'+n;
+    b.classList.toggle('ph-empty',n<=0);
+    const ban=n>0&&S.st&&id!=='swap'&&!applyCard(S.st,id).st;
+    b.classList.toggle('ph-ban',!!ban);
+  });
+  $('bGo').disabled=!S.st;
+}
+function bindCard(b){
+  const up=()=>b.classList.remove('ph-on');
+  b.addEventListener('pointerdown',e=>{
+    if(e.button!=null&&e.button!==0)return;
+    e.preventDefault();b.classList.add('ph-on');useCard(b.dataset.id,b);
+  });
+  b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up);
+  b.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+  b.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+  b.addEventListener('click',e=>{if(e.detail===0)useCard(b.dataset.id,b);});   // キーボード(Enter/Space)
+}
+function nope(el,why){
+  SND.no();
+  if(el){el.classList.remove('ph-shake');void el.offsetWidth;el.classList.add('ph-shake');}
+  log('<b>✕</b> '+why);
+}
+function useCard(id,el){
+  if(!S||S.phase!=='play')return;
+  au();
+  if(!S.st){nope(el,'まず棚から液をえらぼう。');return;}
+  if(S.hand[id]<=0){nope(el,'このカードはもうない。「やり直す」で最初から。');return;}
+  if(id==='swap'){SND.pick();openShelf('swap');return;}
+  const r=applyCard(S.st,id);
+  if(!r.st){nope(el,r.why+'。');return;}
+  S.hand[id]--;S.moves++;
+  const cd=CARDS[id];
+  commit(r.st,cd.done);
+  if(cd.f){SND.pour(cd.f);pour(cd.f);popText(cd.big,'#1c6fd1');}
+  else{SND.mix();mixFx(cd.mix);popText('中和!','#d0306e');}
+}
+function commit(st,verb){
+  S.st=st;S.ops.push(verb);
+  const ph=phOf(st);
+  setNeedle(ph);S.squashT=0;
+  renderAll(true);
+  log(verb+' → <b>pH '+ph.toFixed(2)+'</b>');
+}
+function log(html){$('log').innerHTML=html;}
+
+// ---- 棚 ----
+function openShelf(mode){
+  const p=S.p;
+  S.shelfMode=mode;
+  $('shH').innerHTML=mode==='start'?'棚から液をえらぶ<small>えらぶのは手数に入らない</small>':'取りかえる液をえらぶ<small>取りかえると 1 手</small>';
+  const list=$('shList');list.innerHTML='';
+  p.shelf.forEach(key=>{
+    const L0=LIQS[key],b=document.createElement('button');
+    b.type='button';b.className='ph-sh-b';
+    b.innerHTML='<span>'+KNAME[L0.k]+'</span><small><span class="num">'+concStr(L0.c)+'</span> mol/L'+(L0.a?' 電離度 '+L0.a.toFixed(3):'')+'</small><i></i>';
+    b.addEventListener('click',()=>pickShelf(key));
+    list.appendChild(b);
+  });
+  $('shX').classList.toggle('hidden',mode==='start');
+  $('shelf').classList.remove('hidden');
+}
+function closeShelf(){$('shelf').classList.add('hidden');S.shelfMode=null;}
+$('shX').addEventListener('click',()=>{if(S&&S.phase==='play'){closeShelf();SND.pick();}});
+function pickShelf(key){
+  if(!S||S.phase!=='play')return;
+  au();
+  const mode=S.shelfMode;closeShelf();
+  if(mode==='swap'){S.hand.swap--;S.moves++;}
+  SND.pour(10);
+  commit(mkLiq(key),(mode==='swap'?'液を取りかえた: ':'えらんだ: ')+liqKeyName(key));
+  popText(mode==='swap'?'⇄':'IN','#b07a00');
+}
+
+// ---- やり直し・決定 ----
+$('bRetry').addEventListener('click',()=>{
+  if(!S||S.phase!=='play')return;
+  au();
+  const p=S.p,changed=S.moves>0||(!p.start&&S.st);
+  if(!changed){log('まだ何もしていない。');return;}
+  S.retries++;SND.retry();
+  resetQ();
+  log('最初の状態にもどした(やり直し '+S.retries+'回目)。');
+});
+$('bGo').addEventListener('click',decide);
+function decide(){
+  if(!S||S.phase!=='play'||!S.st)return;
+  au();closeShelf();
+  const p=S.p,ph=phOf(S.st),hit=isHit(ph,p.target);
+  let pts=0,parB=0,cb=0,pen=0;
+  if(hit){
+    S.combo++;S.maxCombo=Math.max(S.maxCombo,S.combo);
+    parB=S.moves<=p.par?PT_PAR:0;
+    cb=Math.min(S.combo,COMBO_MAX)*PT_COMBO;
+    pen=Math.min(S.retries*PT_RETRY,RETRY_CAP);
+    pts=Math.max(0,PT_HIT+parB+cb-pen);
+  }else S.combo=0;
+  S.score+=pts;
+  S.results[S.qi]={p:p,hit:hit,ph:ph,moves:S.moves,pts:pts,parB:parB,cb:cb,pen:pen,retries:S.retries,hint:hit?'':missHint(p,S.st)};
+  S.nd.t=9;                     // 針は止まった位置で
+  S.hit=hit;S.phase='stop';S.phaseT=0;S.stopDur=hit?HITSTOP_HIT:HITSTOP_MISS;
+  if(hit)SND.hit();else SND.miss();
+  drawHud();
+}
+function showJudge(){
+  const r=S.results[S.qi],p=S.p;
+  $('jL').className='ph-jl'+(r.hit?'':' j-miss');
+  $('jL').textContent=r.hit?'命中!':'はずれ';
+  let ps='+'+r.pts;
+  const sm=[];
+  if(r.parB)sm.push('パー+'+r.parB);
+  if(r.cb&&S.combo>=2)sm.push(S.combo+'連続+'+r.cb);
+  if(r.pen)sm.push('やり直し−'+r.pen);
+  $('jP').innerHTML=ps+(sm.length?' <small>'+sm.join(' ')+'</small>':'');
+  const head='pH <b class="num">'+r.ph.toFixed(2)+'</b>(目標 '+p.target+')手数 '+r.moves+' / パー '+p.par+'<br>';
+  $('jT').innerHTML=head+(r.hit?p.ex:r.hint);
+  $('bNext').textContent=S.qi+1>=N_Q?'結果を見る':'次の問題へ';
+  $('hand').classList.add('hidden');$('ctrl').classList.add('hidden');
+  $('judge').classList.remove('hidden');
+  $('judge').classList.remove('pop');void $('judge').offsetWidth;$('judge').classList.add('pop');
+  S.phase='judged';S.phaseT=0;
+}
+$('bNext').addEventListener('click',()=>{
+  if(!S||S.phase!=='judged')return;
+  SND.next();
+  if(S.qi+1>=N_Q)finish();else loadQ(S.qi+1);
+});
+// キーボード: 1〜4 でカード、Enter で決定/次へ、R でやり直し
+document.addEventListener('keydown',e=>{
+  if(!S||!running||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.key==='Enter'||e.key===' '))return;
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=4&&S.phase==='play'&&!S.shelfMode){
+    const b=$('hand').children[n-1];if(b){e.preventDefault();useCard(b.dataset.id,b);}
+  }else if(e.key==='Enter'){
+    if(S.phase==='play'&&!S.shelfMode){e.preventDefault();decide();}
+    else if(S.phase==='judged'){e.preventDefault();$('bNext').click();}
+  }else if((e.key==='r'||e.key==='R')&&S.phase==='play'){$('bRetry').click();}
+});
+
+// ================= 進行 =================
+let last=0;
+function loop(t){
+  if(!running)return;
+  let dt=(t-last)/1000;last=t;
+  if(!(dt>0))dt=0;if(dt>0.05)dt=0.05;      // 経過時間で進める(画面の Hz によらない)
+  update(dt);draw();
+  requestAnimationFrame(loop);
+}
+function update(dt){
+  S.clock+=dt;S.phaseT+=dt;
+  if(S.phase==='stop'){                     // ヒットストップ: ふるえとフラッシュだけ。ほかは止める
+    if(S.phaseT>=S.stopDur){
+      S.phase='react';S.phaseT=0;
+      if(S.hit)confetti(RM?8:34);
+    }
+    return;
+  }
+  if(S.nd)S.nd.t+=dt;
+  S.squashT+=dt;
+  stepParts(dt);
+  if(S.phase==='react'&&S.phaseT>=REACT_S)showJudge();
+}
+function drawHud(){
+  $('hNo').textContent=Math.min(S.qi+1,N_Q)+'/'+N_Q;
+  const sc=CG.fmt(S.score),b=$('hScore');
+  if(b.textContent!==sc){b.textContent=sc;b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+  $('hMove').textContent=S.moves+'/'+S.p.par;
+}
+
+// ================= 描画 =================
+function resize(){
+  W=stageEl.clientWidth;H=stageEl.clientHeight;
+  if(!W||!H)return;
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  const bandH=16,bandY=H-38;
+  const x0=18,x1=W-18;
+  const topY=10,botY=bandY-34;               // ビーカーを置ける高さ
+  const bh=Math.max(60,Math.min(botY-topY,170)),bw=Math.min(W*0.30,bh*0.86,150);
+  L={x0:x0,x1:x1,bandY:bandY,bandH:bandH,bx:Math.max(18+bw/2,W*0.21),bBot:botY,bw:bw,bh:bh};
+}
+if(window.ResizeObserver)new ResizeObserver(()=>{if(running)resize();}).observe(stageEl);
+window.addEventListener('resize',()=>{if(running)resize();});
+function xOf(ph){return L.x0+(L.x1-L.x0)*Math.max(0,Math.min(14,ph))/14;}
+
+function draw(){
+  const c=cx;
+  c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  if(!W)return;
+  // ヒットストップ中は画面ごとふるわせる
+  if(S.phase==='stop'){
+    const a=(S.hit?SHAKE_HIT_PX:SHAKE_MISS_PX)*FX*Math.max(0,1-S.phaseT/S.stopDur),n=Math.floor(S.phaseT*40);
+    stageEl.style.transform='translate('+((hash(n)-.5)*2*a).toFixed(1)+'px,'+((hash(n+7)-.5)*1.4*a).toFixed(1)+'px)';
+  }else if(stageEl.style.transform)stageEl.style.transform='';
+  drawBeaker(c);
+  drawDrops(c);
+  drawBand(c);
+  drawParts(c);
+  drawPops(c);
+  drawJudge(c);
+  drawFlash(c);
+}
+function beakerPath(c,w,h){
+  const r=10;
+  c.beginPath();
+  c.moveTo(-w/2-6,-h);c.lineTo(-w/2,-h+8);c.lineTo(-w/2,-r);c.quadraticCurveTo(-w/2,0,-w/2+r,0);
+  c.lineTo(w/2-r,0);c.quadraticCurveTo(w/2,0,w/2,-r);c.lineTo(w/2,-h+8);c.lineTo(w/2+6,-h);
+}
+function face(){
+  if(S.phase==='stop'||S.phase==='react'||S.phase==='judged')return S.hit?'happy':'sad';
+  if(S.squashT<SQUASH_S)return 'squint';
+  return 'normal';
+}
+function drawBeaker(c){
+  const w=L.bw,h=L.bh,st=S.st;
+  let sx=1,sy=1;
+  if(S.squashT<0.05){sx=1.12;sy=0.88;}else if(S.squashT<SQUASH_S){sx=0.95;sy=1.06;}
+  const fc=face();
+  let jy=0;
+  if(fc==='happy'&&S.phase==='react'){jy=S.phaseT<0.08?-14:S.phaseT<0.16?-20:S.phaseT<0.24?-8:0;}
+  c.save();c.translate(L.bx,L.bBot+jy);c.scale(sx,sy);
+  // ガラス
+  beakerPath(c,w,h);c.closePath();c.fillStyle='rgba(238,247,255,.95)';c.fill();
+  // 液
+  const lev=h*0.62;
+  c.save();beakerPath(c,w,h);c.closePath();c.clip();
+  c.fillStyle=st?rgb(indColor(phOf(st))):'rgba(200,196,226,.35)';
+  c.fillRect(-w,-lev,w*2,lev+2);
+  c.strokeStyle='rgba(28,23,64,.28)';c.lineWidth=2;c.beginPath();c.moveTo(-w,-lev);c.lineTo(w,-lev);c.stroke();
+  c.fillStyle='rgba(255,255,255,.6)';c.fillRect(-w/2+9,-h+16,7,h-30);
+  c.restore();
+  // 目盛り
+  c.strokeStyle='rgba(28,23,64,.5)';c.lineWidth=1.5;
+  for(let i=1;i<=3;i++){const y=-h*0.22*i;c.beginPath();c.moveTo(w/2-14,y);c.lineTo(w/2-3,y);c.stroke();}
+  beakerPath(c,w,h);c.lineWidth=3;c.strokeStyle=NAVY;c.lineJoin='round';c.lineCap='round';c.stroke();
+  // 顔(液の中)
+  const ey=-lev*0.55,ex=w*0.17,my=ey+13;
+  c.strokeStyle=NAVY;c.fillStyle=NAVY;c.lineWidth=3;
+  for(const s of [-1,1]){
+    const x=s*ex;
+    if(fc==='happy'){c.beginPath();c.moveTo(x-6,ey+3);c.lineTo(x,ey-4);c.lineTo(x+6,ey+3);c.stroke();}
+    else if(fc==='sad'){c.beginPath();c.moveTo(x-5,ey-1);c.lineTo(x+5,ey+1);c.stroke();}
+    else if(fc==='squint'){c.beginPath();c.moveTo(x-s*5,ey-4);c.lineTo(x+s*3,ey);c.lineTo(x-s*5,ey+4);c.stroke();}
+    else{c.beginPath();c.ellipse(x,ey,4,5.5,0,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(x-1.3,ey-2,1.4,0,Math.PI*2);c.fill();c.fillStyle=NAVY;}
+  }
+  if(fc==='happy'){c.beginPath();c.moveTo(-8,my-2);c.quadraticCurveTo(0,my+11,8,my-2);c.closePath();c.fill();}
+  else if(fc==='sad'){c.beginPath();c.moveTo(-7,my);c.lineTo(-3.5,my-3);c.lineTo(0,my);c.lineTo(3.5,my-3);c.lineTo(7,my);c.stroke();}
+  else if(fc==='squint'){c.beginPath();c.ellipse(0,my,5,6,0,0,Math.PI*2);c.fill();}
+  else{c.beginPath();c.arc(0,my-5,6,0.2*Math.PI,0.8*Math.PI);c.stroke();}
+  c.restore();
+}
+// 目盛りの帯(pH 0〜14)、目標の的、針
+function drawBand(c){
+  const y=L.bandY,bh=L.bandH,x0=L.x0,x1=L.x1;
+  // 帯
+  const g=c.createLinearGradient(x0,0,x1,0);
+  IND_STOPS.forEach(s=>g.addColorStop(s[0]/14,rgb(s[1])));
+  c.fillStyle=g;c.fillRect(x0,y,x1-x0,bh);
+  c.strokeStyle=NAVY;c.lineWidth=2.5;c.strokeRect(x0,y,x1-x0,bh);
+  // 数字
+  c.fillStyle=NAVY;c.textAlign='center';c.textBaseline='top';
+  const step=W<330?2:1;
+  for(let v=0;v<=14;v++){
+    const x=xOf(v);
+    c.fillRect(x-0.75,y+bh,1.5,v%7===0?6:3);
+    if(v%step===0||v===7){c.font=(v===7?'800 12px ':'700 10.5px ')+NUMF;c.fillText(String(v),x,y+bh+6);}
+  }
+  c.font='900 10px '+JPF;c.fillStyle='#6b6690';c.textBaseline='bottom';
+  c.textAlign='left';c.fillText('← 酸性',x0,y-3);c.textAlign='right';c.fillText('塩基性 →',x1,y-3);
+  // 目標の的
+  const t=S.p.target,cy=y+bh/2;
+  let tx=xOf(t);
+  if(!S.hit&&(S.phase==='stop'||S.phase==='react')){       // はずれ: 的がぶるっとゆれる
+    const k=S.phase==='stop'?1:Math.max(0,1-S.phaseT/0.3);tx+=(Math.floor(S.clock*30)%2?1:-1)*3*k*FX;
+  }
+  c.lineWidth=2.5;c.strokeStyle=NAVY;
+  c.beginPath();c.arc(tx,cy,13,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.stroke();
+  c.beginPath();c.arc(tx,cy,8.5,0,Math.PI*2);c.fillStyle='#ff4f8b';c.fill();c.lineWidth=2;c.stroke();
+  c.beginPath();c.arc(tx,cy,3.6,0,Math.PI*2);c.fillStyle='#fff';c.fill();
+  // 命中: 的から輪が広がる
+  if(S.hit&&(S.phase==='react'||S.phase==='judged')){
+    const k=Math.min(1,(S.phase==='react'?S.phaseT:REACT_S+S.phaseT)/0.45);
+    if(k<1){c.strokeStyle='rgba(255,204,0,'+(1-k)+')';c.lineWidth=5*(1-k)+1;c.beginPath();c.arc(tx,cy,13+k*40,0,Math.PI*2);c.stroke();}
+  }
+  // 針
+  const np=needlePos();
+  if(np!=null){
+    let nx=xOf(np);
+    if(S.hit&&S.phase!=='play')nx=xOf(t);                 // 命中: 的の真ん中に刺さる
+    const top=y-28,col=S.st?rgb(indColor(phOf(S.st))):'#fff';
+    c.strokeStyle=NAVY;c.lineWidth=3;c.lineCap='round';
+    c.beginPath();c.moveTo(nx,top+10);c.lineTo(nx,cy);c.stroke();
+    c.beginPath();c.moveTo(nx-9,top);c.lineTo(nx+9,top);c.lineTo(nx,top+15);c.closePath();
+    c.fillStyle=col;c.fill();c.lineWidth=2.5;c.lineJoin='round';c.stroke();
+    // はずれ: 的をそれた「スカッ」の線
+    if(!S.hit&&(S.phase==='stop'||S.phase==='react')){
+      const dir=np<t?1:-1,k=S.phase==='stop'?0:Math.min(1,S.phaseT/0.3);
+      c.strokeStyle='rgba(28,23,64,'+(0.55*(1-k))+')';c.lineWidth=2;
+      for(let i=0;i<3;i++){const yy=top+3+i*5;c.beginPath();c.moveTo(nx-dir*(12+i*4),yy);c.lineTo(nx-dir*(30+i*8),yy);c.stroke();}
+    }
+  }
+}
+// 判定の文字。大きく出て、少し縮んで決まる(段階で切りかえる)
+function drawJudge(c){
+  const ph=S.phase;
+  if(!(ph==='stop'||ph==='react'||ph==='judged'))return;
+  const t=ph==='stop'?S.phaseT:ph==='react'?S.stopDur+S.phaseT:S.stopDur+REACT_S+S.phaseT;
+  if(ph==='judged'&&S.phaseT>0.25)return;
+  const a=ph==='judged'?1-S.phaseT/0.25:1;
+  const s=t<0.05?1.7:t<0.10?1.25:1;
+  const txt=S.hit?'命中!':'スカッ';
+  const fz=Math.round(Math.min(W*0.15,62));
+  c.save();c.globalAlpha=a;c.translate(W*0.5,(L.bandY-28)*0.5);c.rotate(-0.06);c.scale(s,s);
+  c.font='900 '+fz+'px '+JPF;c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  c.fillStyle=NAVY;c.fillText(txt,0,fz*0.09);
+  c.lineWidth=fz*0.17;c.strokeStyle=NAVY;c.strokeText(txt,0,0);
+  c.fillStyle=S.hit?'#ffcc00':'#d9d5ee';c.fillText(txt,0,0);
+  c.restore();
+}
+function drawFlash(c){
+  if(S.phase!=='stop')return;
+  const t=S.phaseT,k=(S.hit?1:0.4)*(RM?0.3:1);
+  const seq=[[0.045,'255,255,255',0.55],[0.09,'28,23,64',0.26],[0.14,'255,255,255',0.28],[0.19,'28,23,64',0.10]];
+  for(const q of seq){if(t<q[0]){c.fillStyle='rgba('+q[1]+','+(q[2]*k)+')';c.fillRect(0,0,W,H);break;}}
+}
+
+// ---- 粒(水滴・中和のしぶき・紙ふぶき)と浮かぶ文字 ----
+function pour(f){
+  const n=f>=1000?9:f>=100?6:f>=10?4:3;
+  for(let i=0;i<n;i++)S.drops.push({x:L.bx+(Math.random()-.5)*L.bw*0.5,y:-10-i*14-Math.random()*8,vy:260+Math.random()*80,col:'#9fd6ff'});
+}
+function mixFx(mix){
+  const col=mix==='SB'?'#7a5cff':'#ff5a4a';
+  for(let i=0;i<5;i++)S.drops.push({x:L.bx+(Math.random()-.5)*L.bw*0.4,y:-10-i*12,vy:280,col:col});
+  for(let i=0;i<10;i++){
+    const a=-Math.PI/2+(Math.random()-.5)*1.8,v=160+Math.random()*160;
+    S.parts.push({x:L.bx,y:L.bBot-L.bh*0.62,vx:Math.cos(a)*v,vy:Math.sin(a)*v,age:0,life:0.5,col:'#fff',conf:false,r:3+Math.random()*3});
+  }
+}
+function popText(txt,col){S.pops.push({txt:txt,col:col,age:0,x:L.bx,y:L.bBot-L.bh-4});}
+function confetti(n){
+  const cols=['#ffcc00','#ff4f8b','#10b3c7','#a070ff','#19c37d'],x=xOf(S.p.target),y=L.bandY;
+  for(let i=0;i<n;i++){
+    const a=-Math.PI/2+(Math.random()-.5)*2.0,v=320+Math.random()*360;
+    S.parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,rot:Math.random()*6,vr:(Math.random()-.5)*16,col:cols[i%5],age:0,life:0.9+Math.random()*0.4,conf:true});
+  }
+}
+function stepParts(dt){
+  for(const p of S.parts){p.age+=dt;p.vy+=1300*dt;p.vx*=Math.pow(0.4,dt);p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.conf)p.rot+=p.vr*dt;}
+  S.parts=S.parts.filter(p=>p.age<p.life&&p.y<H+20);
+  const surf=L.bBot-L.bh*0.62;
+  for(const d of S.drops){d.vy+=900*dt;d.y+=d.vy*dt;}
+  S.drops=S.drops.filter(d=>d.y<surf);
+  for(const p of S.pops)p.age+=dt;
+  S.pops=S.pops.filter(p=>p.age<0.7);
+}
+function drawDrops(c){
+  c.strokeStyle=NAVY;c.lineWidth=2;
+  for(const d of S.drops){
+    if(d.y<0)continue;
+    const r=4.5;c.fillStyle=d.col;
+    c.beginPath();c.moveTo(d.x,d.y-r*2.2);c.quadraticCurveTo(d.x+r*1.3,d.y+r*0.2,d.x,d.y+r);c.quadraticCurveTo(d.x-r*1.3,d.y+r*0.2,d.x,d.y-r*2.2);
+    c.fill();c.stroke();
+  }
+}
+function drawParts(c){
+  for(const p of S.parts){
+    c.save();c.translate(p.x,p.y);
+    c.fillStyle=p.col;c.strokeStyle=NAVY;c.lineWidth=1.5;
+    if(p.conf){c.rotate(p.rot);c.fillRect(-3.5,-6,7,12);c.strokeRect(-3.5,-6,7,12);}
+    else{c.beginPath();c.arc(0,0,p.r,0,Math.PI*2);c.fill();c.stroke();}
+    c.restore();
+  }
+}
+function drawPops(c){
+  for(const p of S.pops){
+    const k=p.age/0.7,s=p.age<0.05?1.5:p.age<0.1?1.15:1;
+    c.save();c.globalAlpha=k<0.7?1:1-(k-0.7)/0.3;
+    c.translate(p.x,Math.max(16,p.y-k*16));c.scale(s,s);
+    c.font='900 22px '+NUMF;c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+    c.lineWidth=5;c.strokeStyle='#fff';c.strokeText(p.txt,0,0);
+    c.fillStyle=p.col;c.fillText(p.txt,0,0);
+    c.restore();
+  }
+}
+
+// ================= 結果画面 =================
+function finish(){
+  running=false;
+  stageEl.style.transform='';
+  document.body.classList.remove('ph-playing');
+  $('play').classList.add('hidden');$('end').classList.remove('hidden');
+  window.scrollTo(0,0);
+  const sec=Math.round((performance.now()-S.t0)/1000);
+  const nHit=S.results.filter(r=>r&&r.hit).length;
+  $('fTime').textContent='命中 '+nHit+' / '+N_Q+' 問 ・ 最大 '+S.maxCombo+' 連続 ・ 所要時間 '+Math.floor(sec/60)+'分'+String(sec%60).padStart(2,'0')+'秒';
+  let h='',why='';
+  S.results.forEach((r,i)=>{
+    const p=r.p;
+    h+='<div class="ph-row"><span class="n">'+(i+1)+'</span><span class="w">目標 pH <b>'+p.target+'</b><small>手数 '+r.moves+' / パー '+p.par
+      +(r.retries?'・やり直し '+r.retries:'')+'</small></span><span class="j'+(r.hit?' j-hit':'')+'">'+(r.hit?'命中':'はずれ')+'</span><span class="p">+'+r.pts+'</span></div>';
+    if(!r.hit)why+='<div class="ph-why-i"><b>'+(i+1)+'問目(目標 pH '+p.target+')</b> '+p.ex+'</div>';
+  });
+  $('fList').innerHTML=h;
+  $('fWhy').innerHTML='<span class="ph-why-h">まちがえた問題の考え方</span>'+(why||'<div class="ph-why-i">全問命中! pH の差が n なら 10<sup>n</sup> 倍、7 をまたぐなら中和。</div>');
+  CG.countUp($('fScore'),S.score);
+  const sc=S.score,b=CG.best('ph-target',sc);
+  const rk=sc>=RANK_S?'S':sc>=RANK_A?'A':sc>=RANK_B?'B':'C';
+  const el=$('fRank');el.textContent=rk;el.className='rank'+(rk==='A'?' r-a':rk==='B'?' r-b':rk==='C'?' r-c':'');
+  let bl='';
+  if(b.ok){
+    if(b.first)bl='<span>はじめての記録</span>';
+    else if(b.isNew)bl='<span class="new">自己ベスト更新!</span> <span>これまで '+CG.fmt(b.prev)+'点</span>';
+    else bl='<span>自己ベスト '+CG.fmt(b.prev)+'点</span>';
+  }
+  $('fBest').innerHTML=bl;
+  const say=rk==='S'?'見事。10倍で pH 1、7 をまたぐなら中和。もう体に入っているな。'
+    :rk==='A'?'いい腕だ。カードを切る前に「何倍か」を数えれば、パーで決まる。'
+    :rk==='B'?'酸はうすめても 7 をこえない。同じ 0.10 mol/L でも、酢酸は pH 1 にならない。ここが分かれ道だ。'
+    :'pH が 1 ちがうと [H<sup>+</sup>] は 10倍。まずは 10倍・100倍で pH がいくつ動くか、たしかめよう。';
+  $('fSay').innerHTML=CG.mascot(say);
+  CG.sfx.fin();
+}
+</script>
+</body>
+</html>

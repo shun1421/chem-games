@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分圧シミュレーション | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
+<style>
+main.game{max-width:1120px}
+
+/* ===== 物質の種類(2種類 / 3種類) ===== */
+.pp-seg{display:grid;grid-template-columns:1fr 1fr;max-width:420px;margin:0 auto 12px;background:#fff;border:3px solid var(--navy);
+ border-radius:14px;box-shadow:0 4px 0 var(--navy);overflow:hidden}
+.pp-segb{display:block;border:0;background:#fff;padding:6px 6px 5px;font-weight:900;font-size:15px;color:var(--navy);cursor:pointer;line-height:1.25}
+.pp-segb+.pp-segb{border-left:3px solid var(--navy)}
+.pp-segb small{display:block;font-size:10.5px;color:var(--mut)}
+.pp-segb.pp-on{background:var(--u);color:#fff}
+.pp-segb.pp-on small{color:#e3eeff}
+
+/* ===== 2段組み(広い画面) ===== */
+.pp-grid{display:grid;gap:14px;align-items:start}
+.pp-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media(min-width:900px){
+ .pp-grid{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+ .pp-left{position:sticky;top:76px}
+}
+.panel.pp-pn{padding:10px 10px 12px;border-radius:18px;box-shadow:0 5px 0 var(--navy)}
+.pp-h{display:block;font-size:13px;font-weight:900;letter-spacing:.06em;margin:0 2px 6px}
+.pp-h small{font-size:11px;color:var(--mut);letter-spacing:0;margin-left:6px}
+
+/* ===== 容器 ===== */
+.pp-stage{position:relative;width:100%;max-width:max(240px,calc((100vh - 230px)*1.25));margin:0 auto;aspect-ratio:5/4;
+ border:3px solid var(--navy);border-radius:12px;overflow:hidden;background:#161236}
+#ppBox{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.pp-time{position:absolute;left:6px;top:6px;background:rgba(255,255,255,.92);border:2px solid var(--navy);border-radius:99px;
+ padding:1px 9px;font-size:11.5px;font-weight:900;color:var(--navy);pointer-events:none}
+.pp-time b{font-family:var(--numf);font-size:14px;font-variant-numeric:tabular-nums}
+.pp-pz{position:absolute;right:6px;top:6px;background:var(--yellow);border:2px solid var(--navy);border-radius:99px;padding:1px 10px;
+ font-size:11.5px;font-weight:900;color:var(--navy);pointer-events:none}
+
+/* 操作ボタン */
+.pp-ctl{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:10px}
+.pp-cb{display:block;padding:9px 4px;font-size:13.5px;font-weight:900;background:#fff;color:var(--navy);border:3px solid var(--navy);
+ border-radius:12px;box-shadow:0 4px 0 var(--navy);cursor:pointer;white-space:nowrap}
+.pp-cb.pp-main{background:var(--yellow)}
+.pp-cb:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.pp-spd{display:flex;border:3px solid var(--navy);border-radius:12px;box-shadow:0 4px 0 var(--navy);overflow:hidden;background:#fff}
+.pp-sb{display:block;border:0;background:#fff;padding:0 11px;font-family:var(--numf);font-weight:700;font-size:16px;color:var(--navy);cursor:pointer}
+.pp-sb+.pp-sb{border-left:2px solid var(--navy)}
+.pp-sb.pp-on{background:var(--u);color:#fff}
+
+/* ===== 個数の設定 ===== */
+.pp-row{display:grid;grid-template-columns:auto 34px minmax(0,1fr) 34px 54px;align-items:center;gap:7px;padding:4px 0}
+.pp-bd{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:46px;height:30px;padding:0 6px;border:2px solid var(--navy);
+ border-radius:10px;color:var(--navy);font-weight:900;font-size:15px;line-height:1}
+.pp-bd .pp-shp{font-size:12px}
+.pp-pm{display:block;height:32px;border:2px solid var(--navy);border-radius:10px;background:#fff;box-shadow:0 3px 0 var(--navy);font-weight:900;
+ font-size:19px;line-height:1;cursor:pointer;padding:0;color:var(--navy);touch-action:manipulation}
+.pp-pm:active{transform:translateY(2px);box-shadow:0 1px 0 var(--navy)}
+.pp-rg{display:block;width:100%;margin:0;accent-color:var(--u)}
+.pp-val{display:block;text-align:right;font-family:var(--numf);font-size:21px;font-weight:700;line-height:1.05}
+.pp-val small{font-family:inherit;font-size:11px;font-weight:900;margin-left:1px}
+.pp-val .pp-ms{display:block;font-size:10.5px;color:var(--mut);font-weight:900}
+.pp-tot{display:block;text-align:right;font-size:12px;font-weight:900;color:var(--mut);margin:2px 4px 0}
+.pp-tot b{font-family:var(--numf);font-size:15px;color:var(--navy)}
+
+/* ===== くらべるグラフと表 ===== */
+#ppGraph{display:block;width:100%;height:110px}
+.pp-tb{display:grid;gap:4px 5px;margin-top:8px;font-size:12px}
+.pp-th{display:block;text-align:center;font-size:10.5px;font-weight:900;color:var(--mut);line-height:1.3;align-self:end}
+.pp-td{display:block;background:#f3f1ff;border-radius:9px;padding:3px 3px 4px;text-align:center;font-weight:800;line-height:1.25;min-width:0}
+.pp-td.pp-c0{background:none;padding:0;display:flex;align-items:center;justify-content:center}
+.pp-fr{display:block;font-family:var(--numf);font-size:11px;color:var(--mut);word-break:break-all}
+.pp-dec{display:block;font-family:var(--numf);font-size:18px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.pp-td.pp-sum{background:#e6e2fb}
+.pp-rate{display:block;font-size:11.5px;font-weight:800;color:var(--mut);line-height:1.6;margin:8px 2px 0}
+.pp-rate b{font-family:var(--numf);font-size:14px;color:var(--navy)}
+
+/* ===== 分圧 ===== */
+.pp-ptot{display:block;font-size:13px;font-weight:800;line-height:1.6;margin:0 2px 6px}
+.pp-ptot b{font-family:var(--numf);font-size:20px}
+.pp-pr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center;padding:4px 0;border-top:2px dashed #e1ddf6}
+.pp-pf{display:block;font-size:12.5px;font-weight:800;line-height:1.5;min-width:0}
+.pp-pf b,.pp-pm2 b{font-family:var(--numf);font-size:17px}
+.pp-pm2{display:block;text-align:right;font-size:11px;font-weight:900;color:var(--mut);line-height:1.2;white-space:nowrap}
+.pp-pm2 b{display:block;color:var(--navy)}
+
+/* ===== 設定 ===== */
+.pp-sw{display:flex;align-items:center;gap:10px;padding:6px 2px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.pp-sw input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.pp-swk{flex:0 0 46px;height:26px;border:2px solid var(--navy);border-radius:99px;background:#e6e3f2;position:relative;box-shadow:0 3px 0 var(--navy)}
+.pp-swk::after{content:'';position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--navy);transition:left .12s}
+.pp-sw input:checked+.pp-swk{background:var(--u)}
+.pp-sw input:checked+.pp-swk::after{left:22px}
+.pp-sw input:focus-visible+.pp-swk{outline:3px solid var(--yellow);outline-offset:2px}
+.pp-swt{display:block;font-size:13.5px;font-weight:900;line-height:1.35}
+.pp-swt small{display:block;font-size:11px;color:var(--mut)}
+.pp-note{display:block;font-size:12px;font-weight:700;line-height:1.7;color:var(--mut);margin:2px 2px 6px 58px}
+.pp-note b{color:var(--navy)}
+.pp-adv{display:block;margin:4px 0 2px;padding:8px 10px;background:#fffbe6;border:2px solid var(--navy);border-radius:12px;font-size:12.5px;font-weight:700;line-height:1.7}
+.pp-adv b{color:#b0106e}
+
+/* ===== 考察のヒント ===== */
+.pp-hint .mascot{margin:0 0 6px}
+.pp-hint .mascot img{flex-basis:64px;width:64px;height:64px}
+.pp-det{display:block;border:2px solid var(--navy);border-radius:12px;background:#f3f1ff}
+.pp-det summary{cursor:pointer;padding:8px 12px;font-size:13.5px;font-weight:900;list-style:none}
+.pp-det summary::-webkit-details-marker{display:none}
+.pp-det summary::before{content:'▶';display:inline-block;margin-right:7px;font-size:11px;transition:transform .12s}
+.pp-det[open] summary::before{transform:rotate(90deg)}
+.pp-det ol{margin:0;padding:0 12px 10px 32px;font-size:13px;font-weight:700;line-height:1.75}
+.pp-det li+li{margin-top:4px}
+.pp-foot{display:block;font-size:11.5px;font-weight:700;line-height:1.7;color:var(--mut);margin:8px 2px 0}
+
+@media(max-width:380px){
+ .pp-row{grid-template-columns:auto 30px minmax(0,1fr) 30px 48px;gap:5px}
+ .pp-dec{font-size:16px}
+ .pp-cb{font-size:12.5px}
+}
+</style>
+</head>
+<body data-u="blue">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">分圧シミュレーション</div><span class="chip">気体</span></header>
+<main class="game">
+
+<div class="pp-seg" role="group" aria-label="容器の中の物質の種類">
+  <button type="button" class="pp-segb" id="ppK2" onclick="setKinds(2)"><span>2種類</span><small>A・B</small></button>
+  <button type="button" class="pp-segb" id="ppK3" onclick="setKinds(3)"><span>3種類</span><small>A・B・C</small></button>
+</div>
+
+<div class="pp-grid">
+  <div class="pp-col pp-left">
+    <section class="panel pp-pn">
+      <div class="pp-stage" id="ppStage">
+        <canvas id="ppBox" aria-label="容器の中を動く粒子"></canvas>
+        <span class="pp-time">経過 <b id="ppT">0.0</b> 秒</span>
+        <span class="pp-pz hidden" id="ppPz">一時停止中</span>
+      </div>
+      <div class="pp-ctl">
+        <button type="button" class="pp-cb pp-main" id="ppPause" onclick="togglePause()">❚❚ 一時停止</button>
+        <button type="button" class="pp-cb" onclick="resetMeasure()">↺ 測定をリセット</button>
+        <div class="pp-spd" role="group" aria-label="速さ">
+          <button type="button" class="pp-sb" data-s="0" onclick="setSpeed(0)">×1</button>
+          <button type="button" class="pp-sb" data-s="1" onclick="setSpeed(1)">×4</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="pp-col">
+    <section class="panel pp-pn">
+      <span class="pp-h">容器の中の粒子の個数<small>変えると置き直して測定をリセット</small></span>
+      <div id="ppCounts"></div>
+      <span class="pp-tot">合計 <b id="ppSum">0</b> 個</span>
+    </section>
+
+    <section class="panel pp-pn">
+      <span class="pp-h">くらべる<small>個数の割合(モル分率)と、壁への衝突回数の割合</small></span>
+      <canvas id="ppGraph" aria-label="割合をくらべる帯グラフ"></canvas>
+      <div class="pp-tb" id="ppTable"></div>
+      <span class="pp-rate" id="ppRate"></span>
+    </section>
+
+    <section class="panel pp-pn">
+      <span class="pp-h">分圧<small>p<sub>A</sub> = p<sub>全</sub> × x<sub>A</sub> を確かめる</small></span>
+      <div id="ppPres"></div>
+      <span class="pp-foot" id="ppPnote"></span>
+    </section>
+
+    <section class="panel pp-pn">
+      <span class="pp-h">設定</span>
+      <label class="pp-sw"><input type="checkbox" id="ppCol" onchange="setCollide(this.checked)"><span class="pp-swk"></span>
+        <span class="pp-swt">粒子どうしの衝突あり<small>弾性衝突(運動エネルギーの合計は変わらない)</small></span></label>
+      <span class="pp-note" id="ppColNote"></span>
+      <label class="pp-sw"><input type="checkbox" id="ppMass" onchange="setMass(this.checked)"><span class="pp-swk"></span>
+        <span class="pp-swt">質量をかえる(発展)<small>物質ごとに質量がちがう。温度は同じ</small></span></label>
+      <div class="pp-adv hidden" id="ppAdv"></div>
+    </section>
+
+    <section class="panel pp-pn pp-hint">
+      <div id="ppMascot"></div>
+      <details class="pp-det">
+        <summary>考察のヒント</summary>
+        <ol>
+          <li>「衝突回数の割合」と「モル分率(個数の割合)」をくらべよう。時間がたつと、どうなっていく?</li>
+          <li>Aの個数を2倍にすると、Aの1秒あたりの衝突回数は? 全圧は?</li>
+          <li>Bを0個にすると、Aの分圧と全圧はどんな関係になる?</li>
+          <li>「粒子どうしの衝突あり」にしても、割合は変わる?</li>
+        </ol>
+      </details>
+      <span class="pp-foot">※ 2次元のモデル。粒子の速さは同じ温度のマクスウェル分布で、温度は一定。壁との衝突は弾性衝突。
+      時間はシミュレーションの中の時間(×4 のときは4倍の速さで進む)。圧力・分圧は任意単位。</span>
+    </section>
+  </div>
+</div>
+</main>
+
+<script src="common.js"></script>
+<script>
+// ===================== 調整値 =====================
+try{localStorage.setItem('chemgames:partial-pressure:seen','1');}catch(e){} // 一覧の「使った」の印だけ
+const PP={
+  W:1.25, H:1.0,            // 容器の横・縦(シミュレーションの中の長さ。横:縦=5:4。CSS の aspect-ratio と合わせる)
+  R:0.016,                  // 粒子の半径(容器の縦=1 に対して)
+  N_MIN:0, N_MAX:100,       // 1つの物質の個数の範囲
+  INIT:{2:[30,10], 3:[30,20,10]},   // 個数の初期値(2種類 / 3種類)
+  V_MEAN:0.6,               // 質量1の粒子の平均の速さ(容器の縦/秒)
+  MASS:[1,4,16],            // 「質量をかえる(発展)」のときの A・B・C の質量(標準はすべて1)
+  SPEEDS:[1,4],             // 早送りの倍率(×1 / ×4)
+  MAX_DT:50,                // 1回の描画で進める時間の上限(ミリ秒)。タブ復帰などで大きく空いたとき用
+  SUB_MOVE:0.5,             // 1刻みで2粒子が近づける距離の上限(半径の何倍か)。早送りでもこれを守るように刻みを細かくする
+  SUB_MAX:400,              // 1回の描画での刻み数の上限
+  P_SCALE:0.1,              // 圧力の表示の倍率(全圧 ≒ 粒子の総数 × 0.1 になる)
+  MARK_SEC:0.45,            // 壁の光る印が消えるまでの時間(実時間の秒)
+  MARK_MAX:600,             // 光る印を同時に出す数の上限
+  UI_HZ:12,                 // 数字・グラフを書きかえる回数(1秒あたり)
+  NAME:['A','B','C'],
+  SHAPE:['●','▲','■'],      // 色覚に配慮して形でも区別
+  COLOR:['#ff6b6b','#5c9bff','#3ddc97']   // A=赤 B=青 C=緑
+};
+
+// ===================== SIM-CORE BEGIN(描画なし。node でも動く) =====================
+const PP_SIGMA=PP.V_MEAN/Math.sqrt(Math.PI/2);   // 質量1の速度成分の標準偏差(2次元マクスウェル分布)
+const PP_MAXN=PP.N_MAX*3;
+function ppCreate(rng){
+  const n=PP_MAXN;
+  return {W:PP.W,H:PP.H,r:PP.R,ns:2,cnt:[0,0,0],mass:[1,1,1],collide:false,massMode:false,
+    N:0,x:new Float64Array(n),y:new Float64Array(n),vx:new Float64Array(n),vy:new Float64Array(n),
+    sp:new Int8Array(n),m:new Float64Array(n),
+    t:0,hits:[0,0,0],imp:[0,0,0],pairs:0,onWall:null,rng:rng||Math.random,
+    gx:1,gy:1,head:new Int32Array(1),next:new Int32Array(n)};
+}
+function ppShuffle(a,rng){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function ppResetMeasure(S){S.t=0;S.hits=[0,0,0];S.imp=[0,0,0];S.pairs=0;}
+// 粒子を置き直す。cnt=物質ごとの個数、ns=物質の種類の数
+function ppInit(S,cnt,ns,collide,massMode){
+  S.ns=ns;S.collide=!!collide;S.massMode=!!massMode;
+  S.cnt=[0,0,0];S.mass=[1,1,1];
+  for(let k=0;k<ns;k++){
+    S.cnt[k]=Math.max(PP.N_MIN,Math.min(PP.N_MAX,Math.round(cnt[k]||0)));
+    S.mass[k]=massMode?PP.MASS[k]:1;
+  }
+  const r=S.r,W=S.W,H=S.H,rng=S.rng;
+  let N=0;
+  for(let k=0;k<ns;k++)for(let i=0;i<S.cnt[k];i++){S.sp[N]=k;S.m[N]=S.mass[k];N++;}
+  S.N=N;
+  // 位置: 重ならないように(衝突ありに切りかえても最初から重なっていないように)
+  const dmin2=(2.2*r)*(2.2*r);
+  for(let i=0;i<N;i++){
+    let px=0,py=0,ok=false;
+    for(let tr=0;tr<500&&!ok;tr++){
+      px=r+rng()*(W-2*r);py=r+rng()*(H-2*r);ok=true;
+      for(let j=0;j<i;j++){const dx=S.x[j]-px,dy=S.y[j]-py;if(dx*dx+dy*dy<dmin2){ok=false;break;}}
+    }
+    S.x[i]=px;S.y[i]=py;
+  }
+  // 速度: 物質ごとに2次元マクスウェル分布(同じ温度)。速さは分布の分位点からとり、向きは等間隔に散らす。
+  // 少ない個数でも「同じ温度」がくずれないよう、物質ごとに全体の大きさをそろえる:
+  //  標準 … 1粒子あたりの壁への衝突頻度の平均を理論値に一致させる
+  //  発展(質量ちがい)… 1粒子あたりの壁が受ける力積(=平均の運動エネルギー)を理論値に一致させる
+  const Wp=W-2*r,Hp=H-2*r;
+  let base=0;
+  for(let k=0;k<ns;k++){
+    const n=S.cnt[k];if(!n)continue;
+    const m=S.mass[k],sg=PP_SIGMA/Math.sqrt(m);
+    const mags=[];
+    for(let i=0;i<n;i++)mags.push(sg*Math.sqrt(-2*Math.log(1-(i+0.5)/n)));
+    ppShuffle(mags,rng);
+    const off=rng();
+    let q=0;
+    for(let i=0;i<n;i++){
+      const th=2*Math.PI*(i+off)/n,id=base+i;
+      S.vx[id]=mags[i]*Math.cos(th);S.vy[id]=mags[i]*Math.sin(th);
+      q+=massMode?2*m*(S.vx[id]*S.vx[id]/Wp+S.vy[id]*S.vy[id]/Hp):Math.abs(S.vx[id])/Wp+Math.abs(S.vy[id])/Hp;
+    }
+    q/=n;
+    let s;
+    if(massMode)s=Math.sqrt(2*PP_SIGMA*PP_SIGMA*(1/Wp+1/Hp)/q);
+    else s=sg*Math.sqrt(2/Math.PI)*(1/Wp+1/Hp)/q;
+    if(isFinite(s)&&s>0)for(let i=0;i<n;i++){S.vx[base+i]*=s;S.vy[base+i]*=s;}
+    base+=n;
+  }
+  // 粒子どうしの衝突を調べる格子(1マスの幅 ≥ 直径)
+  S.gx=Math.max(1,Math.floor(W/(2*r)));S.gy=Math.max(1,Math.floor(H/(2*r)));
+  S.head=new Int32Array(S.gx*S.gy);
+  ppResetMeasure(S);
+}
+// 壁に当たった: side 0=左 1=右 2=上 3=下、pos=壁にそった位置
+function ppHit(S,i,side,vperp){
+  const k=S.sp[i];
+  S.hits[k]++;S.imp[k]+=2*S.m[i]*Math.abs(vperp);   // 力積 = 運動量の変化 2mv
+  if(S.onWall)S.onWall(k,side,side<2?S.y[i]:S.x[i]);
+}
+// dt(シミュレーションの中の秒)だけ進める。刻み数を返す
+function ppStep(S,dt){
+  if(!(dt>0))return 0;
+  const N=S.N;
+  if(N===0){S.t+=dt;return 0;}
+  const x=S.x,y=S.y,vx=S.vx,vy=S.vy,r=S.r,W=S.W,H=S.H;
+  let v2max=0;
+  for(let i=0;i<N;i++){const v2=vx[i]*vx[i]+vy[i]*vy[i];if(v2>v2max)v2max=v2;}
+  const vmax=Math.sqrt(v2max);
+  // 2粒子が1刻みで近づく距離(最大 2vmax×h)が SUB_MOVE×半径 を超えないように刻む
+  let nsub=Math.ceil(2*vmax*dt/(PP.SUB_MOVE*r));
+  nsub=Math.max(1,Math.min(PP.SUB_MAX,nsub));
+  const h=dt/nsub;
+  for(let s=0;s<nsub;s++){
+    for(let i=0;i<N;i++){
+      x[i]+=vx[i]*h;y[i]+=vy[i]*h;
+      if(x[i]<r){x[i]=2*r-x[i];vx[i]=-vx[i];ppHit(S,i,0,vx[i]);}
+      else if(x[i]>W-r){x[i]=2*(W-r)-x[i];vx[i]=-vx[i];ppHit(S,i,1,vx[i]);}
+      if(y[i]<r){y[i]=2*r-y[i];vy[i]=-vy[i];ppHit(S,i,2,vy[i]);}
+      else if(y[i]>H-r){y[i]=2*(H-r)-y[i];vy[i]=-vy[i];ppHit(S,i,3,vy[i]);}
+      // 念のため(刻みの上限に達したときも容器の外に出さない)
+      if(x[i]<r)x[i]=r;else if(x[i]>W-r)x[i]=W-r;
+      if(y[i]<r)y[i]=r;else if(y[i]>H-r)y[i]=H-r;
+    }
+    if(S.collide)ppPairs(S);
+  }
+  S.t+=dt;
+  return nsub;
+}
+// 粒子どうしの弾性衝突(2次元の剛体円板)。格子で近くの粒子だけ調べる
+function ppPairs(S){
+  const N=S.N,x=S.x,y=S.y,vx=S.vx,vy=S.vy,m=S.m,gx=S.gx,gy=S.gy,head=S.head,next=S.next;
+  const cw=S.W/gx,ch=S.H/gy,d0=2*S.r,d02=d0*d0;
+  head.fill(-1);
+  for(let i=0;i<N;i++){
+    let cx=Math.floor(x[i]/cw),cy=Math.floor(y[i]/ch);
+    if(cx<0)cx=0;else if(cx>=gx)cx=gx-1;
+    if(cy<0)cy=0;else if(cy>=gy)cy=gy-1;
+    const c=cy*gx+cx;next[i]=head[c];head[c]=i;
+  }
+  const OX=[1,-1,0,1],OY=[0,1,1,1];   // 同じマス + 右・左下・下・右下(重複なく1回ずつ)
+  for(let cy=0;cy<gy;cy++)for(let cx=0;cx<gx;cx++){
+    for(let i=head[cy*gx+cx];i>=0;i=next[i]){
+      for(let j=next[i];j>=0;j=next[j])ppPair(S,i,j,d02);
+      for(let o=0;o<4;o++){
+        const nx=cx+OX[o],ny=cy+OY[o];
+        if(nx<0||nx>=gx||ny>=gy)continue;
+        for(let j=head[ny*gx+nx];j>=0;j=next[j])ppPair(S,i,j,d02);
+      }
+    }
+  }
+}
+function ppPair(S,i,j,d02){
+  const x=S.x,y=S.y,vx=S.vx,vy=S.vy,m=S.m;
+  const dx=x[j]-x[i],dy=y[j]-y[i],d2=dx*dx+dy*dy;
+  if(d2>=d02||d2<1e-18)return;
+  const dot=dx*(vx[j]-vx[i])+dy*(vy[j]-vy[i]);
+  if(dot>=0)return;                 // 離れていく途中なら何もしない
+  const d=Math.sqrt(d2),nx=dx/d,ny=dy/d,vrel=-dot/d;
+  const J=2*m[i]*m[j]/(m[i]+m[j])*vrel;   // 中心を結ぶ向きの力積
+  vx[i]-=J/m[i]*nx;vy[i]-=J/m[i]*ny;
+  vx[j]+=J/m[j]*nx;vy[j]+=J/m[j]*ny;
+  S.pairs++;
+}
+function ppKE(S){let e=0;for(let i=0;i<S.N;i++)e+=0.5*S.m[i]*(S.vx[i]*S.vx[i]+S.vy[i]*S.vy[i]);return e;}
+// 表示する値。測定前・0個の物質があっても NaN を出さない(求められないものは null)
+function ppStats(S){
+  const ns=S.ns;let Nt=0,Ht=0,It=0;
+  for(let k=0;k<ns;k++){Nt+=S.cnt[k];Ht+=S.hits[k];It+=S.imp[k];}
+  const perim=2*(S.W+S.H);
+  const pTot=(S.t>0&&It>0)?It/(S.t*perim)*(S.W*S.H)/(PP_SIGMA*PP_SIGMA)*PP.P_SCALE:null;
+  const o={ns:ns,Nt:Nt,Ht:Ht,It:It,t:S.t,pTot:pTot,x:[],hs:[],is:[],rate:[],pX:[],pM:[],rateTot:S.t>0?Ht/S.t:null};
+  for(let k=0;k<ns;k++){
+    const x=Nt>0?S.cnt[k]/Nt:null,hs=Ht>0?S.hits[k]/Ht:null,is=It>0?S.imp[k]/It:null;
+    o.x.push(x);o.hs.push(hs);o.is.push(is);
+    o.rate.push(S.t>0?S.hits[k]/S.t:null);
+    o.pX.push(pTot!==null&&x!==null?pTot*x:null);
+    const share=S.massMode?is:hs;     // 標準は1回の強さが平均で同じなので回数の割合、発展は力積の割合
+    o.pM.push(pTot!==null&&share!==null?pTot*share:null);
+  }
+  return o;
+}
+// ===================== SIM-CORE END =====================
+
+const $=id=>document.getElementById(id);
+const S=ppCreate();
+const counts={2:PP.INIT[2].slice(),3:PP.INIT[3].slice()};
+let kinds=2,collide=false,massMode=false,paused=false,speedIdx=0;
+const RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---- 壁の光る印(リングバッファ) ----
+const MK={k:new Int8Array(PP.MARK_MAX),side:new Int8Array(PP.MARK_MAX),pos:new Float64Array(PP.MARK_MAX),t:new Float64Array(PP.MARK_MAX).fill(-1e9),i:0};
+let markNow=0;
+S.onWall=(k,side,pos)=>{const i=MK.i;MK.k[i]=k;MK.side[i]=side;MK.pos[i]=pos;MK.t[i]=markNow;MK.i=(i+1)%PP.MARK_MAX;};
+function clearMarks(){MK.t.fill(-1e9);}
+
+function reinit(){ppInit(S,counts[kinds],kinds,collide,massMode);clearMarks();uiDirty=true;}
+function resetMeasure(){ppResetMeasure(S);clearMarks();uiDirty=true;}
+
+// ---- 操作 ----
+function setKinds(n){kinds=n;buildCounts();reinit();paintStatic();}
+function setCollide(v){collide=v;reinit();paintStatic();}
+function setMass(v){massMode=v;buildCounts();reinit();paintStatic();sizeCanvases();}   // 発展では帯が3本になるのでグラフの高さを変える
+function togglePause(){paused=!paused;paintStatic();}
+function setSpeed(i){speedIdx=i;paintStatic();}
+function setCount(k,v){
+  v=Math.max(PP.N_MIN,Math.min(PP.N_MAX,Math.round(v)));
+  if(counts[kinds][k]===v)return;
+  counts[kinds][k]=v;
+  const rg=$('ppRg'+k);if(rg&&+rg.value!==v)rg.value=v;
+  $('ppV'+k).firstChild.nodeValue=String(v);
+  reinit();paintSum();
+}
+function badge(k){return '<span class="pp-bd" style="background:'+PP.COLOR[k]+'"><span>'+PP.NAME[k]+'</span><span class="pp-shp">'+PP.SHAPE[k]+'</span></span>';}
+function buildCounts(){
+  let h='';
+  for(let k=0;k<kinds;k++){
+    const v=counts[kinds][k];
+    h+='<div class="pp-row">'+badge(k)
+      +'<button type="button" class="pp-pm" aria-label="'+PP.NAME[k]+'を1個へらす" onclick="setCount('+k+',counts[kinds]['+k+']-1)">−</button>'
+      +'<input type="range" class="pp-rg" id="ppRg'+k+'" min="'+PP.N_MIN+'" max="'+PP.N_MAX+'" step="1" value="'+v+'" aria-label="'+PP.NAME[k]+'の個数">'
+      +'<button type="button" class="pp-pm" aria-label="'+PP.NAME[k]+'を1個ふやす" onclick="setCount('+k+',counts[kinds]['+k+']+1)">＋</button>'
+      +'<span class="pp-val"><span id="ppV'+k+'">'+v+'<small>個</small></span>'+(massMode?'<span class="pp-ms">質量 '+PP.MASS[k]+'</span>':'')+'</span></div>';
+  }
+  $('ppCounts').innerHTML=h;
+  for(let k=0;k<kinds;k++)$('ppRg'+k).addEventListener('input',e=>setCount(k,+e.target.value));
+  paintSum();
+}
+function paintSum(){let s=0;for(let k=0;k<kinds;k++)s+=counts[kinds][k];$('ppSum').textContent=s;}
+function paintStatic(){
+  $('ppK2').classList.toggle('pp-on',kinds===2);$('ppK3').classList.toggle('pp-on',kinds===3);
+  $('ppK2').setAttribute('aria-pressed',kinds===2);$('ppK3').setAttribute('aria-pressed',kinds===3);
+  document.querySelectorAll('.pp-sb').forEach(b=>{const on=+b.dataset.s===speedIdx;b.classList.toggle('pp-on',on);b.setAttribute('aria-pressed',on);});
+  $('ppPause').textContent=paused?'▶ 再開':'❚❚ 一時停止';
+  $('ppPz').classList.toggle('hidden',!paused);
+  $('ppCol').checked=collide;$('ppMass').checked=massMode;
+  $('ppColNote').innerHTML=collide
+    ?'粒子どうしが<b>弾性衝突</b>する(等しい質量なら速度を交換するようにはね返る)。'
+    :'<b>標準</b>: 粒子どうしは素通り。理想気体のモデル(分子どうしは力をおよぼさない)。';
+  const ms=[];for(let k=0;k<kinds;k++)ms.push(PP.NAME[k]+':'+PP.MASS[k]);
+  $('ppAdv').innerHTML='質量 '+ms.join('・')+'。温度が同じなので、平均の運動エネルギー(½mv<sup>2</sup>)は同じ。'
+    +'重い粒子ほどおそい(速さ ∝ 1/√質量)ので、<b>まれにしか当たらないが、強く当たる</b>。'
+    +'圧力は回数だけでなく、1回あたりの強さ(運動量の変化 2mv)で決まる。→「力積の割合」とモル分率をくらべよう。';
+  $('ppAdv').classList.toggle('hidden',!massMode);
+  $('ppPnote').innerHTML=massMode
+    ?'「衝突から」= その物質が壁にあたえた力積だけから求めた圧力(= p<sub>全</sub> × 力積の割合)。'
+    :'「衝突から」= その物質の衝突だけから求めた圧力(1回の強さは平均すると同じなので p<sub>全</sub> × 衝突回数の割合)。p<sub>全</sub> は壁が受けた力積 ÷ (時間 × 壁の長さ)。';
+  uiDirty=true;
+}
+
+// ---- 数字の書式 ----
+const f3=v=>v===null?'—':v.toFixed(3);
+const f2=v=>v===null?'—':v.toFixed(2);
+const f1=v=>v===null?'—':v.toFixed(1);
+
+function paintNumbers(st){
+  $('ppT').textContent=S.t.toFixed(1);
+  // 表
+  const cols=massMode?5:4;
+  let h='<span class="pp-th">物質</span><span class="pp-th">個数の割合<br>(モル分率)</span><span class="pp-th">衝突回数<br>(累計)</span><span class="pp-th">衝突回数の<br>割合</span>'
+    +(massMode?'<span class="pp-th">力積の<br>割合</span>':'');
+  for(let k=0;k<kinds;k++){
+    h+='<span class="pp-td pp-c0">'+badge(k)+'</span>'
+      +'<span class="pp-td"><span class="pp-fr">'+S.cnt[k]+'/'+st.Nt+'</span><span class="pp-dec">'+f3(st.x[k])+'</span></span>'
+      +'<span class="pp-td"><span class="pp-fr">回</span><span class="pp-dec">'+S.hits[k]+'</span></span>'
+      +'<span class="pp-td"><span class="pp-fr">'+S.hits[k]+'/'+st.Ht+'</span><span class="pp-dec">'+f3(st.hs[k])+'</span></span>'
+      +(massMode?'<span class="pp-td"><span class="pp-fr">力積</span><span class="pp-dec">'+f3(st.is[k])+'</span></span>':'');
+  }
+  h+='<span class="pp-td pp-c0"><span class="pp-th">合計</span></span>'
+    +'<span class="pp-td pp-sum"><span class="pp-fr">'+st.Nt+'個</span><span class="pp-dec">'+(st.Nt>0?'1':'—')+'</span></span>'
+    +'<span class="pp-td pp-sum"><span class="pp-fr">回</span><span class="pp-dec">'+st.Ht+'</span></span>'
+    +'<span class="pp-td pp-sum"><span class="pp-fr">&nbsp;</span><span class="pp-dec">'+(st.Ht>0?'1':'—')+'</span></span>'
+    +(massMode?'<span class="pp-td pp-sum"><span class="pp-fr">&nbsp;</span><span class="pp-dec">'+(st.It>0?'1':'—')+'</span></span>':'');
+  const tb=$('ppTable');
+  tb.style.gridTemplateColumns='auto repeat('+(cols-1)+',minmax(0,1fr))';
+  tb.innerHTML=h;
+  // 1秒あたり
+  let r='1秒あたりの衝突回数: ';
+  for(let k=0;k<kinds;k++)r+=PP.NAME[k]+' <b>'+f1(st.rate[k])+'</b>回　';
+  r+='全体 <b>'+f1(st.rateTot)+'</b>回';
+  if(collide)r+='<br>粒子どうしの衝突: <b>'+S.pairs+'</b>回';
+  $('ppRate').innerHTML=r;
+  // 分圧
+  let p='<span class="pp-ptot">全圧 p<sub>全</sub> = <b>'+f2(st.pTot)+'</b>(壁への衝突から求めた値・任意単位)</span>';
+  for(let k=0;k<kinds;k++){
+    const n=PP.NAME[k];
+    p+='<div class="pp-pr">'+badge(k)
+      +'<span class="pp-pf">p<sub>'+n+'</sub> = p<sub>全</sub> × x<sub>'+n+'</sub> = '+f2(st.pTot)+' × '+f3(st.x[k])+' = <b>'+f2(st.pX[k])+'</b></span>'
+      +'<span class="pp-pm2">衝突から<b>'+f2(st.pM[k])+'</b></span></div>';
+  }
+  $('ppPres').innerHTML=p;
+}
+
+// ---- canvas ----
+let bc,bx,BW=0,BH=0,gc,gx,GW=0,GH=0;
+function sizeCanvases(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const st=$('ppStage').getBoundingClientRect();
+  BW=Math.max(10,st.width-6);BH=BW*PP.H/PP.W;
+  bc.width=Math.round(BW*dpr);bc.height=Math.round(BH*dpr);
+  bx.setTransform(bc.width/BW,0,0,bc.height/BH,0,0);
+  GW=Math.max(10,gc.getBoundingClientRect().width);
+  GH=massMode?132:100;
+  gc.style.height=GH+'px';
+  gc.width=Math.round(GW*dpr);gc.height=Math.round(GH*dpr);
+  gx.setTransform(dpr,0,0,dpr,0,0);
+  uiDirty=true;
+}
+function drawBox(now){
+  const c=bx,sc=BW/S.W;
+  c.fillStyle='#161236';c.fillRect(0,0,BW,BH);
+  // うすい方眼
+  c.strokeStyle='rgba(255,255,255,.05)';c.lineWidth=1;c.beginPath();
+  for(let i=1;i<10;i++){const xx=i*BW/10;c.moveTo(xx,0);c.lineTo(xx,BH);}
+  for(let i=1;i<8;i++){const yy=i*BH/8;c.moveTo(0,yy);c.lineTo(BW,yy);}
+  c.stroke();
+  // 壁の光る印
+  const life=PP.MARK_SEC*1000*(RM?0.6:1),amax=RM?0.4:1,len=RM?8:14;
+  for(let i=0;i<PP.MARK_MAX;i++){
+    const age=now-MK.t[i];if(age<0||age>life)continue;
+    const a=amax*(1-age/life),k=MK.k[i],side=MK.side[i],p=MK.pos[i]*sc;
+    c.globalAlpha=a;c.fillStyle=PP.COLOR[k];
+    if(!RM){
+      c.globalAlpha=a*0.35;c.beginPath();
+      const gx0=side===0?0:side===1?BW:p,gy0=side===2?0:side===3?BH:p;
+      c.arc(gx0,gy0,9+6*(age/life),0,7);c.fill();c.globalAlpha=a;
+    }
+    if(side===0)c.fillRect(0,p-len/2,5,len);
+    else if(side===1)c.fillRect(BW-5,p-len/2,5,len);
+    else if(side===2)c.fillRect(p-len/2,0,len,5);
+    else c.fillRect(p-len/2,BH-5,len,5);
+  }
+  c.globalAlpha=1;
+  // 粒子(物質ごとに形を変える)
+  const rr=Math.max(3.5,S.r*sc);
+  for(let k=0;k<S.ns;k++){
+    c.beginPath();
+    for(let i=0;i<S.N;i++){
+      if(S.sp[i]!==k)continue;
+      const px=S.x[i]*sc,py=S.y[i]*sc;
+      if(k===0){c.moveTo(px+rr,py);c.arc(px,py,rr,0,6.2832);}
+      else if(k===1){const q=rr*1.25;c.moveTo(px,py-q);c.lineTo(px+q*0.866,py+q*0.5);c.lineTo(px-q*0.866,py+q*0.5);c.closePath();}
+      else{const q=rr*0.9;c.rect(px-q,py-q,2*q,2*q);}
+    }
+    c.fillStyle=PP.COLOR[k];c.fill();
+  }
+  if(S.N===0){
+    c.fillStyle='rgba(255,255,255,.7)';c.font='700 14px sans-serif';c.textAlign='center';
+    c.fillText('粒子が0個です。個数をふやしてください',BW/2,BH/2);
+  }
+}
+function drawGraph(st){
+  const c=gx;c.clearRect(0,0,GW,GH);
+  const LBL=66,x0=LBL,x1=GW-6,bw=x1-x0,bh=22,gap=10,top=6;
+  const rows=[['個数の割合',st.x,st.Nt>0],['衝突回数の割合',st.hs,st.Ht>0]];
+  if(massMode)rows.push(['力積の割合',st.is,st.It>0]);
+  c.font='800 11px sans-serif';c.textBaseline='middle';
+  rows.forEach((rw,ri)=>{
+    const y=top+ri*(bh+gap);
+    c.fillStyle='#1c1740';c.textAlign='right';
+    // ラベルは2行まで
+    const lb=rw[0];
+    if(lb.length>5){c.fillText(lb.slice(0,lb.length-3),LBL-6,y+bh/2-6);c.fillText(lb.slice(-3),LBL-6,y+bh/2+7);}
+    else c.fillText(lb,LBL-6,y+bh/2);
+    c.fillStyle='#e6e3f2';c.fillRect(x0,y,bw,bh);
+    if(rw[2]){
+      let acc=0;
+      for(let k=0;k<kinds;k++){
+        const v=rw[1][k]||0,w=v*bw,sx=x0+acc*bw;
+        c.fillStyle=PP.COLOR[k];c.fillRect(sx,y,w,bh);
+        if(w>1){c.strokeStyle='#1c1740';c.lineWidth=1.5;c.beginPath();c.moveTo(sx+w,y);c.lineTo(sx+w,y+bh);c.stroke();}
+        c.fillStyle='#1c1740';c.textAlign='center';
+        if(w>58)c.fillText(PP.NAME[k]+' '+v.toFixed(2),sx+w/2,y+bh/2+1);
+        else if(w>16)c.fillText(PP.NAME[k],sx+w/2,y+bh/2+1);
+        acc+=v;
+      }
+    }else{
+      c.fillStyle='#6b6690';c.textAlign='center';c.fillText(ri===0?'粒子がありません':'測定中…',x0+bw/2,y+bh/2+1);
+    }
+    c.strokeStyle='#1c1740';c.lineWidth=2;c.strokeRect(x0,y,bw,bh);
+  });
+  // モル分率の境目を点線で下までのばす(下の帯がそろっていくのが見えるように)
+  const yb=top+rows.length*(bh+gap)-gap;
+  if(st.Nt>0){
+    let acc=0;c.setLineDash([4,3]);c.strokeStyle='#1c1740';c.lineWidth=1.5;
+    for(let k=0;k<kinds-1;k++){
+      acc+=st.x[k];const xx=x0+acc*bw;
+      c.beginPath();c.moveTo(xx,top-4);c.lineTo(xx,yb+4);c.stroke();
+    }
+    c.setLineDash([]);
+  }
+  // 目盛り
+  c.fillStyle='#6b6690';c.font='700 10px sans-serif';c.textBaseline='top';
+  [0,0.25,0.5,0.75,1].forEach(v=>{const xx=x0+v*bw;c.textAlign=v===0?'left':v===1?'right':'center';c.fillText(String(v),xx,yb+6);});
+}
+
+// ---- ループ ----
+let last=null,lastUI=-1e9,uiDirty=true;
+function loop(now){
+  let dt=last===null?1000/60:now-last;last=now;
+  if(!(dt>0))dt=0;if(dt>PP.MAX_DT)dt=PP.MAX_DT;
+  if(!paused){markNow=now;ppStep(S,dt/1000*PP.SPEEDS[speedIdx]);}
+  drawBox(now);
+  if(uiDirty||(!paused&&now-lastUI>1000/PP.UI_HZ)){
+    const st=ppStats(S);paintNumbers(st);drawGraph(st);lastUI=now;uiDirty=false;
+  }
+  requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange',()=>{last=null;});
+
+window.addEventListener('load',()=>{
+  bc=$('ppBox');bx=bc.getContext('2d');gc=$('ppGraph');gx=gc.getContext('2d');
+  $('ppMascot').innerHTML=CG.mascot('壁にぶつかる回数の<b>割合</b>と、粒子の<b>個数の割合</b>(モル分率)をくらべてみよう。');
+  buildCounts();reinit();paintStatic();sizeCanvases();
+  let rz=0;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(sizeCanvases,100);});
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

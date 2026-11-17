@@ -47,6 +47,7 @@ formula-tower.html       … No.11 物質名→化学式(ミニ周期表を押�
 polarity-3d.html         … No.8  3D極性判定(自作3D投影)
 lattice-viewer.html      … No.14 結晶格子3D教材(金属4種・CsCl/NaCl/ZnS型・ダイヤモンド、限界半径比スライダー、断面。自作3D投影)
 gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体)
+partial-pressure.html    … No.52 分圧シミュレーション(2〜3種類の粒子の壁への衝突回数を数え、衝突回数の割合とモル分率をくらべて分圧の法則を見つける。粒子どうしの衝突あり/なし、質量をかえる発展では力積の割合も。2次元、canvas自作)
 element-match.html       … No.1  元素記号マッチング(elemental-master-118由来)
 element-position.html    … No.2  周期表の位置あて(同上)
 stoichiometry.html       … No.18 量的関係を5ステップで解く
@@ -56,6 +57,8 @@ mol-sprint.html          … No.16 モル換算(次元解析で単位を約分�
 sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio)
 electrolysis.html        … No.40 電気分解の手順ゲーム
 equilibrium-travel.html  … No.64 太平洋トラベラー(日本⇌アメリカの人の移動で平衡を体感。実戦/シミュレーション/H2+I2の3モード、canvasグラフ自作)
+ph-target.html           … No.30 pH ねらい撃ち(うすめる・中和・液えらびのカードで目標 pH に合わせるパズル。強酸・強塩基は水の電離をふくめて計算)
+organic-duel.html        … No.90 構造決定カードバトル(骨格カード+官能基カードで物質をつくり、18枚の質問カード(検出反応・性質・構造)の答えから当て合う2人対戦。CPU戦3段階と1台での2人対戦。つくれる物質は図鑑の44種。データと正解表は script の先頭)
 titration.html           … No.33 ギリギリ滴定(中和点の直前で止める中和滴定。塩酸・酢酸・アンモニア水と2価の硫酸・シュウ酸・水酸化バリウム。赤色が残る予兆、指示薬えらび、滴定曲線をcanvasで自作。pHは電荷のつり合いを数値で解く)
 ```
 

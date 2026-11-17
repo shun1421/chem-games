@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>構造決定カードバトル | 化学ゲームラボ</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* ===== 全体 ===== */
+main.game{max-width:560px}
+#start,#end{max-width:560px;margin:0 auto}
+button{touch-action:manipulation}
+
+/* ===== スタート画面の設定 ===== */
+.od-opts{margin:0 0 16px}
+.od-or{margin-bottom:9px}
+.od-ol{display:block;font-size:11.5px;font-weight:900;letter-spacing:.08em;color:var(--mut);margin:0 0 4px 2px}
+.od-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:7px}
+.od-sb{display:block;width:100%;min-height:44px;padding:6px 4px;background:#fff;color:var(--navy);border:3px solid var(--navy);border-radius:12px;
+ box-shadow:0 4px 0 var(--navy);font-size:13px;font-weight:900;line-height:1.25;cursor:pointer}
+.od-sb small{display:block;font-size:10px;color:var(--mut)}
+.od-sb.od-on{background:var(--yellow)}
+.od-sb:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+
+/* ===== プレイ画面: 点数の帯 ===== */
+.od-score{display:grid;grid-template-columns:1fr auto 1fr;gap:7px;align-items:stretch;margin-bottom:9px}
+.od-pl{display:block;background:#fff;border:3px solid var(--navy);border-radius:14px;box-shadow:0 4px 0 var(--navy);padding:3px 8px 3px;position:relative;min-width:0}
+.od-pl.od-c0{border-left:10px solid #ff4f8b}.od-pl.od-c1{border-left:10px solid #3d8bff}
+.od-pn{display:block;font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.od-role{display:inline-block;font-size:10px;font-weight:900;color:#fff;background:var(--mut);border-radius:99px;padding:0 7px;vertical-align:2px}
+.od-role.od-r-set{background:#f08a24}.od-role.od-r-sol{background:#10b3c7}
+.od-pts{display:block;font-family:var(--numf);font-size:24px;font-weight:700;line-height:1.05}
+.od-pts small{font-size:11px;margin-left:2px;font-family:inherit;font-weight:900;color:var(--mut)}
+.od-pts.od-bump{animation:od-bump .3s}
+@keyframes od-bump{0%{transform:scale(1.35);color:var(--pink)}100%{transform:none}}
+.od-mid{display:block;align-self:center;text-align:center;color:#fff;font-size:10.5px;font-weight:900;line-height:1.45;text-shadow:0 2px 0 var(--navy)}
+.od-mid b{display:block;font-family:var(--numf);font-size:17px;color:var(--yellow)}
+
+/* ===== 左(情報と推理メモ)・右(操作) ===== */
+.od-wrap{display:block}
+.od-side>*+*{margin-top:8px}
+.od-main{margin-top:9px}
+.od-box{background:#fff;border:3px solid var(--navy);border-radius:16px;box-shadow:0 4px 0 var(--navy);padding:7px 10px 8px}
+.od-guide{font-size:12.5px;font-weight:800;line-height:1.6}
+.od-guide b{color:#b0106e}
+.od-info{display:block;font-size:12px;font-weight:900;line-height:1.5}
+.od-ik{display:inline-block;font-size:10px;color:#fff;background:var(--navy);border-radius:99px;padding:0 8px;margin-right:6px;vertical-align:2px}
+.od-mf{display:inline-block;margin-right:10px;white-space:nowrap}
+.od-mf b{font-family:var(--numf);font-size:22px;font-weight:700;vertical-align:-1px}
+.od-mf b.od-sec{font-family:inherit;font-size:14px;color:var(--mut)}
+.od-cnt{display:inline-block;white-space:nowrap}
+.od-cnt b{font-family:var(--numf);font-size:17px;color:#b0106e}
+.od-mine{display:block;margin-top:4px;padding:3px 8px;background:#fff3c4;border-radius:9px;font-size:12px}
+.od-log .od-lh{display:block;font-size:12px;font-weight:900;margin-bottom:4px}
+.od-log .od-lh small{font-size:10.5px;color:var(--mut);margin-left:4px}
+.od-log .od-lh .num{float:right;font-size:15px}
+.od-ll{list-style:none;margin:0;padding:0;display:grid;gap:3px;max-height:150px;overflow-y:auto}
+.od-lr{display:grid;grid-template-columns:20px 1fr auto;gap:5px;align-items:center;min-height:23px;background:#f3f1ff;border-radius:8px;padding:2px 6px;font-size:12px;font-weight:800;line-height:1.3}
+.od-lr.od-lr0{background:repeating-linear-gradient(-45deg,#f6f5fb 0 6px,#efedf7 6px 12px);color:#b9b5d3}
+.od-ln{display:block;font-family:var(--numf);font-weight:700;font-size:14px;color:var(--mut);text-align:center}
+.od-lq{display:block;min-width:0}
+.od-lx{display:block;font-size:10px;color:#d0304a}
+.od-yn{display:inline-block;min-width:44px;text-align:center;padding:0 8px;border:2px solid var(--navy);border-radius:99px;font-size:11.5px;font-weight:900;white-space:nowrap}
+.od-yn.od-y{background:var(--ok);color:#fff}.od-yn.od-n{background:#e9e6f7;color:var(--navy)}
+.od-lr.od-new{animation:od-in .25s}
+/* 解答のとき: 情報と推理メモを小さくまとめる */
+.od-compact .od-ll{grid-template-columns:1fr 1fr}
+.od-compact .od-lr{font-size:11px;min-height:21px;padding:1px 5px;grid-template-columns:16px 1fr auto}
+.od-compact .od-yn{min-width:36px;padding:0 5px;font-size:10.5px}
+
+/* ===== 操作の枠 ===== */
+.od-pane{background:#fff;border:3px solid var(--navy);border-radius:18px;box-shadow:0 5px 0 var(--navy);padding:9px 10px 12px}
+.od-ph{display:block;font-size:13.5px;font-weight:900;margin:0 0 7px}
+.od-ph small{font-size:11px;color:var(--mut);margin-left:4px}
+.od-msg{display:block;min-height:1.5em;font-size:12px;font-weight:800;color:#d0304a;margin:5px 0 0;line-height:1.5}
+.od-pane .btn{padding:12px 8px;font-size:16px}
+.od-pane .btn+.btn{margin-top:10px}
+
+/* ===== カード(骨格=水色・官能基=だいだい・質問=うす紫) ===== */
+.od-card{display:block;width:100%;min-height:58px;padding:4px 3px 5px;border:3px solid var(--navy);border-radius:12px;box-shadow:0 4px 0 var(--navy);
+ color:var(--navy);text-align:center;cursor:pointer;line-height:1.25;user-select:none;-webkit-user-select:none;font-family:inherit;position:relative}
+.od-card:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.od-sk{background:#dcf3ff}
+.od-fg{background:#ffe1bd}
+.od-cn{display:block;font-size:12px;font-weight:900;letter-spacing:-.02em}
+.od-ct{display:block;font-size:9.5px;font-weight:900;color:#4a4570;min-height:1.2em}
+.od-cs{display:block;font-size:11px;font-weight:800;margin-top:1px;white-space:nowrap;letter-spacing:-.02em}
+.od-cs.od-l1{font-size:10px}.od-cs.od-l2{font-size:9px}   /* 長い示性式は字を小さく(途中で改行しない) */
+.od-fg .od-cs{font-size:14px;font-family:var(--numf);font-weight:700}
+.od-dot{color:#e8306f}
+.od-card.od-used{opacity:.3}
+.od-card.od-off{background:repeating-linear-gradient(-45deg,#f1eff8 0 7px,#e6e3f2 7px 14px);color:#8c88ad}
+.od-card.od-in{animation:od-in .16s cubic-bezier(.3,1.6,.5,1)}
+@keyframes od-in{0%{transform:scale(1.18)}100%{transform:none}}
+.od-card.od-shake{animation:od-shake .26s}
+@keyframes od-shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.od-back{display:block;min-height:58px;border:3px solid var(--navy);border-radius:12px;box-shadow:0 4px 0 var(--navy);
+ background:repeating-linear-gradient(45deg,#4330d9 0 8px,#6f5dff 8px 16px)}
+.od-mini .od-card,.od-mini .od-back{min-height:50px;cursor:default;box-shadow:0 3px 0 var(--navy)}
+.od-mini .od-card:active{transform:none;box-shadow:0 3px 0 var(--navy)}
+
+.od-hand{display:grid;grid-template-columns:repeat(4,1fr);gap:7px 6px}
+.od-hand4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px 6px}
+
+/* 置き場 */
+.od-slots{display:grid;gap:6px;align-items:start;margin:2px 0 4px}
+.od-slots.od-s2{grid-template-columns:1fr 1fr}
+.od-slots.od-s3{grid-template-columns:1fr 1fr 1fr}
+.od-slot{display:block;min-width:0}
+.od-empty{display:block;min-height:58px;border:3px dashed #9d97c4;border-radius:12px;background:#f7f6fd;color:#9d97c4;font-size:11.5px;font-weight:900;
+ padding-top:18px;text-align:center}
+.od-sl{display:block;text-align:center;font-size:10.5px;font-weight:900;color:var(--mut);margin-top:3px;min-height:1.3em}
+.od-sl.od-est{color:#b0106e}
+.od-pv{display:block;min-height:42px;margin:4px 0 8px;padding:4px 8px;border-radius:10px;background:#f3f1ff;font-size:12.5px;font-weight:900;line-height:1.5}
+.od-pvok{color:#0d8a57;font-size:15px}
+.od-pvf{display:inline-block;margin-left:4px}
+.od-pvng{display:block;color:#d0304a}
+.od-pvwhy{display:block;font-size:11.5px;font-weight:800;color:var(--navy)}
+.od-pv0{color:var(--mut)}
+.od-row2{display:grid;grid-template-columns:auto 1fr;gap:9px;margin-top:10px}
+.od-row2 .btn{margin-top:0 !important}
+.od-swap{display:block;padding:10px 12px;min-width:64px;background:#fff;border:3px solid var(--navy);border-radius:14px;box-shadow:0 5px 0 var(--navy);font-size:12px;font-weight:900;color:var(--navy);cursor:pointer;line-height:1.2}
+.od-swap:active{transform:translateY(4px);box-shadow:0 1px 0 var(--navy)}
+.od-sep{display:block;font-size:11px;font-weight:900;color:var(--mut);margin:8px 0 4px}
+
+/* 質問カード */
+.od-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.od-tab{display:block;min-height:36px;background:#fff;border:3px solid var(--navy);border-radius:11px;box-shadow:0 3px 0 var(--navy);font-size:13px;font-weight:900;color:var(--navy);cursor:pointer;padding:3px}
+.od-tab.od-on{background:#a070ff;color:#fff}
+.od-tab small{font-family:var(--numf);font-size:11px;margin-left:3px}
+.od-qgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px 7px}
+.od-qc{display:block;width:100%;min-height:56px;padding:4px 6px 4px 30px;background:#eee8ff;border:3px solid var(--navy);border-radius:12px;box-shadow:0 4px 0 var(--navy);
+ color:var(--navy);text-align:left;font-size:12.5px;font-weight:900;line-height:1.3;cursor:pointer;position:relative}
+.od-qc:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.od-qc .od-qn{position:absolute;left:5px;top:50%;margin-top:-11px;width:21px;height:21px;border-radius:50%;background:#a070ff;color:#fff;border:2px solid var(--navy);
+ font-family:var(--numf);font-size:11px;font-weight:700;line-height:17px;text-align:center}
+.od-qc .od-qt{display:block}
+.od-qc[disabled]{opacity:.32;cursor:default}
+.od-qc[disabled]:active{transform:none;box-shadow:0 4px 0 var(--navy)}
+
+/* 質問と はい/いいえ */
+.od-askq{display:block;background:#eee8ff;border:3px solid var(--navy);border-radius:14px;padding:8px 10px;font-size:16px;font-weight:900;line-height:1.5;margin-bottom:8px}
+.od-askq small{display:block;font-size:11px;color:var(--mut)}
+.od-askq.od-fly{animation:od-fly .2s cubic-bezier(.2,1.4,.5,1)}
+@keyframes od-fly{0%{transform:translateY(26px) scale(.92);opacity:.4}100%{transform:none;opacity:1}}
+.od-who{display:block;font-size:12.5px;font-weight:900;margin:4px 0 8px}
+.od-pd{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--navy);margin-right:5px;vertical-align:-1px;font-style:normal}
+.od-ynb{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.od-ynb button{display:block;min-height:64px;border:3px solid var(--navy);border-radius:16px;box-shadow:0 6px 0 var(--navy);font-size:22px;font-weight:900;color:var(--navy);cursor:pointer}
+.od-ynb button:active{transform:translateY(5px);box-shadow:0 1px 0 var(--navy)}
+.od-ynb .od-by{background:#7be0b0}.od-ynb .od-bn{background:#e9e6f7}
+.od-think{display:block;text-align:center;font-size:14px;font-weight:900;padding:14px 0 10px;color:var(--mut)}
+.od-think::after{content:'';display:inline-block;width:1.4em;text-align:left;animation:od-dots .9s steps(4) infinite}
+@keyframes od-dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+
+/* 判定 */
+.od-said{display:block;text-align:center;margin:2px 0 6px}
+.od-stamp{display:inline-block;font-size:26px;font-weight:900;padding:2px 22px;border:4px solid var(--navy);border-radius:14px;background:#fff;transform:rotate(-4deg);animation:od-stamp .22s cubic-bezier(.3,1.6,.5,1)}
+@keyframes od-stamp{0%{transform:scale(1.8) rotate(-12deg);opacity:0}100%{transform:rotate(-4deg);opacity:1}}
+.od-verd{display:block;text-align:center;border:3px solid var(--navy);border-radius:14px;padding:6px 8px;font-size:17px;font-weight:900;color:#fff}
+.od-verd.od-ok{background:var(--ok);animation:od-in .2s}
+.od-verd.od-ng{background:var(--bad);animation:od-shake .3s}
+.od-verd small{display:block;font-size:11.5px}
+/* もう解答する(副ボタン)と確認 */
+.od-pane .btn.od-early{margin-top:12px;padding:9px 8px;min-height:46px;font-size:14px;letter-spacing:.04em;line-height:1.25}
+.od-conf{display:block;margin-top:12px;padding:8px 10px 10px;background:#fff3c4;border:3px solid var(--navy);border-radius:14px;box-shadow:0 4px 0 var(--navy);animation:od-in .16s}
+.od-conf b{display:block;text-align:center;font-size:14px;font-weight:900;margin-bottom:8px}
+.od-conf .od-cb{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.od-pane .od-conf .btn{margin-top:0;padding:10px 6px;font-size:15px}
+.od-skip{display:block;margin:10px auto 0;background:none;border:0;color:var(--mut);font-size:12.5px;font-weight:900;text-decoration:underline;cursor:pointer;padding:4px 12px}
+
+/* ルーレット */
+.od-rr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 8px}
+.od-rv{display:block;text-align:center;padding:12px 4px;border:3px solid var(--navy);border-radius:16px;box-shadow:0 5px 0 var(--navy);background:#f3f1ff;color:#b9b5d3;
+ font-size:30px;font-weight:900}
+.od-rv small{display:block;font-size:11px;color:inherit}
+.od-rv.od-on{background:var(--yellow);color:var(--navy)}
+.od-rv.od-land{animation:od-land .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes od-land{0%{transform:scale(1.25)}35%{transform:scale(1.25)}100%{transform:none}}
+.od-rt{display:block;text-align:center;font-size:13px;font-weight:900;min-height:1.6em}
+
+/* 秘密の案内 */
+.od-secret{display:block;text-align:center;padding:8px 2px}
+.od-secret b{display:block;font-size:20px;margin:6px 0}
+.od-secret .od-eye{display:inline-block;font-size:12px;font-weight:900;color:#fff;background:var(--pink);border:2px solid var(--navy);border-radius:99px;padding:1px 14px;letter-spacing:.2em}
+.od-secret p{font-size:13px;font-weight:800;line-height:1.7;margin:4px 0 12px}
+
+/* ふり返り */
+.od-wrap.od-solo .od-side{display:none}
+.od-rvh{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:900;padding:1px 10px;border-radius:99px;margin-bottom:4px}
+.od-truth{display:block;text-align:center;margin-bottom:8px}
+.od-tn{display:block;font-size:22px;font-weight:900;line-height:1.3;animation:od-in .3s}
+.od-tf{display:block;font-size:15px;font-weight:900}
+.od-tm{display:block;font-size:12px;font-weight:800;color:var(--mut)}
+.od-cards{display:grid;gap:6px;margin:6px 0 2px}
+.od-cards.od-s2{grid-template-columns:1fr 1fr}.od-cards.od-s3{grid-template-columns:1fr 1fr 1fr}
+.od-cw{display:block;position:relative}
+.od-mk{position:absolute;top:-9px;right:-5px;width:30px;height:30px;border-radius:50%;border:3px solid var(--navy);font-size:16px;font-weight:900;line-height:24px;text-align:center;z-index:2;
+ animation:od-mk .3s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
+.od-mk.od-h{background:var(--ok);color:#fff}.od-mk.od-m{background:#e9e6f7;color:var(--bad)}
+@keyframes od-mk{0%{transform:scale(2.2);opacity:0}100%{transform:none;opacity:1}}
+.od-cw.od-hit .od-card{animation:od-hitst .55s both;animation-delay:var(--d,0s)}
+@keyframes od-hitst{0%{transform:none}8%{transform:scale(1.2) rotate(-3deg);background:var(--yellow)}38%{transform:scale(1.2) rotate(-3deg);background:var(--yellow)}100%{transform:none}}
+.od-cw.od-miss .od-card{animation:od-shake .3s both;animation-delay:var(--d,0s);opacity:.6}
+.od-gp{display:block;text-align:center;font-size:13px;font-weight:900;margin:6px 0 2px}
+.od-gp b{font-family:var(--numf);font-size:26px;color:#0d8a57;display:inline-block;animation:od-mk .35s both;animation-delay:var(--d,0s)}
+.od-gn{display:block;text-align:center;font-size:12px;font-weight:800;color:var(--mut)}
+.od-sum{display:block;margin:8px 0;padding:6px 9px;background:#f3f1ff;border-radius:11px;font-size:12px;font-weight:800;line-height:1.6}
+.od-rl{list-style:none;margin:6px 0 10px;padding:0;display:grid;gap:5px}
+.od-ri{display:block;background:#fffbe6;border:2px solid var(--navy);border-radius:11px;padding:5px 8px;font-size:12px;font-weight:700;line-height:1.55}
+.od-ri .od-rq{display:block;font-weight:900}
+.od-ri .od-rq .od-yn{margin-left:6px}
+.od-ri .od-rw{display:block;color:#3a3560}
+
+/* 結果画面 */
+.od-win{display:block;font-size:26px;font-weight:900;margin:8px 0 6px;animation:od-land .5s .1s both}
+.od-fin{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0}
+.od-fp{display:block;background:#f3f1ff;border-radius:14px;padding:8px 6px;border:3px solid var(--navy)}
+.od-fp.od-c0{border-top:9px solid #ff4f8b}.od-fp.od-c1{border-top:9px solid #3d8bff}
+.od-fp .od-fn{display:block;font-size:12.5px;font-weight:900}
+.od-fp .od-fs{display:block;font-family:var(--numf);font-size:40px;font-weight:700;line-height:1.1}
+.od-fp .od-fb{display:block;font-size:11px;font-weight:800;color:var(--mut);line-height:1.5}
+.od-fp.od-w{background:#fff3c4}
+#end .btn{margin-top:12px}
+
+/* 図鑑 */
+.od-modal{position:fixed;inset:0;z-index:60;background:rgba(28,23,64,.62);padding:14px 10px;overflow-y:auto}
+.od-mbox{max-width:600px;margin:0 auto;background:#fff;border:3px solid var(--navy);border-radius:20px;box-shadow:0 7px 0 var(--navy);padding:12px 12px 14px}
+.od-mh{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:6px}
+.od-mh b{display:block;font-size:18px;font-weight:900}
+.od-mx{display:block;width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid var(--navy);box-shadow:0 3px 0 var(--navy);font-size:20px;font-weight:900;cursor:pointer;color:var(--navy)}
+.od-zg{display:block;margin:12px 0 5px;font-size:13px;font-weight:900}
+.od-zg span{display:inline-block;background:#ffe1bd;border:2px solid var(--navy);border-radius:99px;padding:0 10px}
+.od-zr{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:5px 8px;border-radius:10px;background:#f3f1ff;margin-bottom:4px;font-size:12.5px;font-weight:800;line-height:1.45}
+.od-zn{display:block;font-weight:900}
+.od-zf{display:block;text-align:right;white-space:nowrap}
+.od-zm{display:block;font-family:var(--numf);text-align:right;white-space:nowrap;color:var(--mut)}
+.od-zc{display:block;font-size:11px;color:#4a4570}
+.od-znote{font-size:12px;font-weight:700;line-height:1.6;color:var(--mut);margin:4px 0}
+
+/* 広い画面(Chromebook など): 左に推理メモ、右に操作 */
+@media(min-width:860px){
+ main.game{max-width:940px}
+ .od-wrap{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
+ .od-wrap.od-solo{display:block;max-width:600px;margin:0 auto}
+ .od-main{margin-top:0}
+ .od-ll{max-height:none}
+ .od-score{max-width:600px;margin-left:auto;margin-right:auto}
+}
+@media(max-width:360px){.od-cn{font-size:11px}.od-cs{font-size:10px}.od-cs.od-l1{font-size:9px}.od-cs.od-l2{font-size:8.5px}.od-qc{font-size:11.5px}}
+@media(max-height:700px) and (max-width:859px){.od-ll{max-height:128px}}
+</style>
+</head>
+<body data-u="brown" data-game="organic-duel">
+<header class="top"><a class="back" href="index.html" aria-label="一覧へ">‹</a><div class="ttl">構造決定カードバトル</div><span class="chip">有機化合物</span></header>
+<main class="game">
+
+<section id="start" class="panel start">
+  <h1>構造決定カードバトル</h1>
+  <div class="mascot"><img src="img/gorilla.png" alt="" width="84" height="84"><div class="bubble">骨格カードと官能基カードで物質をつくり、相手に当てさせる。
+  当てる側は<b>検出反応</b>などの質問で「はい/いいえ」を聞き出して、構造をしぼりこめ。質問は<b>最大5回</b>。いつ切り上げて解答するかも作戦だ。</div></div>
+  <ul class="rules">
+    <li>出題側は配られた8枚から、骨格+官能基のカード2枚か3枚で物質をつくる。分子式と枚数だけが公開される</li>
+    <li>解答側は質問カードで<b>最大5回</b>質問できる。出題側が「はい/いいえ」で答え、正しければ出題側に <b>+<span id="rAns">4</span>点</b>(まちがいは画面が正しい答えに直す)</li>
+    <li>解答側は<b>いつでも解答できる</b>。当たったカード1枚につき <b>+<span id="rHit">10</span>点</b></li>
+    <li>質問を早く切り上げると、出題側が点をかせぐ機会がへる。それも駆け引きのうち</li>
+    <li>出題と解答を入れかえて1セット。合計点の高い方が勝ち</li>
+  </ul>
+  <div class="od-opts" id="opts"></div>
+  <button class="btn" type="button" data-act="start">スタート</button>
+  <button class="btn white" type="button" data-act="zukan">図鑑を見る</button>
+</section>
+
+<section id="play" class="hidden">
+  <div class="od-score" id="score"></div>
+  <div class="od-wrap" id="wrap">
+    <div class="od-side" id="side"></div>
+    <div class="od-main" id="pane"></div>
+  </div>
+</section>
+
+<section id="end" class="panel res hidden">
+  <div class="lb">RESULT</div>
+  <div class="od-win" id="fWin"></div>
+  <div class="od-fin" id="fFin"></div>
+  <div class="bestline" id="fBest"></div>
+  <div id="fSay"></div>
+  <button class="btn" type="button" data-act="again">もう一度</button>
+  <button class="btn white" type="button" data-act="zukan">図鑑を見る</button>
+  <button class="btn white" type="button" data-act="tosetting">設定を変える</button>
+  <a class="btn white" href="index.html">一覧へ戻る</a>
+</section>
+</main>
+
+<div class="od-modal hidden" id="zukan" role="dialog" aria-label="図鑑">
+  <div class="od-mbox">
+    <div class="od-mh"><b>図鑑(つくれる物質 <span id="zN">44</span>種)</b><button class="od-mx" type="button" data-act="zclose" aria-label="とじる">✕</button></div>
+    <div class="od-znote">この44種だけがつくれる。エステルは「酸の側+アルコールの側」の順。</div>
+    <div id="zList"></div>
+    <button class="btn" type="button" data-act="zclose" style="margin-top:12px">とじる</button>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+'use strict';
+/*PURE-BEGIN*/
+// ================= 調整値(ここの数字を変えて調整する) =================
+const PT_HIT=10;               // 【点数】解答で当たったカード1枚
+const PT_ANS=4;                // 【点数】出題側が質問に正しく答えた1問
+const N_ASK=5;                 // 【質問回数】1ラウンドの最大
+const N_HAND=8;                // 【配る枚数】
+const MIN_MAKE=3;              // 【配り直しの条件】決まった枚数で、図鑑の物質がこの種類以上つくれる
+const DEAL_TRY=3000;           // 【配り直しの上限回数】(ふつうは数回で決まる)
+const CPU_ACC={easy:0.70,normal:0.85,hard:1.00};   // 【CPU 出題側】質問に正しく答える確率
+const CPU_RANDQ={easy:0.60,normal:0.15,hard:0};    // 【CPU 解答側】質問をランダムにえらぶ確率(残りは候補をいちばん分ける質問)
+const CPU_MISS={easy:0.35,normal:0,hard:0};        // 【CPU 解答側】最後の解答をわざと外す確率
+const CPU_EARLY={easy:false,normal:true,hard:true}; // 【CPU 解答側】候補が1つにしぼれたら残りの質問をせずに解答する
+const CPU_THINK_S=0.6;         // 【CPU の考える時間】秒
+const JUDGE_OK_S=0.9;          // 【判定を見せる時間】正しい答え(秒。押せば先へ)
+const JUDGE_NG_S=1.9;          // 【判定を見せる時間】まちがった答え(秒)
+const ROUL_STEPS=[0.05,0.055,0.06,0.07,0.08,0.095,0.115,0.14,0.17,0.21]; // 【ルーレット】切りかわりの間隔(秒)。だんだん遅く
+const ROUL_HOLD_S=0.9;         // 【ルーレット】止まってから次へ進むまで(秒)
+const STAMP_GAP_S=0.42;        // 【解答の当たり外れ】1枚ずつ見せる間隔(秒)
+const STAMP_T0_S=0.35;         // 【解答の当たり外れ】最初の1枚まで(秒)
+
+// ================= カード =================
+// 骨格カード。st: 置きかわる所を ● で示した示性式。at: 官能基が付いたときの原子の数(H を1つ失った形)。cnt: 山札の枚数
+const SKEL={
+  H:    {nm:'水素',tag:'骨格なし',st:'H–●',at:{H:1},cnt:1},
+  C1:   {nm:'メタン',tag:'',st:'CH3–●',at:{C:1,H:3},cnt:2},
+  C2:   {nm:'エタン',tag:'',st:'CH3CH2–●',at:{C:2,H:5},cnt:2},
+  C3e:  {nm:'プロパン',tag:'はしの炭素',st:'CH3CH2CH2–●',at:{C:3,H:7},cnt:1},
+  C3m:  {nm:'プロパン',tag:'まん中の炭素',st:'CH3CH(●)CH3',at:{C:3,H:7},cnt:1},
+  C4e:  {nm:'ブタン',tag:'はしの炭素',st:'CH3(CH2)2CH2–●',at:{C:4,H:9},cnt:1},
+  C4m:  {nm:'ブタン',tag:'まん中の炭素',st:'CH3CH(●)CH2CH3',at:{C:4,H:9},cnt:1},
+  tBu:  {nm:'2-メチルプロパン',tag:'まん中の炭素',st:'(CH3)3C–●',at:{C:4,H:9},cnt:1},
+  allyl:{nm:'プロペン',tag:'CH3側の炭素',st:'CH2=CHCH2–●',at:{C:3,H:5},cnt:1},
+  Ph:   {nm:'ベンゼン',tag:'',st:'C6H5–●',at:{C:6,H:5},cnt:1},
+  Tol:  {nm:'トルエン',tag:'環・CH3のとなり',st:'o-CH3C6H4–●',at:{C:7,H:7},cnt:1},
+  Bn:   {nm:'トルエン',tag:'メチル基',st:'C6H5CH2–●',at:{C:7,H:7},cnt:1}
+};
+const SKEL_ORDER=['H','C1','C2','C3e','C3m','C4e','C4m','tBu','allyl','Ph','Tol','Bn'];
+const SKEL_FULL={H:'水素 H(骨格なし)',C1:'メタン',C2:'エタン',C3e:'プロパン(はしの炭素)',C3m:'プロパン(まん中の炭素)',C4e:'ブタン(はしの炭素)',
+  C4m:'ブタン(まん中の炭素)',tBu:'2-メチルプロパン(まん中の炭素)',allyl:'プロペン(CH3 側の炭素)',Ph:'ベンゼン',Tol:'トルエン(ベンゼン環・メチル基のとなり)',Bn:'トルエン(メチル基)'};
+// 官能基カード。k: 1=骨格1枚に付ける 2=骨格2枚をつなぐ
+const FG={
+  OH:  {nm:'ヒドロキシ基',tag:'',fm:'–OH',k:1,at:{O:1,H:1},cnt:2},
+  CHO: {nm:'ホルミル基',tag:'アルデヒド基',fm:'–CHO',k:1,at:{C:1,H:1,O:1},cnt:1},
+  COOH:{nm:'カルボキシ基',tag:'',fm:'–COOH',k:1,at:{C:1,H:1,O:2},cnt:1},
+  NH2: {nm:'アミノ基',tag:'',fm:'–NH2',k:1,at:{N:1,H:2},cnt:1},
+  NO2: {nm:'ニトロ基',tag:'',fm:'–NO2',k:1,at:{N:1,O:2},cnt:1},
+  ETH: {nm:'エーテル結合',tag:'',fm:'–O–',k:2,at:{O:1},cnt:1},
+  KET: {nm:'カルボニル基',tag:'ケトン',fm:'&gt;C=O',k:2,at:{C:1,O:1},cnt:1},
+  EST: {nm:'エステル結合',tag:'',fm:'–COO–',k:2,at:{C:1,O:2},cnt:1}
+};
+const FG_ORDER=['OH','CHO','COOH','NH2','NO2','ETH','KET','EST'];
+
+// ================= 図鑑(つくれる物質はこの44種だけ) =================
+// [id, 名前, 示性式, 官能基, 骨格…]。エステルは [酸の側, アルコールの側]
+const SUB_ROWS=[
+  ['meoh','メタノール','CH3OH','OH','C1'],
+  ['etoh','エタノール','C2H5OH','OH','C2'],
+  ['proh1','1-プロパノール','CH3CH2CH2OH','OH','C3e'],
+  ['proh2','2-プロパノール','CH3CH(OH)CH3','OH','C3m'],
+  ['buoh1','1-ブタノール','CH3CH2CH2CH2OH','OH','C4e'],
+  ['buoh2','2-ブタノール','CH3CH(OH)CH2CH3','OH','C4m'],
+  ['tbuoh','2-メチル-2-プロパノール','(CH3)3COH','OH','tBu'],
+  ['allyloh','アリルアルコール','CH2=CHCH2OH','OH','allyl'],
+  ['phoh','フェノール','C6H5OH','OH','Ph'],
+  ['cresol','o-クレゾール','C6H4(CH3)OH','OH','Tol'],
+  ['bnoh','ベンジルアルコール','C6H5CH2OH','OH','Bn'],
+  ['hcho','ホルムアルデヒド','HCHO','CHO','H'],
+  ['mecho','アセトアルデヒド','CH3CHO','CHO','C1'],
+  ['etcho','プロピオンアルデヒド','C2H5CHO','CHO','C2'],
+  ['prcho','ブタナール(ブチルアルデヒド)','CH3CH2CH2CHO','CHO','C3e'],
+  ['iprcho','2-メチルプロパナール','(CH3)2CHCHO','CHO','C3m'],
+  ['phcho','ベンズアルデヒド','C6H5CHO','CHO','Ph'],
+  ['hcooh','ギ酸','HCOOH','COOH','H'],
+  ['acoh','酢酸','CH3COOH','COOH','C1'],
+  ['etcooh','プロピオン酸','C2H5COOH','COOH','C2'],
+  ['prcooh','酪酸','CH3CH2CH2COOH','COOH','C3e'],
+  ['iprcooh','2-メチルプロパン酸','(CH3)2CHCOOH','COOH','C3m'],
+  ['phcooh','安息香酸','C6H5COOH','COOH','Ph'],
+  ['aniline','アニリン','C6H5NH2','NH2','Ph'],
+  ['nitrobz','ニトロベンゼン','C6H5NO2','NO2','Ph'],
+  ['dme','ジメチルエーテル','CH3OCH3','ETH','C1','C1'],
+  ['eme','エチルメチルエーテル','CH3OC2H5','ETH','C1','C2'],
+  ['dee','ジエチルエーテル','C2H5OC2H5','ETH','C2','C2'],
+  ['mpe','メチルプロピルエーテル','CH3OCH2CH2CH3','ETH','C1','C3e'],
+  ['mipe','イソプロピルメチルエーテル','CH3OCH(CH3)2','ETH','C1','C3m'],
+  ['anisole','アニソール(メチルフェニルエーテル)','C6H5OCH3','ETH','C1','Ph'],
+  ['acetone','アセトン','CH3COCH3','KET','C1','C1'],
+  ['mek','2-ブタノン(エチルメチルケトン)','CH3COC2H5','KET','C1','C2'],
+  ['dek','3-ペンタノン','C2H5COC2H5','KET','C2','C2'],
+  ['mpk','2-ペンタノン','CH3COCH2CH2CH3','KET','C1','C3e'],
+  ['mefo','ギ酸メチル','HCOOCH3','EST','H','C1'],
+  ['etfo','ギ酸エチル','HCOOC2H5','EST','H','C2'],
+  ['prfo','ギ酸プロピル','HCOOCH2CH2CH3','EST','H','C3e'],
+  ['iprfo','ギ酸イソプロピル','HCOOCH(CH3)2','EST','H','C3m'],
+  ['meac','酢酸メチル','CH3COOCH3','EST','C1','C1'],
+  ['etac','酢酸エチル','CH3COOC2H5','EST','C1','C2'],
+  ['mepr','プロピオン酸メチル','C2H5COOCH3','EST','C2','C1'],
+  ['mebz','安息香酸メチル','C6H5COOCH3','EST','Ph','C1'],
+  ['phac','酢酸フェニル','CH3COOC6H5','EST','C1','Ph']
+];
+const SUBS=SUB_ROWS.map(r=>({id:r[0],nm:r[1],ff:r[2],f:r[3],s:r.slice(4)}));
+const SUB_BY_ID={};SUBS.forEach(x=>SUB_BY_ID[x.id]=x);
+// エステルの加水分解で生じる酸・アルコールの名前(ふり返りの文で使う)
+const ACID_NM={H:'ギ酸',C1:'酢酸',C2:'プロピオン酸',Ph:'安息香酸'};
+const ALC_NM={C1:'メタノール',C2:'エタノール',C3e:'1-プロパノール',C3m:'2-プロパノール',Ph:'フェノール'};
+
+// 組み合わせの鍵。ケトン・エーテルは順番を問わない。エステルは 酸の側>アルコールの側
+function keyOf(f,s){
+  if(!FG[f])return null;
+  if(FG[f].k===1)return f+'|'+s[0];
+  if(f==='EST')return f+'|'+s[0]+'>'+s[1];
+  return f+'|'+[s[0],s[1]].sort().join('+');
+}
+const SUB_BY_KEY={};SUBS.forEach(x=>SUB_BY_KEY[keyOf(x.f,x.s)]=x);
+// カードの組から物質をつくる。{sub} または {why: つくれない理由}
+function build(f,s){
+  const r=SUB_BY_KEY[keyOf(f,s)];
+  if(r)return {sub:r};
+  if(FG[f].k===1){
+    if(s[0]==='H'){
+      if(f==='OH')return {why:'水素+ヒドロキシ基は水 H2O。有機化合物ではない'};
+      if(f==='NH2')return {why:'水素+アミノ基はアンモニア NH3。有機化合物ではない'};
+      if(f==='NO2')return {why:'炭素をふくまないので、有機化合物ではない'};
+    }
+    return {why:'この図鑑にはない組み合わせ'};
+  }
+  const nH=s.filter(x=>x==='H').length;
+  if(f==='ETH'&&nH===2)return {why:'H–O–H は水。有機化合物ではない'};
+  if(f==='ETH'&&nH===1)return {why:'片方が水素だと R–O–H、つまりアルコールになる(ヒドロキシ基のカードを使う)'};
+  if(f==='KET'&&nH===2)return {why:'H–CO–H はホルムアルデヒド(ホルミル基のカードを使う)'};
+  if(f==='KET'&&nH===1)return {why:'片方が水素だと R–CO–H、つまりアルデヒドになる(ホルミル基のカードを使う)'};
+  if(f==='EST'&&s[1]==='H')return {why:(s[0]==='H'?'H–COO–H はギ酸':'アルコールの側が水素だと R–COO–H、つまりカルボン酸')+'になる(カルボキシ基のカードを使う)'};
+  return {why:'この図鑑にはない組み合わせ'};
+}
+
+// ---- 分子式(部品の原子を足す) ----
+function atomsOf(f,s){
+  const a={C:0,H:0,N:0,O:0};
+  const add=o=>{for(const k in o)a[k]+=o[k];};
+  s.forEach(id=>add(SKEL[id].at));add(FG[f].at);
+  return a;
+}
+function mfOf(x){ // 文字列(例 C3H8O)。C, H, N, O の順
+  const a=atomsOf(x.f,x.s);let t='';
+  ['C','H','N','O'].forEach(k=>{if(a[k])t+=k+(a[k]>1?a[k]:'');});
+  return t;
+}
+// 数字を下付きにする(元素記号や ) のあとの数字だけ)
+function chem(s){return String(s).replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>');}
+
+// ================= 質問カード(18枚)と「はい」になる物質 =================
+const ALL_OH=['meoh','etoh','proh1','proh2','buoh1','buoh2','tbuoh','allyloh','phoh','cresol','bnoh'];
+const ALL_COOH=['hcooh','acoh','etcooh','prcooh','iprcooh','phcooh'];
+const ALL_CHO=['hcho','mecho','etcho','prcho','iprcho','phcho'];
+const ALL_EST=['mefo','etfo','prfo','iprfo','meac','etac','mepr','mebz','phac'];
+const FORMATES=['mefo','etfo','prfo','iprfo'];
+const TABS=['検出','性質・反応','構造'];
+// tab: タブ番号、sh: カードの短い文、full: 質問文
+const QS=[
+  {id:'na',  tab:0,sh:'Na で H2 が発生',full:'金属ナトリウムを加えると水素が発生するか',yes:ALL_OH.concat(ALL_COOH)},
+  {id:'co2', tab:0,sh:'NaHCO3 で CO2 が発生',full:'炭酸水素ナトリウム水溶液を加えると二酸化炭素が発生するか',yes:ALL_COOH},
+  {id:'ag',  tab:0,sh:'銀鏡反応',full:'銀鏡反応を示すか',yes:ALL_CHO.concat(['hcooh'],FORMATES)},
+  {id:'i3',  tab:0,sh:'ヨードホルム反応',full:'ヨードホルム反応を示すか',yes:['etoh','proh2','buoh2','mecho','acetone','mek','mpk']},
+  {id:'br',  tab:0,sh:'臭素水の色が消える(付加)',full:'臭素水の色が付加反応で消えるか',yes:['allyloh']},
+  {id:'fe',  tab:0,sh:'FeCl3 で呈色',full:'塩化鉄(III)水溶液で呈色するか',yes:['phoh','cresol']},
+  {id:'cl',  tab:0,sh:'さらし粉で赤紫色',full:'さらし粉水溶液で赤紫色になるか',yes:['aniline']},
+  {id:'hyd', tab:0,sh:'NaOH と加熱で加水分解',full:'水酸化ナトリウム水溶液と加熱すると加水分解されるか',yes:ALL_EST},
+  {id:'oxa', tab:1,sh:'酸化→アルデヒド',full:'酸化するとアルデヒドを生じるか',yes:['meoh','etoh','proh1','buoh1','allyloh','bnoh']},
+  {id:'oxk', tab:1,sh:'酸化→ケトン',full:'酸化するとケトンを生じるか',yes:['proh2','buoh2']},
+  {id:'naoh',tab:1,sh:'NaOH と塩をつくる(中和)',full:'水酸化ナトリウム水溶液と塩をつくるか(中和)',yes:ALL_COOH.concat(['phoh','cresol'])},
+  {id:'hcl', tab:1,sh:'塩酸と塩をつくる',full:'塩酸と塩をつくるか',yes:['aniline']},
+  {id:'hi3', tab:1,sh:'加水分解→アルコールがヨードホルム',full:'加水分解で生じるアルコールは、ヨードホルム反応を示すか',yes:['etfo','etac','iprfo']},
+  {id:'hag', tab:1,sh:'加水分解→カルボン酸が銀鏡',full:'加水分解で生じるカルボン酸は、銀鏡反応を示すか',yes:FORMATES},
+  {id:'hfe', tab:1,sh:'加水分解→FeCl3 で呈色する物質',full:'加水分解で生じる物質に、塩化鉄(III)水溶液で呈色するものがあるか',yes:['phac']},
+  {id:'chi', tab:2,sh:'不斉炭素原子がある',full:'不斉炭素原子をもつか',yes:['buoh2']},
+  {id:'me2', tab:2,sh:'1つの C に CH3– が2つ以上',full:'1つの炭素原子に CH3– が2つ以上結合しているか',yes:['proh2','tbuoh','iprcho','iprcooh','acetone','mipe','iprfo']},
+  {id:'same',tab:2,sh:'同じ骨格カードを2枚',full:'同じ骨格カードを2枚使っているか',yes:['dme','dee','acetone','dek','meac']}
+];
+const Q_BY_ID={};QS.forEach((q,i)=>{q.no=i+1;q.set=new Set(q.yes);Q_BY_ID[q.id]=q;});
+function isYes(qid,sid){return Q_BY_ID[qid].set.has(sid);}
+
+// ---- ふり返りの「なぜ」(質問×物質の種類) ----
+function clsOf(x){
+  if(x.f==='OH'){
+    const s=x.s[0];
+    if(s==='Ph'||s==='Tol')return 'phen';
+    if(s==='tBu')return 'alc3';
+    if(s==='C3m'||s==='C4m')return 'alc2';
+    return 'alc1';
+  }
+  return {CHO:'ald',COOH:'acid',NH2:'amine',NO2:'nitro',ETH:'ether',KET:'ket',EST:'ester'}[x.f];
+}
+function hasRing(x){return x.s.some(s=>s==='Ph'||s==='Tol'||s==='Bn');}
+function whyOf(qid,x){
+  const y=isYes(qid,x.id),c=clsOf(x),id=x.id,alc=c==='alc1'||c==='alc2'||c==='alc3';
+  switch(qid){
+  case 'na':
+    if(y)return c==='acid'?'カルボキシ基 –COOH をもつので、ナトリウムと反応して水素が発生する'
+      :c==='phen'?'フェノール類も –OH をもつので、ナトリウムと反応して水素が発生する'
+      :'ヒドロキシ基 –OH をもつので、ナトリウムと反応して水素が発生する';
+    if(c==='ether')return 'エーテルは –OH をもたないので、ナトリウムと反応しない';
+    if(c==='ester')return 'エステルは –OH をもたないので、ナトリウムと反応しない';
+    return '–OH も –COOH ももたないので、ナトリウムと反応しない';
+  case 'co2':
+    if(y)return 'カルボン酸は炭酸より強い酸なので、炭酸水素ナトリウムと反応して CO2 が発生する';
+    if(c==='phen')return 'フェノール類は炭酸より弱い酸なので、CO2 は発生しない';
+    return 'カルボキシ基をもたないので、CO2 は発生しない';
+  case 'ag':
+    if(y)return c==='ald'?'ホルミル基(アルデヒド基)–CHO が還元性を示すので、銀鏡反応を示す'
+      :id==='hcooh'?'ギ酸 HCOOH はホルミル基の構造 H–CO– をもつので、銀鏡反応を示す'
+      :'ギ酸エステル HCOOR はホルミル基の構造 H–CO– をもつので、銀鏡反応を示す';
+    if(c==='ket')return 'ケトンは還元性がないので、銀鏡反応を示さない';
+    if(c==='acid')return 'ギ酸以外のカルボン酸はホルミル基の構造をもたないので、銀鏡反応を示さない';
+    if(c==='ester')return 'ギ酸エステル以外のエステルはホルミル基の構造をもたないので、銀鏡反応を示さない';
+    return 'ホルミル基 –CHO をもたないので、銀鏡反応を示さない';
+  case 'i3':
+    if(y)return alc?'CH3CH(OH)– の構造があるので、ヨードホルム反応を示す':'CH3CO– の構造があるので、ヨードホルム反応を示す';
+    if(id==='acoh'||id==='meac'||id==='etac'||id==='phac')return 'CH3CO– が O と結合した CH3COO– の形は、ヨードホルム反応を示す構造にあたらない';
+    if(id==='tbuoh')return 'OH の付いた C に H がないので、CH3CH(OH)– の構造ではない';
+    return 'CH3CO– も CH3CH(OH)– ももたないので、ヨードホルム反応を示さない';
+  case 'br':
+    if(y)return 'C=C 二重結合をもつので、臭素が付加して臭素水の色が消える';
+    if(id==='phoh')return 'フェノールは臭素水と置換反応をする(白色沈殿)が、付加反応ではない';
+    if(id==='aniline')return 'アニリンは臭素水と置換反応をする(白色沈殿)が、付加反応ではない';
+    if(hasRing(x))return 'ベンゼン環は付加反応を起こしにくいので、臭素は付加しない';
+    return 'C=C 二重結合をもたないので、臭素は付加しない';
+  case 'fe':
+    if(y)return 'ベンゼン環に –OH が直接結合したフェノール類なので、塩化鉄(III)水溶液で呈色する';
+    if(id==='bnoh')return '–OH がベンゼン環に直接結合していない(アルコール)ので、呈色しない';
+    return 'フェノール類ではないので、呈色しない';
+  case 'cl':
+    if(y)return 'アニリンはさらし粉水溶液で酸化されて赤紫色になる';
+    if(id==='nitrobz')return 'ニトロベンゼンはアミノ基をもたない(スズと塩酸で還元するとアニリンになる)';
+    return 'アニリンではないので、赤紫色にならない';
+  case 'hyd':
+    if(y)return 'エステル結合 –COO– をもつので、けん化(加水分解)される';
+    if(c==='acid')return 'カルボン酸は NaOH と中和するが、加水分解はされない';
+    return 'エステル結合をもたないので、加水分解されない';
+  case 'oxa':
+    if(y)return id==='meoh'?'第一級アルコールなので、酸化するとアルデヒド(ホルムアルデヒド)を生じる':'第一級アルコールなので、酸化するとアルデヒドを生じる';
+    if(c==='alc2')return '第二級アルコールを酸化するとケトンになる(アルデヒドではない)';
+    if(c==='alc3')return '第三級アルコールは酸化されにくい';
+    if(c==='phen')return 'フェノール類は、酸化してもアルデヒドを生じない';
+    if(c==='ald')return 'アルデヒドを酸化するとカルボン酸になる';
+    return '第一級アルコールではないので、酸化してもアルデヒドは生じない';
+  case 'oxk':
+    if(y)return '第二級アルコールなので、酸化するとケトンを生じる';
+    if(c==='alc1')return '第一級アルコールを酸化するとアルデヒドになる(ケトンではない)';
+    if(c==='alc3')return '第三級アルコールは酸化されにくい';
+    if(c==='ket')return 'すでにケトン。ケトンは酸化されにくい';
+    return '第二級アルコールではないので、酸化してもケトンは生じない';
+  case 'naoh':
+    if(y)return c==='acid'?'カルボン酸は NaOH と中和して塩をつくる':'フェノール類は弱い酸性を示し、NaOH と中和して塩をつくる';
+    if(alc)return 'アルコールは中性で、NaOH と中和しない';
+    if(c==='ester')return 'エステルは酸ではないので中和しない(加熱するとけん化される)';
+    if(c==='amine')return 'アニリンは塩基なので、NaOH とは塩をつくらない';
+    return '酸性を示す基をもたないので、NaOH と中和しない';
+  case 'hcl':
+    if(y)return 'アミノ基 –NH2 は塩基性なので、塩酸と塩(アニリン塩酸塩)をつくる';
+    if(c==='nitro')return 'ニトロ基は塩基性を示さないので、塩酸と塩をつくらない';
+    return 'アミノ基のような塩基性の基をもたないので、塩酸と塩をつくらない';
+  case 'hi3':{
+    if(c!=='ester')return 'エステルではないので、加水分解でアルコールは生じない';
+    const a=x.s[1],nm=ALC_NM[a];
+    if(y)return '加水分解で生じる'+nm+'は CH3CH(OH)– の構造をもつので、ヨードホルム反応を示す';
+    if(a==='Ph')return '加水分解で生じるのはフェノール(アルコールではない)。ヨードホルム反応も示さない';
+    return '加水分解で生じる'+nm+'は CH3CH(OH)– の構造をもたないので、ヨードホルム反応を示さない';
+  }
+  case 'hag':
+    if(c!=='ester')return 'エステルではないので、加水分解でカルボン酸は生じない';
+    if(y)return '加水分解で生じるギ酸はホルミル基の構造をもつので、銀鏡反応を示す';
+    return '加水分解で生じる'+ACID_NM[x.s[0]]+'はホルミル基の構造をもたないので、銀鏡反応を示さない';
+  case 'hfe':
+    if(c!=='ester')return 'エステルではないので、加水分解されない';
+    if(y)return '加水分解で生じるフェノールは、塩化鉄(III)水溶液で呈色する';
+    return '加水分解で生じるのはカルボン酸とアルコール。フェノール類は生じないので呈色しない';
+  case 'chi':
+    if(y)return 'OH の付いた C に H・OH・CH3・C2H5 の4つの異なる原子・原子団が結合している(不斉炭素原子)';
+    return '4つの異なる原子・原子団が結合した炭素原子(不斉炭素原子)はない';
+  case 'me2':
+    if(y)return id==='tbuoh'?'(CH3)3C– の構造で、1つの C に CH3 が3つ結合している'
+      :id==='acetone'?'カルボニル基の C に CH3 が2つ結合している'
+      :'(CH3)2CH– の構造で、1つの C に CH3 が2つ結合している';
+    if(id==='dme')return '2つの CH3 が結合しているのは O 原子(炭素原子ではない)';
+    if(id==='meac')return '2つの CH3 は、別々の原子(C と O)に結合している';
+    return 'CH3 が2つ以上結合した炭素原子はない';
+  case 'same':
+    if(y)return '同じ骨格カード('+SKEL_FULL[x.s[0]]+')を2枚使っている';
+    if(x.s.length===1)return '骨格カードは1枚だけ';
+    return '2枚の骨格カードは種類がちがう';
+  }
+  return '';
+}
+
+// ================= 配る =================
+function makeDeck(){
+  const d=[];
+  SKEL_ORDER.forEach(id=>{for(let i=0;i<SKEL[id].cnt;i++)d.push({t:'s',id:id});});
+  FG_ORDER.forEach(id=>{for(let i=0;i<FG[id].cnt;i++)d.push({t:'f',id:id});});
+  return d;
+}
+function shuf(a,rng){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+// 手札の並び(骨格→官能基、図鑑の順)
+function sortHand(h){
+  const ord=c=>c.t==='s'?SKEL_ORDER.indexOf(c.id):100+FG_ORDER.indexOf(c.id);
+  return h.slice().sort((a,b)=>ord(a)-ord(b));
+}
+// 手札から n 枚でつくれる物質(種類ごとに1つ)。{sub, f:官能基の手札番号, s:[骨格の手札番号…]}
+function makeable(hand,n){
+  const out={},sk=[],fl=[];
+  hand.forEach((c,i)=>{if(c.t==='s')sk.push(i);else if((FG[c.id].k===1)===(n===2))fl.push(i);});
+  for(const fi of fl){
+    if(n===2){for(const si of sk){const r=SUB_BY_KEY[keyOf(hand[fi].id,[hand[si].id])];if(r&&!out[r.id])out[r.id]={sub:r,f:fi,s:[si]};}}
+    else{for(const a of sk)for(const b of sk){if(a===b)continue;const r=SUB_BY_KEY[keyOf(hand[fi].id,[hand[a].id,hand[b].id])];if(r&&!out[r.id])out[r.id]={sub:r,f:fi,s:[a,b]};}}
+  }
+  return Object.keys(out).map(k=>out[k]);
+}
+const FALLBACK={2:['C1','C2','Ph','H','OH','CHO','COOH','NH2'],3:['C1','C1','C2','H','Ph','ETH','KET','EST']};
+function deal(rng,n){
+  const deck=makeDeck();
+  for(let t=1;t<=DEAL_TRY;t++){
+    const h=sortHand(shuf(deck.slice(),rng).slice(0,N_HAND));
+    if(makeable(h,n).length>=MIN_MAKE)return {hand:h,tries:t};
+  }
+  // 念のため(確率的にはまず来ない)
+  return {hand:sortHand(FALLBACK[n].map(id=>({t:SKEL[id]?'s':'f',id:id}))),tries:-1};
+}
+
+// ================= 採点 =================
+// tr: 正体 {f,s}、an: 解答 {f,s}。sHit は解答の骨格の置き場ごと
+function scoreAnswer(n,tr,an){
+  const fHit=an.f===tr.f;
+  let sHit;
+  if(n===2)sHit=[an.s[0]===tr.s[0]];
+  else if(an.f==='EST'&&tr.f==='EST')sHit=[an.s[0]===tr.s[0],an.s[1]===tr.s[1]];
+  else{const pool=tr.s.slice();sHit=an.s.map(x=>{const k=pool.indexOf(x);if(k>=0){pool.splice(k,1);return true;}return false;});}
+  const hits=(fHit?1:0)+sHit.filter(Boolean).length;
+  return {fHit:fHit,sHit:sHit,hits:hits,pts:hits*PT_HIT};
+}
+
+// ================= CPU =================
+// 候補: 枚数・分子式(公開されていれば)・これまでの正しい答えに合う物質
+function candidates(n,mf,log){
+  return SUBS.filter(x=>x.s.length===n-1&&(mf==null||mfOf(x)===mf)&&log.every(e=>isYes(e.q,x.id)===e.truth));
+}
+// 候補をいちばん分ける質問(はい・いいえの多い方がいちばん少なくなるもの)。同点はランダム
+function bestQuestions(c,used){
+  let best=1e9,bs=[];
+  for(const q of QS){
+    if(used.indexOf(q.id)>=0)continue;
+    let y=0;for(const x of c)if(q.set.has(x.id))y++;
+    const s=Math.max(y,c.length-y);
+    if(s<best){best=s;bs=[q.id];}else if(s===best)bs.push(q.id);
+  }
+  return bs;
+}
+function cpuPickQ(lv,c,used,rng){
+  const free=QS.filter(q=>used.indexOf(q.id)<0).map(q=>q.id);
+  if(rng()<CPU_RANDQ[lv])return free[Math.floor(rng()*free.length)];
+  const bs=bestQuestions(c,used);
+  return bs[Math.floor(rng()*bs.length)];
+}
+function cpuFinal(lv,n,c,rng){
+  const same=SUBS.filter(x=>x.s.length===n-1);
+  if(rng()<CPU_MISS[lv]){
+    const pool=same.filter(x=>c.indexOf(x)<0);
+    if(pool.length)return pool[Math.floor(rng()*pool.length)];
+  }
+  const p=c.length?c:same;
+  return p[Math.floor(rng()*p.length)];
+}
+function cpuSays(lv,truth,rng){return rng()<CPU_ACC[lv]?truth:!truth;}
+// CPU 解答側が、もう解答するか(候補が1つにしぼれた)
+function cpuWantsSolve(lv,c,asked){return asked>=N_ASK||(CPU_EARLY[lv]&&c.length<=1);}
+/*PURE-END*/
+// ================= ここまで純粋な計算(node で確かめられる) =================
+
+const $=CG.$;
+document.querySelector('.top').appendChild(CG.soundButton());
+$('rAns').textContent=PT_ANS;$('rHit').textContent=PT_HIT;
+const LV_NM={easy:'やさしい',normal:'ふつう',hard:'つよい'};
+const OPT={mode:'cpu',lv:'normal',sets:'1',mf:'show'};
+
+// ================= 音(Web Audio。音の ON/OFF は CG に従う) =================
+let AC=null,MG=null,NZ=null;
+function au(){
+  if(!AC){
+    try{
+      const K=window.AudioContext||window.webkitAudioContext;AC=new K();
+      MG=AC.createGain();MG.gain.value=0.6;MG.connect(AC.destination);
+      const n=Math.floor(AC.sampleRate*0.4);NZ=AC.createBuffer(1,n,AC.sampleRate);
+      const d=NZ.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    }catch(e){AC=null;}
+  }
+  if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}
+  return AC;
+}
+function canPlay(){return !!AC&&!CG.isMuted();}
+function blip(type,f0,f1,sweep,at,dur,vol){
+  const t=AC.currentTime+(at||0),o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);
+  if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,t+sweep);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.003);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(MG);o.start(t);o.stop(t+dur+0.02);
+}
+function noise(at,dur,ftype,freq,q,vol,f1){
+  const t=AC.currentTime+(at||0),s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=NZ;f.type=ftype;f.frequency.setValueAtTime(freq,t);f.Q.value=q;
+  if(f1)f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(f);f.connect(g);g.connect(MG);s.start(t);s.stop(t+dur+0.02);
+}
+const SND_DEF={
+  tap(){blip('square',620,620,0,0,0.04,0.05);},
+  place(){blip('square',900,1400,0.025,0,0.05,0.09);noise(0,0.035,'highpass',3200,0.8,0.16);},   // パキッ
+  back(){blip('triangle',760,420,0.05,0,0.07,0.12);},
+  ask(){noise(0,0.13,'bandpass',700,1.2,0.22,3200);blip('triangle',520,820,0.07,0.05,0.1,0.16);},
+  yes(){blip('square',700,700,0,0,0.06,0.10);blip('square',1050,1050,0,0.05,0.07,0.08);},
+  no(){blip('square',420,420,0,0,0.06,0.10);blip('square',300,300,0,0.05,0.08,0.08);},
+  ok(){[880,1320].forEach((f,i)=>blip('triangle',f,f,0,i*0.07,0.12,0.22));},
+  ng(){blip('sawtooth',230,140,0.22,0,0.26,0.12);noise(0,0.12,'lowpass',900,0.7,0.18);},
+  hit(){blip('sine',190,80,0.08,0,0.11,0.7);noise(0,0.05,'lowpass',1800,0.7,0.3,400);
+    [1046.5,1318.5,1568].forEach((f,i)=>blip('triangle',f,f,0,0.03+i*0.05,0.14,0.25));},
+  miss(){noise(0,0.18,'bandpass',2400,2,0.32,500);blip('square',300,200,0.1,0.04,0.12,0.08);},
+  tick(){blip('square',1250,1250,0,0,0.025,0.06);},
+  land(){blip('triangle',523,1046,0.1,0,0.2,0.24);blip('triangle',1568,1568,0,0.12,0.18,0.14);},
+  bad(){blip('square',230,180,0.08,0,0.1,0.12);},
+  deal(){for(let i=0;i<4;i++)noise(i*0.05,0.04,'highpass',2600,0.9,0.14);}
+};
+const SND={};
+Object.keys(SND_DEF).forEach(k=>{SND[k]=function(){if(!canPlay())return;try{SND_DEF[k]();}catch(e){}};});
+
+// ================= 時間の管理 =================
+let TOK=0;   // 新しいゲームを始めたら古いタイマーは無効
+function later(sec,fn){const t=TOK;setTimeout(()=>{if(t===TOK)fn();},Math.round(sec*1000));}
+
+// ================= 状態 =================
+// G.ph: roulette / cpumake / guard / make / cover / ask / cpuask / answer / judge / cpusolve / solve / reveal / end
+let G=null;
+function pName(i){return G.P[i].nm;}
+function dotHtml(i){return '<i class="od-pd" style="background:'+(i===0?'#ff4f8b':'#3d8bff')+'"></i>';}
+
+// ================= カードの見た目 =================
+function stHtml(s){return chem(s).replace('●','<span class="od-dot">●</span>');}
+function skCard(id,attrs,cls,tag){
+  const k=SKEL[id],t=tag||'button',ln=k.st.replace(/\d/g,'').length,lc=ln>=10?' od-l2':ln>=9?' od-l1':'';
+  return '<'+t+(t==='button'?' type="button"':'')+' class="od-card od-sk '+(cls||'')+'" '+(attrs||'')+'><span class="od-cn">'+k.nm+'</span><span class="od-ct">'+chem(k.tag)+'</span><span class="od-cs'+lc+'">'+stHtml(k.st)+'</span></'+t+'>';
+}
+function fgCard(id,attrs,cls,tag){
+  const k=FG[id],t=tag||'button';
+  return '<'+t+(t==='button'?' type="button"':'')+' class="od-card od-fg '+(cls||'')+'" '+(attrs||'')+'><span class="od-cn">'+k.nm+'</span><span class="od-ct">'+k.tag+'</span><span class="od-cs">'+chem(k.fm)+'</span></'+t+'>';
+}
+function cardOf(c,attrs,cls,tag){return c.t==='s'?skCard(c.id,attrs,cls,tag):fgCard(c.id,attrs,cls,tag);}
+// カードの並び(骨格A, 官能基, 骨格B)。cards: [{t,id}|null …] を置き場の順に
+function slotOrder(n){return n===2?['s0','f']:['s0','f','s1'];}
+function slotLabels(n,f){
+  if(n===2)return {s0:'骨格',f:'官能基'};
+  if(f==='EST')return {s0:'酸の側',f:'つなぐ官能基',s1:'アルコールの側'};
+  return {s0:'骨格',f:'つなぐ官能基',s1:'骨格'};
+}
+
+// ================= 画面 =================
+function show(id){['start','play','end'].forEach(s=>$(s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function render(){renderScore();renderSide();renderPane();}
+
+let shownPts=[0,0];
+function renderScore(){
+  const R=G.R;
+  let h='';
+  [0,1].forEach(i=>{
+    const p=G.P[i];
+    let role='';
+    if(R)role=R.setter===i?'<span class="od-role od-r-set">出題</span>':'<span class="od-role od-r-sol">解答</span>';
+    const bump=p.score!==shownPts[i];
+    h+=(i===1?'<div class="od-mid">セット <b class="num">'+(G.set+1)+'/'+G.sets+'</b>'+(G.n?G.n+'枚の回':'')+'</div>':'')
+      +'<div class="od-pl od-c'+i+'"><span class="od-pn">'+p.nm+' '+role+'</span><span class="od-pts num'+(bump?' od-bump':'')+'">'+p.score+'<small>点</small></span></div>';
+    shownPts[i]=p.score;
+  });
+  $('score').innerHTML=h;
+}
+function renderSide(){
+  const ph=G.ph,R=G.R;
+  $('wrap').classList.toggle('od-solo',ph==='reveal');
+  if(ph==='roulette'||!R){$('side').innerHTML='<div class="od-box od-guide">このセットで使うカードの枚数を決める。<br><b>2枚</b> = 骨格1+官能基1 / <b>3枚</b> = 骨格2+つなぐ官能基1</div>';return;}
+  if(ph==='cpumake'||ph==='guard'||ph==='make'||ph==='cover'){
+    $('side').innerHTML='<div class="od-box od-guide">出題側: <b>'+pName(R.setter)+'</b> / 解答側: <b>'+pName(R.solver)+'</b><br>'
+      +(G.n===2?'カード<b>2枚</b>(骨格1枚+官能基1枚)で物質をつくる。':'カード<b>3枚</b>(骨格2枚+つなぐ官能基1枚)で物質をつくる。')
+      +'<br>公開されるのは'+(G.showMF?'分子式と':'')+'枚数だけ。</div>';
+    return;
+  }
+  const compact=ph==='solve'||ph==='cpusolve';
+  $('side').innerHTML=infoHtml(compact)+logHtml(compact);
+}
+function infoHtml(compact){
+  const R=G.R,x=R.sub;
+  let h='<div class="od-box od-info"><span class="od-ik">公開</span>'
+    +'<span class="od-mf">分子式 '+(G.showMF?'<b>'+chem(mfOf(x))+'</b>':'<b class="od-sec">ひみつ</b>')+'</span>'
+    +'<span class="od-cnt">骨格<b class="num">'+(G.n-1)+'</b>枚・官能基<b class="num">1</b>枚</span>';
+  // CPU 戦で人が出題側のときは、自分の物質を見えるようにしておく(CPU は見ない)
+  if(G.mode==='cpu'&&!G.P[R.setter].cpu&&!compact)h+='<span class="od-mine">あなたの物質: <b>'+x.nm+'</b> <span>'+chem(x.ff)+'</span></span>';
+  return h+'</div>';
+}
+function ynHtml(t){return '<span class="od-yn '+(t?'od-y':'od-n')+'">'+(t?'はい':'いいえ')+'</span>';}
+function logHtml(compact){
+  const R=G.R;
+  let h='<div class="od-box od-log'+(compact?' od-compact':'')+'"><span class="od-lh">推理メモ<small>質問と正しい答え</small><span class="num">'+R.log.length+'/'+N_ASK+'</span></span><ol class="od-ll">';
+  for(let i=0;i<N_ASK;i++){
+    const e=R.log[i];
+    if(!e){
+      h+='<li class="od-lr od-lr0"><span class="od-ln">'+(i+1)+'</span><span class="od-lq">'
+        +(R.closed?'(質問なし)':(compact?'—':'(まだ)'))+'</span><span></span></li>';
+      continue;
+    }
+    const q=Q_BY_ID[e.q];
+    h+='<li class="od-lr'+(i===R.log.length-1&&G.ph==='judge'?' od-new':'')+'"><span class="od-ln">'+(i+1)+'</span><span class="od-lq"><span>'+chem(q.sh)+'</span>'
+      +(e.ok||compact?'':'<span class="od-lx">出題側が「'+(e.said?'はい':'いいえ')+'」とまちがえた → 正しい答え</span>')+'</span>'+ynHtml(e.truth)+'</li>';
+  }
+  return h+'</ol></div>';
+}
+
+function renderPane(){
+  const ph=G.ph,R=G.R;let h='';
+  if(ph==='roulette'){
+    h='<div class="od-pane"><span class="od-ph">ルーレット<small>このセットは2人とも同じ枚数</small></span><div class="od-rr">'
+      +'<span class="od-rv'+(G.rl===2?' od-on':'')+'" id="rv2">2枚<small>骨格1+官能基1</small></span>'
+      +'<span class="od-rv'+(G.rl===3?' od-on':'')+'" id="rv3">3枚<small>骨格2+官能基1</small></span></div>'
+      +'<span class="od-rt" id="rvT"></span><button class="btn" type="button" data-act="roul">OK</button></div>';
+  }else if(ph==='cpumake'){
+    h='<div class="od-pane"><span class="od-ph">'+pName(R.setter)+' が8枚から物質をつくっている</span><div class="od-hand od-mini">'
+      +R.hand.map(()=>'<span class="od-back"></span>').join('')+'</div><span class="od-think">考え中</span></div>';
+  }else if(ph==='guard'){
+    h='<div class="od-pane od-secret"><span class="od-eye">ひみつ</span><b>'+dotHtml(R.setter)+pName(R.setter)+' だけが見てください</b>'
+      +'<p>'+pName(R.solver)+' は目をそらして。<br>8枚のカードが出ます。物質をつくって決定すると、カードは伏せられます。</p>'
+      +'<button class="btn" type="button" data-act="peek">'+pName(R.setter)+': カードを見る</button></div>';
+  }else if(ph==='make'){
+    h=makeHtml();
+  }else if(ph==='cover'){
+    h='<div class="od-pane od-secret"><b>伏せました</b><div class="od-cards od-s'+G.n+' od-mini">'+slotOrder(G.n).map(()=>'<span class="od-back"></span>').join('')+'</div>'
+      +'<p>画面を2人の間に置いてください。<br>ここからは質問も答えも、2人で見ながら進めます。<br>解答側: <b style="display:inline;font-size:inherit">'+pName(R.solver)+'</b></p>'
+      +'<button class="btn" type="button" data-act="cover-ok">質問をはじめる</button></div>';
+  }else if(ph==='ask'){
+    h=askHtml();
+  }else if(ph==='cpuask'){
+    h='<div class="od-pane"><span class="od-ph">質問 '+(R.log.length+1)+'/'+N_ASK+'</span><span class="od-think">'+pName(R.solver)+' が質問をえらんでいる</span></div>';
+  }else if(ph==='answer'||ph==='judge'){
+    h=answerHtml();
+  }else if(ph==='cpusolve'){
+    h='<div class="od-pane"><span class="od-ph">解答</span><span class="od-think">'+pName(R.solver)+' が推理している</span></div>';
+  }else if(ph==='solve'){
+    h=solveHtml();
+  }else if(ph==='reveal'){
+    h=revealHtml();
+  }
+  $('pane').innerHTML=h;
+}
+
+// ---- つくる ----
+function makeHtml(){
+  const R=G.R,n=G.n,mk=R.mk;
+  const usedIdx=new Set(mk.s.concat([mk.f]).filter(v=>v!=null));
+  const fId=mk.f!=null?R.hand[mk.f].id:null;
+  const lb=slotLabels(n,fId);
+  let h='<div class="od-pane"><span class="od-ph">物質をつくる<small>カードを押すと置き場へ。置いたカードを押すと手札へ</small></span>';
+  h+='<div class="od-slots od-s'+n+'">';
+  slotOrder(n).forEach(k=>{
+    const idx=k==='f'?mk.f:mk.s[+k[1]];
+    h+='<div class="od-slot">'+(idx!=null?cardOf(R.hand[idx],'data-act="mslot" data-v="'+k+'"',R.lastIn===k?'od-in':''):'<span class="od-empty">'+lb[k]+'</span>')
+      +'<span class="od-sl'+(fId==='EST'&&k!=='f'?' od-est':'')+'">'+(fId==='EST'&&k!=='f'?lb[k]:'')+'</span></div>';
+  });
+  h+='</div>';
+  const sIds=mk.s.map(v=>v==null?null:R.hand[v].id);
+  h+='<span class="od-pv">'+previewHtml(fId,sIds,n)+'</span>';
+  h+='<div class="od-hand">';
+  R.hand.forEach((c,i)=>{
+    const off=c.t==='f'&&((FG[c.id].k===1)!==(n===2));
+    h+=cardOf(c,'data-act="mhand" data-v="'+i+'" id="mh'+i+'"',(usedIdx.has(i)?'od-used':'')+(off?' od-off':''));
+  });
+  h+='</div><span class="od-msg" id="msg">'+(R.msg||'')+'</span>';
+  const ok=fId&&sIds.every(v=>v)&&build(fId,sIds).sub;
+  h+='<div class="'+(n===3?'od-row2':'')+'">'+(n===3?'<button class="od-swap" type="button" data-act="mswap">⇄<br>骨格を<br>入れかえ</button>':'')
+    +'<button class="btn" type="button" data-act="decide"'+(ok?'':' disabled')+'>これで決定(伏せる)</button></div></div>';
+  return h;
+}
+function previewHtml(fId,sIds,n){
+  const needS=sIds.filter(v=>v==null).length,needF=fId==null;
+  if(needS||needF){
+    const w=[];if(needS)w.push('骨格カード'+needS+'枚');if(needF)w.push(n===2?'官能基カード1枚':'つなぐ官能基カード1枚');
+    return '<span class="od-pv0">あと '+w.join('と')+'</span>';
+  }
+  const r=build(fId,sIds);
+  if(r.sub)return '<span class="od-pvok">'+r.sub.nm+'</span><span class="od-pvf">'+chem(r.sub.ff)+'</span>';
+  return '<span class="od-pvng">✕ この組み合わせではつくれない</span><span class="od-pvwhy">'+chem(r.why)+'</span>';
+}
+
+// ---- 質問をえらぶ ----
+function askHtml(){
+  const R=G.R;
+  let h='<div class="od-pane"><span class="od-ph">質問 '+(R.log.length+1)+'/'+N_ASK+' をえらぶ<small>'+pName(R.solver)+'(解答側)</small></span><div class="od-tabs">';
+  TABS.forEach((t,i)=>{
+    const left=QS.filter(q=>q.tab===i&&R.used.indexOf(q.id)<0).length;
+    h+='<button type="button" class="od-tab'+(R.tab===i?' od-on':'')+'" data-act="tab" data-v="'+i+'">'+t+'<small>'+left+'</small></button>';
+  });
+  h+='</div><div class="od-qgrid">';
+  QS.filter(q=>q.tab===R.tab).forEach(q=>{
+    const u=R.used.indexOf(q.id)>=0;
+    h+='<button type="button" class="od-qc" data-act="ask" data-v="'+q.id+'"'+(u?' disabled':'')+' title="'+q.full.replace(/<[^>]+>/g,'')+'"><span class="od-qn">'+q.no+'</span><span class="od-qt">'+chem(q.sh)+'</span></button>';
+  });
+  h+='</div>';
+  const left=N_ASK-R.log.length;
+  if(R.confirm)h+='<div class="od-conf"><b>質問はあと'+left+'回できる。解答に進む?</b><div class="od-cb">'
+    +'<button class="btn white" type="button" data-act="early-no">もどる</button><button class="btn" type="button" data-act="early-yes">はい、解答する</button></div></div>';
+  else h+='<button class="btn white od-early" type="button" data-act="early">もう解答する</button>';
+  return h+'</div>';
+}
+// ---- 答える・判定 ----
+function answerHtml(){
+  const R=G.R,q=Q_BY_ID[R.cur];
+  let h='<div class="od-pane"><div class="od-askq'+(G.ph==='answer'?' od-fly':'')+'"><small>質問 '+(R.used.length)+'/'+N_ASK+'('+pName(R.solver)+')</small>'+chem(q.full)+'?</div>';
+  if(G.ph==='answer'){
+    if(G.P[R.setter].cpu)h+='<span class="od-think">'+pName(R.setter)+' が答えている</span>';
+    else{
+      h+='<span class="od-who">'+dotHtml(R.setter)+'出題側 <b>'+pName(R.setter)+'</b> が答える'+(G.mode==='cpu'?'(あなたの物質: '+R.sub.nm+')':'')+'</span>'
+        +'<div class="od-ynb"><button type="button" class="od-by" data-act="say" data-v="yes">はい</button><button type="button" class="od-bn" data-act="say" data-v="no">いいえ</button></div>';
+    }
+  }else{
+    const e=R.log[R.log.length-1];
+    h+='<span class="od-said"><span class="od-stamp">'+pName(R.setter)+'「'+(e.said?'はい':'いいえ')+'」</span></span>';
+    if(e.ok)h+='<span class="od-verd od-ok">正しい! 出題側 +'+PT_ANS+'点</span>';
+    else h+='<span class="od-verd od-ng">まちがい。正しくは『'+(e.truth?'はい':'いいえ')+'』<small>推理メモには正しい答えを残す(出題側は 0点)</small></span>';
+    h+='<button type="button" class="od-skip" data-act="jnext">次へ ›</button>';
+  }
+  return h+'</div>';
+}
+// ---- 解答 ----
+function solveHtml(){
+  const R=G.R,n=G.n,a=R.ans,lb=slotLabels(n,a.f);
+  let h='<div class="od-pane"><span class="od-ph">解答: カードを置く<small>当たった1枚 +'+PT_HIT+'点</small></span><div class="od-slots od-s'+n+'">';
+  slotOrder(n).forEach(k=>{
+    const id=k==='f'?a.f:a.s[+k[1]];
+    const c=id?{t:k==='f'?'f':'s',id:id}:null;
+    h+='<div class="od-slot">'+(c?cardOf(c,'data-act="aslot" data-v="'+k+'"',R.lastIn===k?'od-in':''):'<span class="od-empty">'+lb[k]+'</span>')
+      +'<span class="od-sl'+(a.f==='EST'&&k!=='f'?' od-est':'')+'">'+(a.f==='EST'&&k!=='f'?lb[k]:'')+'</span></div>';
+  });
+  h+='</div>';
+  const full=a.f&&a.s.every(v=>v);
+  let pv='<span class="od-pv0">'+(full?'':'あと '+[a.s.filter(v=>!v).length?'骨格'+a.s.filter(v=>!v).length+'枚':'',a.f?'':'官能基1枚'].filter(Boolean).join('と'))+'</span>';
+  if(full){const r=build(a.f,a.s);pv=r.sub?'<span class="od-pvok">'+r.sub.nm+'</span><span class="od-pvf">'+chem(r.sub.ff)+'</span>':'<span class="od-pvwhy">図鑑にない組み合わせ(このままでも解答できる)</span>';}
+  h+='<span class="od-pv">'+pv+'</span>';
+  const fl=FG_ORDER.filter(id=>(FG[id].k===1)===(n===2));
+  h+='<span class="od-sep">官能基</span><div class="od-hand4" style="grid-template-columns:repeat('+fl.length+',1fr)">'
+    +fl.map(id=>fgCard(id,'data-act="pfg" data-v="'+id+'"',a.f===id?'od-used':'')).join('')+'</div>';
+  h+='<span class="od-sep">骨格</span><div class="od-hand4">'+SKEL_ORDER.map(id=>skCard(id,'data-act="psk" data-v="'+id+'" id="ps'+id+'"','')).join('')+'</div>';
+  h+='<span class="od-msg" id="msg">'+(R.msg||'')+'</span>';
+  h+='<div class="'+(n===3?'od-row2':'')+'">'+(n===3?'<button class="od-swap" type="button" data-act="aswap">⇄<br>骨格を<br>入れかえ</button>':'')
+    +'<button class="btn" type="button" data-act="submit"'+(full?'':' disabled')+'>これで解答!</button></div></div>';
+  return h;
+}
+// ---- 正体とふり返り ----
+function cardsRow(f,s,n,res){
+  const lb=slotLabels(n,f);
+  let h='<div class="od-cards od-s'+n+' od-mini">',k=0;
+  slotOrder(n).forEach(key=>{
+    const c=key==='f'?{t:'f',id:f}:{t:'s',id:s[+key[1]]};
+    let cls='',mk='';
+    if(res){
+      const hit=key==='f'?res.fHit:res.sHit[+key[1]];
+      const d='--d:'+(STAMP_T0_S+k*STAMP_GAP_S).toFixed(2)+'s';
+      cls=hit?' od-hit':' od-miss';mk='<span class="od-mk '+(hit?'od-h':'od-m')+'" style="'+d+'">'+(hit?'○':'✕')+'</span>';
+      cls+='" style="'+d;
+      k++;
+    }
+    h+='<div class="od-cw'+cls+'">'+mk+cardOf(c,'','','div')+'<span class="od-sl'+(f==='EST'&&key!=='f'?' od-est':'')+'">'+(f==='EST'&&key!=='f'?lb[key]:'')+'</span></div>';
+  });
+  return h+'</div>';
+}
+function revealHtml(){
+  const R=G.R,x=R.sub,res=R.res,n=G.n;
+  const nOk=R.log.filter(e=>e.ok).length;
+  const g=build(R.ans.f,R.ans.s);
+  const tEnd=STAMP_T0_S+n*STAMP_GAP_S;
+  let h='<div class="od-pane"><span class="od-rvh">正体</span><div class="od-truth"><span class="od-tn">'+x.nm+'</span><span class="od-tf">'+chem(x.ff)+'</span>'
+    +'<span class="od-tm">分子式 '+chem(mfOf(x))+'</span></div>'+cardsRow(x.f,x.s,n,null);
+  h+='<span class="od-rvh" style="margin-top:10px">'+pName(R.solver)+' の解答</span>'+cardsRow(R.ans.f,R.ans.s,n,res)
+    +'<span class="od-gn">'+(g.sub?g.sub.nm+' '+chem(g.sub.ff):'(図鑑にない組み合わせ)')+'</span>'
+    +'<span class="od-gp">当たり '+res.hits+'/'+n+'枚 <b style="--d:'+tEnd.toFixed(2)+'s">+'+res.pts+'点</b></span>';
+  h+='<span class="od-sum">'+dotHtml(R.setter)+'出題側 '+pName(R.setter)+': 質問に正しく答えた '+nOk+'/'+R.log.length+' → +'+nOk*PT_ANS+'点<br>'
+    +'解答側 '+pName(R.solver)+': 当たったカード '+res.hits+'枚 → +'+res.pts+'点</span>';
+  h+='<span class="od-rvh">ふり返り(なぜ はい/いいえ か)</span><ol class="od-rl">';
+  R.log.forEach((e,i)=>{
+    const q=Q_BY_ID[e.q];
+    h+='<li class="od-ri"><span class="od-rq">'+(i+1)+'. '+chem(q.full)+'?'+ynHtml(e.truth)+(e.ok?'':' <small style="color:#d0304a">(出題側はまちがえた)</small>')+'</span>'
+      +'<span class="od-rw">'+chem(whyOf(e.q,x))+'</span></li>';
+  });
+  if(!R.log.length)h+='<li class="od-ri">質問はしなかった。</li>';
+  h+='</ol><button class="btn" type="button" data-act="next">'+nextLabel()+'</button></div>';
+  return h;
+}
+function nextLabel(){
+  if(G.ri===0)return '出題と解答を入れかえる';
+  return G.set+1<G.sets?'次のセットへ':'結果を見る';
+}
+function flashMsg(t,el){
+  const R=G.R;if(R)R.msg=t;
+  const m=$('msg');if(m)m.innerHTML=t;
+  SND.bad();
+  if(el){el.classList.remove('od-shake');void el.offsetWidth;el.classList.add('od-shake');}
+}
+
+// ================= 進行 =================
+function startGame(){
+  au();TOK++;
+  const cpu=OPT.mode==='cpu';
+  G={mode:OPT.mode,lv:OPT.lv,sets:+OPT.sets,showMF:OPT.mf==='show',set:0,ri:0,n:0,rl:2,R:null,ph:'',
+     P:[{nm:cpu?'あなた':'プレイヤー1',cpu:false,score:0,qPts:0,hPts:0},{nm:cpu?'CPU('+LV_NM[OPT.lv]+')':'プレイヤー2',cpu:cpu,score:0,qPts:0,hPts:0}]};
+  shownPts=[0,0];
+  show('play');
+  nextSet();
+}
+function nextSet(){
+  G.n=Math.random()<0.5?2:3;G.rl=2;G.ri=0;G.R=null;G.landed=false;G.ph='roulette';
+  render();
+  // だんだん遅くなる切りかえ。最後に G.n で止まるよう、回数の偶奇を合わせる
+  const steps=ROUL_STEPS.slice(0,(G.n===3)===(ROUL_STEPS.length%2===1)?ROUL_STEPS.length:ROUL_STEPS.length-1);
+  let t=0;
+  steps.forEach((d,i)=>{
+    t+=d;
+    later(t,()=>{
+      if(G.ph!=='roulette'||G.landed)return;
+      G.rl=G.rl===2?3:2;SND.tick();
+      const a=$('rv2'),b=$('rv3');if(a)a.classList.toggle('od-on',G.rl===2);if(b)b.classList.toggle('od-on',G.rl===3);
+      if(i===steps.length-1)land();
+    });
+  });
+}
+function land(){
+  if(G.landed)return;
+  G.landed=true;G.rl=G.n;
+  const a=$('rv2'),b=$('rv3');
+  if(a){a.classList.toggle('od-on',G.n===2);a.classList.toggle('od-land',G.n===2);}
+  if(b){b.classList.toggle('od-on',G.n===3);b.classList.toggle('od-land',G.n===3);}
+  const t=$('rvT');if(t)t.innerHTML=G.n===2?'骨格1枚+官能基1枚で物質をつくる':'骨格2枚を官能基(エーテル結合・ケトン・エステル結合)でつなぐ';
+  SND.land();
+  later(ROUL_HOLD_S,()=>{if(G.ph==='roulette')startRound(0);});
+}
+function startRound(ri){
+  G.ri=ri;
+  const setter=ri===0?1:0,solver=1-setter;     // 1回目は CPU(プレイヤー2)が出題、人(プレイヤー1)が解答
+  const d=deal(Math.random,G.n);
+  G.R={setter:setter,solver:solver,hand:d.hand,mk:{s:G.n===2?[null]:[null,null],f:null},sub:null,log:[],used:[],tab:0,cur:null,
+       ans:{f:null,s:G.n===2?[null]:[null,null]},res:null,scored:false,msg:'',lastIn:null,jt:0,confirm:false,closed:false};
+  const R=G.R;
+  if(G.P[setter].cpu){
+    const opts=makeable(R.hand,G.n),m=opts[Math.floor(Math.random()*opts.length)];
+    R.sub=m.sub;
+    G.ph='cpumake';render();SND.deal();
+    later(CPU_THINK_S+0.3,beginAsk);
+  }else if(G.mode==='pvp'){G.ph='guard';render();}
+  else{G.ph='make';render();SND.deal();}
+}
+function decide(){
+  const R=G.R,mk=R.mk;
+  if(mk.f==null||mk.s.some(v=>v==null))return;
+  const r=build(R.hand[mk.f].id,mk.s.map(v=>R.hand[v].id));
+  if(!r.sub){flashMsg('この組み合わせではつくれない。');return;}
+  R.sub=r.sub;R.msg='';
+  SND.place();
+  if(G.mode==='pvp'){G.ph='cover';render();}else beginAsk();
+}
+function beginAsk(){
+  const R=G.R;R.log=[];R.used=[];R.tab=0;R.msg='';
+  if(G.P[R.solver].cpu)cpuAskStart();else{G.ph='ask';render();}
+}
+function cpuAskStart(){
+  const R=G.R;G.ph='cpuask';render();
+  later(CPU_THINK_S,()=>{
+    const c=candidates(G.n,G.showMF?mfOf(R.sub):null,R.log);
+    if(cpuWantsSolve(G.lv,c,R.log.length)){beginSolve();return;}   // 1つにしぼれたら早解き
+    doAsk(cpuPickQ(G.lv,c,R.used,Math.random));
+  });
+}
+function doAsk(qid){
+  const R=G.R;R.cur=qid;R.used.push(qid);R.confirm=false;G.ph='answer';
+  SND.ask();render();
+  if(G.P[R.setter].cpu)later(CPU_THINK_S,()=>doSay(cpuSays(G.lv,isYes(qid,R.sub.id),Math.random)));
+}
+function doSay(said){
+  const R=G.R;if(G.ph!=='answer')return;
+  const t=isYes(R.cur,R.sub.id),ok=said===t;
+  if(ok){G.P[R.setter].score+=PT_ANS;G.P[R.setter].qPts+=PT_ANS;}
+  R.log.push({q:R.cur,said:said,truth:t,ok:ok});
+  G.ph='judge';
+  if(said)SND.yes();else SND.no();
+  setTimeout(()=>{if(ok)SND.ok();else SND.ng();},120);
+  render();
+  const jt=++R.jt;
+  later(ok?JUDGE_OK_S:JUDGE_NG_S,()=>{if(G.R===R&&R.jt===jt)afterJudge();});
+}
+function afterJudge(){
+  const R=G.R;if(G.ph!=='judge')return;
+  R.jt++;
+  if(R.log.length>=N_ASK){beginSolve();return;}
+  if(G.P[R.solver].cpu)cpuAskStart();else{G.ph='ask';render();}
+}
+function beginSolve(){
+  const R=G.R;R.msg='';R.lastIn=null;R.confirm=false;
+  R.closed=true;   // 使わなかった質問は「(質問なし)」。点はだれにも入らない
+  if(G.P[R.solver].cpu){
+    G.ph='cpusolve';render();
+    later(CPU_THINK_S*1.5,()=>{
+      const c=candidates(G.n,G.showMF?mfOf(R.sub):null,R.log),p=cpuFinal(G.lv,G.n,c,Math.random);
+      R.ans={f:p.f,s:p.s.slice()};
+      submit();
+    });
+  }else{G.ph='solve';render();}
+}
+function submit(){
+  const R=G.R,a=R.ans;
+  if(!a.f||a.s.some(v=>!v))return;
+  R.res=scoreAnswer(G.n,{f:R.sub.f,s:R.sub.s},a);
+  G.ph='reveal';render();
+  window.scrollTo(0,0);
+  // 1枚ずつ当たり外れ(当たりは一瞬止めて強調)
+  const order=slotOrder(G.n);
+  order.forEach((key,k)=>{
+    const hit=key==='f'?R.res.fHit:R.res.sHit[+key[1]];
+    later(STAMP_T0_S+k*STAMP_GAP_S,()=>{if(G.R===R&&G.ph==='reveal'){if(hit)SND.hit();else SND.miss();}});
+  });
+  later(STAMP_T0_S+order.length*STAMP_GAP_S,()=>{if(G.R===R)applySolve();});
+}
+function applySolve(){
+  const R=G.R;if(R.scored)return;
+  R.scored=true;G.P[R.solver].score+=R.res.pts;G.P[R.solver].hPts+=R.res.pts;
+  if(R.res.pts)SND.ok();
+  renderScore();
+}
+function nextStep(){
+  applySolve();
+  if(G.ri===0)startRound(1);
+  else if(G.set+1<G.sets){G.set++;nextSet();}
+  else finish();
+}
+
+// ================= 操作(画面のボタンはすべてここを通る) =================
+function act(a,v,el){
+  au();
+  switch(a){
+    case 'opt':{const p=v.split(':');OPT[p[0]]=p[1];renderOpts();SND.tap();return;}
+    case 'start':case 'again':startGame();return;
+    case 'zukan':openZukan();return;
+    case 'zclose':$('zukan').classList.add('hidden');return;
+    case 'tosetting':TOK++;G=null;show('start');return;
+  }
+  if(!G)return;
+  const R=G.R,ph=G.ph;
+  switch(a){
+    case 'roul':if(ph!=='roulette')return;
+      if(!G.landed){TOK++;land();}else{TOK++;startRound(0);}
+      return;
+    case 'peek':if(ph!=='guard')return;G.ph='make';SND.deal();render();return;
+    case 'mhand':{
+      if(ph!=='make')return;
+      const i=+v,c=R.hand[i],mk=R.mk;R.msg='';
+      // 置いてあるカードなら手札にもどす
+      const at=mk.f===i?'f':mk.s.indexOf(i)>=0?'s'+mk.s.indexOf(i):null;
+      if(at){if(at==='f')mk.f=null;else mk.s[+at[1]]=null;R.lastIn=null;SND.back();render();return;}
+      if(c.t==='s'){
+        const k=mk.s.indexOf(null);
+        if(k<0){flashMsg('骨格の置き場はいっぱい。置いたカードを押すと手札にもどる。',el);return;}
+        mk.s[k]=i;R.lastIn='s'+k;
+      }else{
+        if(FG[c.id].k===1&&G.n===3){flashMsg('この回は骨格2枚を「つなぐ」官能基(エーテル結合・カルボニル基・エステル結合)を使う。',el);return;}
+        if(FG[c.id].k===2&&G.n===2){flashMsg('この回は骨格1枚に付ける官能基(–OH・–CHO・–COOH・–NH<sub>2</sub>・–NO<sub>2</sub>)を使う。',el);return;}
+        mk.f=i;R.lastIn='f';
+      }
+      SND.place();render();return;
+    }
+    case 'mslot':{
+      if(ph!=='make')return;
+      if(v==='f')R.mk.f=null;else R.mk.s[+v[1]]=null;
+      R.lastIn=null;R.msg='';SND.back();render();return;
+    }
+    case 'mswap':if(ph!=='make')return;R.mk.s.reverse();R.lastIn=null;SND.place();render();return;
+    case 'decide':if(ph!=='make')return;decide();return;
+    case 'cover-ok':if(ph!=='cover')return;beginAsk();return;
+    case 'tab':if(ph!=='ask')return;R.tab=+v;SND.tap();render();return;
+    case 'ask':
+      if(ph!=='ask'||G.P[R.solver].cpu||R.used.indexOf(v)>=0||!Q_BY_ID[v])return;
+      doAsk(v);return;
+    case 'say':
+      if(ph!=='answer'||G.P[R.setter].cpu)return;
+      doSay(v==='yes');return;
+    case 'jnext':if(ph!=='judge')return;afterJudge();return;
+    case 'early':
+      if(ph!=='ask'||G.P[R.solver].cpu||R.log.length>=N_ASK)return;
+      R.confirm=true;SND.tap();render();return;
+    case 'early-no':if(ph!=='ask'||!R.confirm)return;R.confirm=false;SND.back();render();return;
+    case 'early-yes':if(ph!=='ask'||!R.confirm)return;SND.place();beginSolve();return;
+    case 'psk':{
+      if(ph!=='solve')return;
+      const k=R.ans.s.indexOf(null);
+      if(k<0){flashMsg('骨格の置き場はいっぱい。置いたカードを押すと外れる。',el);return;}
+      R.ans.s[k]=v;R.lastIn='s'+k;R.msg='';SND.place();render();return;
+    }
+    case 'pfg':if(ph!=='solve')return;R.ans.f=v;R.lastIn='f';R.msg='';SND.place();render();return;
+    case 'aslot':
+      if(ph!=='solve')return;
+      if(v==='f')R.ans.f=null;else R.ans.s[+v[1]]=null;
+      R.lastIn=null;R.msg='';SND.back();render();return;
+    case 'aswap':if(ph!=='solve')return;R.ans.s.reverse();R.lastIn=null;SND.place();render();return;
+    case 'submit':if(ph!=='solve')return;submit();return;
+    case 'next':if(ph!=='reveal')return;nextStep();return;
+  }
+}
+document.addEventListener('click',e=>{
+  const el=e.target&&e.target.closest?e.target.closest('[data-act]'):null;
+  if(!el||el.disabled)return;
+  act(el.dataset.act,el.dataset.v,el);
+});
+
+// ================= スタート画面の設定 =================
+function segHtml(k,label,items){
+  return '<div class="od-or"><span class="od-ol">'+label+'</span><div class="od-seg">'+items.map(it=>
+    '<button type="button" class="od-sb'+(OPT[k]===it[0]?' od-on':'')+'" data-act="opt" data-v="'+k+':'+it[0]+'">'+it[1]+'</button>').join('')+'</div></div>';
+}
+function renderOpts(){
+  let h=segHtml('mode','対戦',[['cpu','CPU と対戦'],['pvp','2人で対戦<small>1台を交代で</small>']]);
+  if(OPT.mode==='cpu')h+=segHtml('lv','CPU の強さ',[['easy','やさしい'],['normal','ふつう'],['hard','つよい']]);
+  h+=segHtml('sets','長さ',[['1','1セット<small>約5分</small>'],['2','2セット<small>約10分</small>']]);
+  h+=segHtml('mf','分子式',[['show','出す'],['hide','出さない<small>むずかしい</small>']]);
+  $('opts').innerHTML=h;
+}
+renderOpts();
+
+// ================= 図鑑 =================
+function openZukan(){
+  const groups=[['OH','ヒドロキシ基'],['CHO','ホルミル基'],['COOH','カルボキシ基'],['NH2','アミノ基・ニトロ基'],['ETH','エーテル結合'],['KET','カルボニル基(ケトン)'],['EST','エステル結合(酸の側+アルコールの側)']];
+  let h='';
+  groups.forEach(g=>{
+    const list=SUBS.filter(x=>x.f===g[0]||(g[0]==='NH2'&&x.f==='NO2'));
+    h+='<span class="od-zg"><span>'+g[1]+'</span> '+list.length+'種</span>';
+    list.forEach(x=>{
+      const cards=x.s.map(s=>SKEL_FULL[s]);
+      const cs=x.f==='EST'?cards[0]+'(酸の側)+エステル結合+'+cards[1]+'(アルコールの側)':cards.length===2?cards[0]+'+'+FG[x.f].nm+'+'+cards[1]:cards[0]+'+'+FG[x.f].nm;
+      h+='<div class="od-zr"><span class="od-zn">'+x.nm+'</span><span class="od-zf">'+chem(x.ff)+'</span><span class="od-zc">'+chem(cs)+'</span><span class="od-zm">'+chem(mfOf(x))+'</span></div>';
+    });
+  });
+  $('zN').textContent=SUBS.length;
+  $('zList').innerHTML=h;
+  $('zukan').classList.remove('hidden');
+  $('zukan').scrollTop=0;
+}
+
+// ================= 結果 =================
+function finish(){
+  TOK++;G.ph='end';
+  show('end');
+  const P=G.P,d=P[0].score-P[1].score;
+  const win=d>0?0:d<0?1:-1;
+  let w;
+  if(G.mode==='cpu')w=win===0?'あなたの勝ち!':win===1?'CPU の勝ち':'引き分け';
+  else w=win<0?'引き分け':P[win].nm+' の勝ち!';
+  $('fWin').textContent=w;
+  $('fFin').innerHTML=[0,1].map(i=>'<div class="od-fp od-c'+i+(win===i?' od-w':'')+'"><span class="od-fn">'+P[i].nm+'</span><span class="od-fs">'+P[i].score+'</span>'
+    +'<span class="od-fb">質問に正しく答えた +'+P[i].qPts+'<br>カードを当てた +'+P[i].hPts+'</span></div>').join('');
+  let bl='';
+  if(G.mode==='cpu'){
+    const b=CG.best('organic-duel',P[0].score,G.lv+(G.sets>1?'-2set':''));
+    let wins=null;
+    if(win===0){
+      const k='organic-duel:wins:'+G.lv;
+      const n0=parseInt(CG.load(k),10)||0;
+      if(CG.save(k,n0+1))wins=n0+1;
+    }else{const v=parseInt(CG.load('organic-duel:wins:'+G.lv),10);if(isFinite(v))wins=v;}
+    if(b.ok){
+      if(b.first)bl='<span>はじめての記録('+LV_NM[G.lv]+')</span>';
+      else if(b.isNew)bl='<span class="new">自己ベスト更新!</span> <span>これまで '+b.prev+'点</span>';
+      else bl='<span>自己ベスト('+LV_NM[G.lv]+') '+b.prev+'点</span>';
+      if(wins)bl+='<br><span>CPU('+LV_NM[G.lv]+')に勝った回数 '+wins+'</span>';
+    }
+  }else CG.save('organic-duel:seen','1');
+  $('fBest').innerHTML=bl;
+  const say=G.mode==='pvp'?'勝っても負けても、ふり返りの「なぜ」を読み直しておこう。検出反応は、官能基の名札だ。'
+    :win===0?'見事な推理だ。「はい/いいえ」から官能基をしぼる。それが構造決定だ。'+(G.lv!=='hard'?'つぎは強さを上げてみよう。':'')
+    :win===1?'おしい。分子式が同じ物質を思い出して、それを分ける質問をえらぼう。図鑑で見ておくといい。'
+    :'引き分けか。質問に正しく答える力も、点になるぞ。';
+  $('fSay').innerHTML=CG.mascot(say);
+  CG.sfx.fin();
+}
+</script>
+</body>
+</html>

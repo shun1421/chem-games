@@ -14,7 +14,7 @@
   <div class="prog hidden" id="prog"></div>
 </header>
 <main id="list" class="home"></main>
-<footer class="home-foot">遊んで身につく高校化学 — 全25アプリ / スマホ対応<br>
+<footer class="home-foot">遊んで身につく高校化学 — 全28アプリ / スマホ対応<br>
 ブラウザだけで動きます。授業・すきま時間・テスト前にどうぞ。<br>
 <span class="credit">制作: 鹿児島中央高校 福永</span><br>
 <button class="clr hidden" id="clr" onclick="clearRecords()">この端末の記録を消す</button></footer>
@@ -40,6 +40,7 @@ const UNITS=[
   {no:19,f:'excess-reagent.html',sym:'Δn',nm:'過不足ある反応',ds:'反応前・変化・反応後の表をテンキーで埋め、未反応で残る物質を当てる。全5問。',k:'表うめクイズ'},
  ]},
  {t:'酸と塩基',c:'var(--rose)',games:[
+  {no:30,f:'ph-target.html',sym:'[H⁺]',nm:'pH ねらい撃ち',ds:'うすめる・中和する・液をえらぶ。少ない手数で目標の pH にぴたり。うすめすぎたら戻れない。全8問。',k:'パズル'},
   {no:32,f:'salt-judge.html',sym:'pH',nm:'塩の液性ジャッジ',ds:'塩の水溶液は酸性?中性?塩基性?もとの酸・塩基の強弱で見きわめる。',k:'クイズ'},
   {no:33,f:'titration.html',sym:'mL',nm:'ギリギリ滴定',ds:'中和点の直前で止める度胸試し。赤色が消えにくくなったら1滴ずつ。指示薬えらびと滴定曲線も。',k:'アクション'},
  ]},
@@ -50,6 +51,7 @@ const UNITS=[
  {t:'状態変化と気体',c:'var(--blue)',games:[
   {no:50,f:'gas-sim.html',sym:'PVT',nm:'気体分子ラボ',ds:'P・V・T・nを操作して分子運動を観察。変数を連続変化させるとグラフも描画。理想気体と実在気体(H₂O)を比較。',k:'教材'},
   {no:51,f:'gas-race.html',sym:'PV',nm:'気体方程式レース',ds:'PV=nRTの計算レース。R=8.3×10³をあやつって最速で解け。',k:'計算タイムアタック'},
+  {no:52,f:'partial-pressure.html',sym:'pA',nm:'分圧シミュレーション',ds:'2〜3種類の気体の粒子が壁にぶつかる回数を数えて、分圧 = 全圧 × モル分率 を自分で見つける。',k:'教材'},
  ]},
  {t:'溶液',c:'var(--green)',games:[
   {no:58,f:'colloid-match.html',sym:'Sol',nm:'コロイドマッチ',ds:'チンダル・凝析・塩析…混同しがちなコロイド用語を高速マッチング。',k:'クイズ'},
@@ -63,6 +65,7 @@ const UNITS=[
  ]},
  {t:'有機化学',c:'var(--brown)',games:[
   {no:89,f:'detection-match.html',sym:'Ag',nm:'検出反応マッチ',ds:'銀鏡・ヨードホルム・FeCl₃…検出反応と構造をつなげて構造決定に強くなる。',k:'クイズ'},
+  {no:90,f:'organic-duel.html',sym:'R–X',nm:'構造決定カードバトル',ds:'骨格と官能基のカードで物質をつくり、検出反応などの質問5回で当て合う。CPU戦と1台での2人対戦。',k:'対戦'},
  ]},
  {t:'高分子化合物',c:'var(--green)',games:[
   {no:91,f:'polymer-quiz.html',sym:'[-]n',nm:'重合しきわけ',ds:'付加?縮合?開環?付加縮合?高分子の名前から重合様式を見きわめる。',k:'クイズ'},
