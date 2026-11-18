@@ -241,6 +241,176 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
 @media(max-width:860px){
  body.cls #sec0 .cwrap{flex:none;height:320px}
 }
+
+/* タブが4つ。スマホでは2段にする */
+@media(max-width:600px){
+ .tabs{flex-wrap:wrap}
+ .tabs button{flex:1 1 40%;padding:8px 4px}
+ .clsbtn.cx{display:none}
+}
+
+/* ===== ルシャトリエ ===== */
+.lsh .qr>div{white-space:nowrap}
+.lsh .qr .tg{display:block;font-size:10.5px;font-weight:900;color:var(--mut);line-height:1.15}
+.lsh .qr.af>div{color:var(--ink)}
+.lsh .qr.af .rh{color:var(--mut)}
+.lsh .qr .hit{background:#fff1a8}
+.lsh .qr.qq>div{color:#b9b5d3}
+.lsh .qr.qq .rh{color:var(--mut)}
+.lxl{font-size:11.5px;color:var(--mut);font-weight:700;margin-top:6px;line-height:1.7}
+.lxl b{font-family:var(--mono);color:var(--ink)}
+.lchg{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.lchg .fld input{width:52px}
+.lmax{font-size:11px;color:var(--mut);font-weight:700;margin-top:6px;min-height:1px}
+.lgo{display:flex;gap:8px;margin-top:10px}
+.lgo .big{margin-top:0;flex:2 1 0;padding:12px}
+.lgo .lrs{flex:1 1 0;font-family:inherit;font-size:13px;font-weight:900;color:var(--navy);background:#fff;
+ border:3px solid var(--navy);border-radius:14px;box-shadow:0 5px 0 var(--navy);cursor:pointer}
+.lgo .lrs:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.ldir{margin-top:8px;padding:7px 10px;border:2px solid var(--navy);border-radius:11px;box-shadow:0 3px 0 var(--navy);
+ font-size:14px;font-weight:900;line-height:1.5;background:#f7f4fc;color:var(--mut)}
+.ldir .why{display:block;font-size:11.5px;font-weight:800;color:var(--ink)}
+.ldir.r{background:#fde9ee;color:#c0304c}
+.ldir.l{background:#e6effb;color:#2c62a8}
+.lk2{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:700px){.lk2{grid-template-columns:1fr 1fr}}
+.lkb{background:#fff;border:2px solid var(--navy);border-radius:11px;padding:8px 10px}
+.lkb .lt{font-size:11px;font-weight:900;color:var(--pur);letter-spacing:.06em}
+.lkl{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-family:var(--mono);font-size:14px;font-weight:800;margin-top:6px}
+.lkl .ans{font-size:24px;color:var(--ok);font-weight:900}
+.lkl .qm{font-size:22px;color:#b9b5d3;font-weight:900}
+.lkb .lt .lg{display:none}
+.lkl .ans{margin-left:2px}
+.frac{display:inline-flex;flex-direction:column;align-items:center}
+.frac>span{padding:1px 4px;white-space:nowrap;line-height:1.35}
+.frac>span:first-child{border-bottom:2px solid var(--ink)}
+
+/* ===== 教室表示(シミュレーション・H2+I2・ルシャトリエ) ===== */
+body.cls .clsbtn.cx{font-size:14px;padding:6px 12px}
+body.cls #lSetBtn{background:#fff}
+body.cls.cls-lset #lSetBtn{background:var(--yellow)}
+body.cls:not(.cls-lset) .lhide{display:none}
+body.clsx .pane .hd .t{font-size:18px}
+body.clsx .ph{font-size:14px}
+body.clsx .fld{font-size:15px;padding:6px 10px}
+body.clsx .fld input{font-size:22px;width:80px}
+body.clsx .unit{font-size:13px}
+body.cls #sgraph button,body.cls #hgraph button,body.cls #lgraph button{min-height:44px;padding:0 16px;font-size:15px}
+body.cls #sec1 .legend,body.cls #sec2 .legend,body.cls #sec3 .legend{font-size:17px;gap:18px}
+body.cls #sec1 .legend i,body.cls #sec2 .legend i,body.cls #sec3 .legend i{width:28px;height:5px}
+body.cls #sec1 .legend i.d,body.cls #sec2 .legend i.d,body.cls #sec3 .legend i.d{height:0;border-top-width:5px}
+body.clsx .warn{font-size:14px}
+body.clsx .big{font-size:20px}
+body.clsx .rc .k{font-size:14px}
+body.clsx .rc .v{font-size:28px}
+body.clsx .eqbox{font-size:15px;line-height:1.8}
+body.clsx .eqbox b{font-size:17px}
+body.clsx .eqbox .ttl{font-size:13px}
+body.clsx .qr{font-size:24px;grid-template-columns:6.4em 1fr 1fr 1fr}
+body.clsx .qr>div{padding:5px 2px}
+body.clsx .qr.eq>div{font-size:26px}
+body.clsx .qr.qh,body.clsx .qr .rh,body.clsx .qr.eq .rh{font-size:16px}
+body.clsx .kbtn{font-size:18px;padding:10px}
+body.clsx .kl{font-size:20px;line-height:1.8}
+body.clsx .kl.ans>div:last-child{font-size:30px}
+body.clsx .kcap{font-size:13px}
+body.cls #sec2 .note,body.cls #sec3 .note{display:none}
+/* H2+I2: 見出しをはぶき、式の行をつめて、表と K が1画面に入るように */
+body.cls #sec2 .ph{display:none}
+body.cls #sec2 .ctrl+.ctrl{margin-top:7px}
+body.cls #sec2 .eqbox{line-height:1.6;padding:6px 10px;margin-top:8px}
+body.cls #sec2 .qt{margin-top:8px}
+body.cls #sec2 .qr>div{padding:3px 2px}
+body.cls #sec2 .kcalc{margin-top:8px}
+body.cls #sec2 .kbtn{padding:6px}
+body.cls #sec2 .kwork{padding:6px 12px;margin-top:6px}
+body.cls #sec2 .kl{line-height:1.5}
+body.cls #sec2 .kcap{display:none}
+/* ルシャトリエ */
+body.cls .lsh .qr .tg{font-size:13px}
+body.cls .lxl{font-size:14px;margin-top:3px;line-height:1.45}
+body.cls .lchg .fld input{width:70px}
+body.cls .lchg .seg button{min-height:40px;padding:0 13px;font-size:17px}
+body.cls .lmax{font-size:13px;margin-top:3px}
+body.cls .lgo{margin-top:6px}
+body.cls .ldir{font-size:20px;padding:5px 12px;margin-top:4px}
+body.cls .ldir .why{font-size:14px}
+body.cls #sec3 .ph.sp{margin-top:9px}
+body.cls #sec3 .qt{margin-top:5px}
+body.cls #sec3 .kcalc{flex:none;margin-top:8px}
+body.cls .lk2{gap:10px}
+body.cls .lkb .lt{font-size:14px}
+body.cls .lkl{font-size:19px;margin-top:3px}
+body.cls .lkl .ans,body.cls .lkl .qm{font-size:34px}
+body.cls #lKwork{margin-top:6px;padding:8px 10px}
+body.cls .lxl,body.cls .lmax.ex,body.cls .lkl.gen,body.clsx .kcap .kx{display:none}
+body.cls .lkb .lt .lg{display:inline;color:var(--ink)}
+body.cls .lkb{padding:5px 10px}
+body.cls #sec3 .kbtn{padding:6px;font-size:17px}
+body.cls #sec3 .kcap{margin-top:4px}
+body.cls .lop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body.cls .lop .lgo{margin:0;flex:1 1 170px;gap:6px}
+body.cls .lop .lgo .big{padding:6px 4px;font-size:17px;letter-spacing:0}
+body.cls .lop .lgo .lrs{flex:0 1 auto;padding:0 8px;font-size:14px}
+body.cls #sec3 .qr>div{padding:3px 2px}
+body.cls #sec3 .qr.qh>div{padding:2px}
+@media(min-width:861px){
+ body.cls #sec1,body.cls #sec2,body.cls #sec3{gap:16px;align-items:stretch}
+ body.cls #sec2{grid-template-columns:5fr 6fr}
+ body.cls #sec3{grid-template-columns:1fr 1fr}
+ body.cls .lk2{grid-template-columns:1fr 1fr}
+ body.cls #sec1>.pane,body.cls #sec2>.pane,body.cls #sec3>.pane{height:var(--gh,640px);display:flex;flex-direction:column;
+  min-height:0;padding:12px;overflow-y:auto}
+ body.cls #sec1>.pane>*,body.cls #sec2>.pane>*,body.cls #sec3>.pane>*{flex:none}
+ body.cls #sec1 .hd,body.cls #sec2 .hd,body.cls #sec3 .hd{flex:none;margin-bottom:6px}
+ body.cls #sec1 .cwrap,body.cls #sec2 .cwrap,body.cls #sec3 .cwrap{flex:1 1 0;min-height:200px;height:auto}
+ body.cls #sec1 .cwrap canvas,body.cls #sec2 .cwrap canvas,body.cls #sec3 .cwrap canvas{position:absolute;inset:0}
+ body.cls #sec1 .legend,body.cls #sec2 .legend,body.cls #sec3 .legend{flex:none}
+}
+/* せまい画面で教室表示にしたとき(教室表示ボタンは出さないが、実戦タブから入れる)は、表を横にはみ出させない */
+@media(max-width:860px){
+ body.clsx .qr{font-size:15px;grid-template-columns:5.2em 1fr 1fr 1fr}
+ body.clsx .qr.eq>div{font-size:16px}
+ body.clsx .qr.qh,body.clsx .qr .rh,body.clsx .qr.eq .rh{font-size:11.5px}
+ body.cls .lsh .qr .tg{font-size:10.5px}
+ body.cls .lkl{font-size:15px}
+ body.cls .lkl .ans,body.cls .lkl .qm{font-size:26px}
+ body.clsx .kl{font-size:15px}
+ body.cls .ldir{font-size:16px}
+}
+/* 1920×1080 など大きい画面の教室表示では、もう一段大きく */
+@media(min-width:1600px) and (min-height:900px){
+ body.clsx .pane .hd .t{font-size:22px}
+ body.clsx .ph{font-size:17px}
+ body.clsx .fld{font-size:17px}
+ body.clsx .fld input{font-size:26px;width:96px}
+ body.clsx .big{font-size:24px}
+ body.clsx .rc .k{font-size:17px}
+ body.clsx .rc .v{font-size:36px}
+ body.clsx .eqbox{font-size:18px}
+ body.clsx .eqbox b{font-size:21px}
+ body.clsx .qr{font-size:31px}
+ body.clsx .qr.eq>div{font-size:34px}
+ body.clsx .qr.qh,body.clsx .qr .rh,body.clsx .qr.eq .rh{font-size:20px}
+ body.cls #sec3 .qr>div{padding:6px 2px}
+ body.cls .lsh .qr .tg{font-size:16px}
+ body.clsx .kbtn,body.cls #sec3 .kbtn{font-size:21px;padding:9px}
+ body.clsx .kl{font-size:25px}
+ body.clsx .kl.ans>div:last-child{font-size:38px}
+ body.clsx .kcap{font-size:16px}
+ body.cls .lchg .seg button{min-height:52px;font-size:21px;padding:0 16px}
+ body.cls .lchg .fld input{width:84px}
+ body.cls .lop .lgo .big{font-size:22px}
+ body.cls .lop .lgo .lrs{font-size:17px}
+ body.cls .lmax{font-size:16px}
+ body.cls .ldir{font-size:26px;padding:8px 14px}
+ body.cls .ldir .why{font-size:18px}
+ body.cls #sec3 .ph.sp{margin-top:16px}
+ body.cls .lkb .lt{font-size:17px}
+ body.cls .lkl{font-size:24px}
+ body.cls .lkl .ans,body.cls .lkl .qm{font-size:42px}
+ body.cls #sec1 .legend,body.cls #sec2 .legend,body.cls #sec3 .legend{font-size:20px}
+}
 </style>
 </head>
 <body data-u="purple">
@@ -251,6 +421,7 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
   <button class="on" id="tb0" onclick="setTab(0)">実戦</button>
   <button id="tb1" onclick="setTab(1)">シミュレーション</button>
   <button id="tb2" onclick="setTab(2)">H<sub>2</sub>+I<sub>2</sub>⇌2HI</button>
+  <button id="tb3" onclick="setTab(3)">ルシャトリエ</button>
 </div>
 
 <!-- ===================== 実戦モード ===================== -->
@@ -312,7 +483,8 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
 <!-- ===================== シミュレーション ===================== -->
 <section id="sec1" class="split hidden">
   <div class="pane">
-    <div class="hd"><div class="t">条件</div></div>
+    <div class="hd"><div class="t">条件</div>
+      <button class="clsbtn cx" onclick="gClsToggle()" aria-pressed="false" title="プロジェクターやテレビに映すときの大きな表示">教室表示<b>切</b></button></div>
     <div class="ctrl">
       <label class="fld">参加人数 <input id="sN" type="number" min="2" max="5000" value="600"><span class="unit">人</span></label>
       <label class="fld">試行回数 <input id="sT" type="number" min="5" max="400" value="60"><span class="unit">回</span></label>
@@ -346,7 +518,8 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
 <!-- ===================== H2 + I2 ===================== -->
 <section id="sec2" class="split hidden">
   <div class="pane">
-    <div class="hd"><div class="t">H<sub>2</sub> ＋ I<sub>2</sub> ⇌ 2HI</div></div>
+    <div class="hd"><div class="t">H<sub>2</sub> ＋ I<sub>2</sub> ⇌ 2HI</div>
+      <button class="clsbtn cx" onclick="gClsToggle()" aria-pressed="false" title="プロジェクターやテレビに映すときの大きな表示">教室表示<b>切</b></button></div>
     <div class="ph">はじめの濃度 (mol/L)</div>
     <div class="ctrl">
       <label class="fld"><span>[H<sub>2</sub>]<sub>0</sub></span> <input id="hH" type="number" min="0" max="100" step="0.1" value="1.0"></label>
@@ -379,6 +552,63 @@ body.cls #sec0 .row2 button{padding:12px;font-size:15px}
     <div class="cwrap"><canvas id="hCv"></canvas></div>
     <div class="legend" id="hLeg"></div>
     <p class="note">正反応と逆反応の速度が等しくなったところで、濃度は見かけ上かわらなくなる（平衡状態）。</p>
+  </div>
+</section>
+
+<!-- ===================== ルシャトリエの原理(濃度の変化) ===================== -->
+<section id="sec3" class="split hidden">
+  <div class="pane" id="lPaneL">
+    <div class="hd"><div class="t">濃度を変えると平衡は？</div>
+      <button class="clsbtn cx" onclick="gClsToggle()" aria-pressed="false" title="プロジェクターやテレビに映すときの大きな表示">教室表示<b>切</b></button>
+      <button class="gsetbtn" id="lSetBtn" onclick="lSetToggle()" aria-pressed="false">はじめの濃度</button></div>
+    <div class="lhide">
+      <div class="ph">H<sub>2</sub> ＋ I<sub>2</sub> ⇌ 2HI（430 ℃）　はじめの濃度 (mol/L)</div>
+      <div class="ctrl">
+        <label class="fld"><span>[H<sub>2</sub>]<sub>0</sub></span> <input id="lH" type="number" min="0" max="10" step="0.1" value="1.0"></label>
+        <label class="fld"><span>[I<sub>2</sub>]<sub>0</sub></span> <input id="lI" type="number" min="0" max="10" step="0.1" value="1.0"></label>
+        <label class="fld"><span>[HI]<sub>0</sub></span> <input id="lHI" type="number" min="0" max="10" step="0.1" value="0"></label>
+      </div>
+    </div>
+    <div class="warn" id="lwarn"></div>
+
+    <div class="ph sp">① はじめ → 第一の平衡</div>
+    <div class="lsh" id="lT1"></div>
+    <div class="lxl" id="lX1"></div>
+
+    <div class="ph sp">② 平衡状態に変化を加える</div>
+    <div class="lop">
+    <div class="lchg">
+      <span class="seg" id="lSp"><button class="on" data-v="0">H<sub>2</sub></button><button data-v="1">I<sub>2</sub></button><button data-v="2">HI</button></span>
+      <span class="seg" id="lPm"><button class="on" data-v="1">増やす</button><button data-v="-1">減らす</button></span>
+      <label class="fld"><input id="lAmt" type="number" min="0" max="10" step="0.1" value="1.0"><span class="unit">mol/L</span></label>
+    </div>
+    <div class="lgo">
+      <button class="big" id="lGo" onclick="lApply()">変化を加える</button>
+      <button class="lrs" onclick="lUndo()">やり直す</button>
+    </div>
+    </div>
+    <div class="lmax" id="lMax"></div>
+
+    <div class="ph sp">③ 操作直後 → 新しい平衡</div>
+    <div class="ldir" id="lDir"></div>
+    <div class="lsh" id="lT2"></div>
+    <div class="lxl" id="lX2"></div>
+
+    <div id="lKhome"></div>
+    <div class="kcalc" id="lKbox">
+      <button class="kbtn" onclick="lCalcK()">平衡定数を計算する</button>
+      <div class="kwork hidden" id="lKwork"></div>
+    </div>
+  </div>
+
+  <div class="pane" id="lPaneR">
+    <div class="hd"><div class="t" id="lGt">濃度の変化</div>
+      <span class="seg" id="lgraph">
+        <button class="on" data-v="0">濃度</button><button data-v="1">反応速度</button>
+      </span></div>
+    <div class="cwrap"><canvas id="lCv"></canvas></div>
+    <div class="legend" id="lLeg"></div>
+    <p class="note">点線の時刻で濃度を変える。平衡は、加えた変化をやわらげる向きに移動して、新しい平衡状態になる（ルシャトリエの原理）。</p>
   </div>
 </section>
 
@@ -416,7 +646,7 @@ function toggleMute(){muted=!muted;$('mute').textContent=muted?'🔇':'🔊';}
 let tab=0;
 function setTab(i){
   tab=i;
-  for(let k=0;k<3;k++){
+  for(let k=0;k<4;k++){
     $('sec'+k).classList.toggle('hidden',k!==i);
     $('tb'+k).classList.toggle('on',k===i);
   }
@@ -476,7 +706,8 @@ function drawChart(cv,cfg){
   // 軸
   g.strokeStyle='#c3d0cf';g.lineWidth=1.5*k;
   g.beginPath();g.moveTo(L,T);g.lineTo(L,T+ph);g.lineTo(L+pw,T+ph);g.stroke();
-  // 系列
+  // 系列(cfg.clip のときは、範囲の外の値を枠で切る。ふだんは枠の端にそろえる)
+  if(cfg.clip){g.save();g.beginPath();g.rect(L,T-1,pw,ph+2);g.clip();}
   cfg.series.forEach(s=>{
     if(!s.data||!s.data.length)return;
     g.strokeStyle=s.c;g.lineWidth=(s.w||2.2)*k;
@@ -486,7 +717,7 @@ function drawChart(cv,cfg){
     for(let i=0;i<s.data.length&&i<xs.length;i++){
       const v=s.data[i];
       if(v==null||!isFinite(v)){on=false;continue;}
-      const x=X(xs[i]),y=Y(clamp(v,y0,y1));
+      const x=X(xs[i]),y=Y(cfg.clip?clamp(v,y0-(y1-y0),y1+(y1-y0)):clamp(v,y0,y1));
       if(!on){g.moveTo(x,y);on=true;}else g.lineTo(x,y);
     }
     g.stroke();g.setLineDash([]);
@@ -495,6 +726,9 @@ function drawChart(cv,cfg){
       g.fillStyle=s.c;g.beginPath();g.arc(X(xs[i]),Y(s.data[i]),3.4*k,0,7);g.fill();
     }
   });
+  if(cfg.clip)g.restore();
+  // ページごとの書きこみ(縦の点線・まだ見せない部分など)
+  if(cfg.extra)cfg.extra(g,X,Y,{L:L,T:T,pw:pw,ph:ph,k:k,x0:x0,x1:x1,y0:y0,y1:y1});
   // 軸ラベル
   g.fillStyle=k>1?'#6b6690':'#8fa0a5';g.font='700 '+(10*k)+'px sans-serif';
   g.textAlign='right';g.textBaseline='bottom';
@@ -559,30 +793,41 @@ function gSetup(reset){
 
 /* ----- 教室表示(プロジェクター・大型テレビ用。状態は保存しない) ----- */
 const G_CLS_K=1.6;            // 教室表示のグラフの倍率(目もりの文字 10px → 16px)
+// 実戦以外のタブの教室表示のグラフの倍率。1366 で 1.6、1920 で 1.9 くらい
+function clsK(){return G.cls?clamp(window.innerWidth/1000,G_CLS_K,2.1):1;}
 G.cls=false;G.set=false;
 function gClsToggle(){
   G.cls=!G.cls;
   if(!G.cls)G.set=false;
-  gClsApply();gDraw();
+  gClsApply();redraw();
 }
 function gSetToggle(){
   G.set=!G.set;
   gClsApply();gDraw();
 }
-// body に cls を付けるのは実戦タブを開いているときだけ(ほかのタブの見た目は変えない)
+// 教室表示は4つのタブで共通(どのタブのボタンでも切りかわる)。「設定」は実戦、「はじめの濃度」はルシャトリエのもの
 function gClsApply(){
-  const on=G.cls&&tab===0, b=document.body;
+  const on=G.cls, b=document.body;
   b.classList.toggle('cls',on);
-  b.classList.toggle('cls-set',on&&G.set);
-  $('gClsBtn').classList.toggle('on',G.cls);
-  $('gClsBtn').setAttribute('aria-pressed',G.cls?'true':'false');
-  $('gClsSt').textContent=G.cls?'入':'切';
+  b.classList.toggle('clsx',on&&tab!==0);   // 実戦以外のタブの教室表示(実戦の見た目は変えない)
+  b.classList.toggle('cls-set',on&&G.set&&tab===0);
+  b.classList.toggle('cls-lset',on&&L.set);
+  document.querySelectorAll('.clsbtn').forEach(x=>{
+    x.classList.toggle('on',G.cls);
+    x.setAttribute('aria-pressed',G.cls?'true':'false');
+    const s=x.querySelector('b');if(s)s.textContent=G.cls?'入':'切';
+  });
   $('gSetBtn').setAttribute('aria-pressed',G.set?'true':'false');
+  $('lSetBtn').setAttribute('aria-pressed',L.set?'true':'false');
+  // ルシャトリエの「平衡定数」は、教室表示ではグラフの下(右の列)に置く
+  const kb=$('lKbox');
+  if(on)$('lPaneR').appendChild(kb);else $('lKhome').after(kb);
   if(on){
-    // 実戦の画面が、上の帯とタブの下にちょうど収まる高さ
-    const top=$('sec0').getBoundingClientRect().top+window.scrollY;
+    // 開いているタブの画面が、上の帯とタブの下にちょうど収まる高さ
+    const sec=$('sec'+tab);
+    const top=sec.getBoundingClientRect().top+window.scrollY;
     const gh=Math.max(420,Math.floor(window.innerHeight-top-20));
-    $('sec0').style.setProperty('--gh',gh+'px');
+    sec.style.setProperty('--gh',gh+'px');
   }
   gFit();
 }
@@ -729,7 +974,7 @@ function gDraw(){
     NET:pad(h.map((x,i)=>i?x.m1-x.m2:null))};
   Object.assign(d,theoryMoves(th,N,r1,r2,T));
   const r=travelGraph(G.view,d);
-  r.cfg.k=G.cls&&tab===0?G_CLS_K:1;
+  r.cfg.k=G.cls?G_CLS_K:1;
   $('gGt').textContent=r.title;
   drawChart($('gCv'),r.cfg);
   legend($('gLeg'),r.leg);
@@ -844,6 +1089,7 @@ function sDraw(){
   const d=S.data;
   if(!d){drawChart($('sCv'),null);legend($('sLeg'),[]);return;}
   const r=travelGraph(S.view,d);
+  r.cfg.k=clsK();
   $('sGt').textContent=r.title;
   drawChart($('sCv'),r.cfg);
   legend($('sLeg'),r.leg);
@@ -945,13 +1191,13 @@ function hDraw(){
     // [H2]と[I2]が同じだと重なるので、H2を太く描いて下からのぞかせる
     const ser=[{c:'#3e77b6',data:d.H2,w:4.4},{c:'#8a6bbf',data:d.I2,w:2.2},{c:'#d4566a',data:d.HI,w:2.6}];
     if(d.eq)ser.unshift({c:'#cfd8d7',data:d.xs.map(()=>d.eq.HI),dash:[3,3],w:1.4});
-    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/L',series:ser});
+    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/L',series:ser,k:clsK()});
     legend($('hLeg'),[{c:'#3e77b6',t:'H₂'},{c:'#8a6bbf',t:'I₂'},{c:'#d4566a',t:'HI'},
       {c:'#cfd8d7',t:'HIの平衡濃度',d:1}]);
   }else{
     $('hGt').textContent='反応速度の変化';
     const mx=Math.max(...d.V1,...d.V2)*1.12||1;
-    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/(L·s)',
+    drawChart($('hCv'),{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/(L·s)',k:clsK(),
       series:[{c:'#2e9e6b',data:d.V1,w:2.4},{c:'#e8a13d',data:d.V2,w:2.4}]});
     legend($('hLeg'),[{c:'#2e9e6b',t:'正反応 v₁＝k₁[H₂][I₂]'},{c:'#e8a13d',t:'逆反応 v₂＝k₂[HI]²'}]);
   }
@@ -985,17 +1231,343 @@ $('hgraph').onclick=e=>{
   H.view=+b.dataset.v;hDraw();
 };
 
+/* =======================================================
+   ルシャトリエの原理(濃度の変化だけ。体積・圧力・温度は扱わない)
+   はじめの濃度 → 第一の平衡 → 変化を加える → 新しい平衡
+   表の平衡値は二次方程式(hEq)で正確に出し、グラフは H2+I2 と同じ RK4 で積分する
+   ======================================================= */
+const L={view:0,p1:null,chg:null,data:null,rev:1,raf:0,set:false,sp:0,pm:1,dp:4};
+const LSPH=['H<sub>2</sub>','I<sub>2</sub>','HI'], LSPC=['H₂','I₂','HI'];
+const r3=v=>Math.round(v*1000)/1000;
+function lSetToggle(){L.set=!L.set;gClsApply();lDraw();}
+// 表示の小数点以下の桁数 dp は、表に出る平衡の濃度のうちいちばん小さい値が
+// 有効数字4けた以上になるように、2つの表で共通にきめる(足し算・引き算が表の上で合うように)。
+// K はこの表示どおりの値を代入して計算するので、K の誤差は 0.2% 以内。K は2けた(k1,k2 が2けた)で示す。
+function lDpCalc(){
+  const vs=[];
+  if(L.p1)vs.push(...L.p1.eq);
+  if(L.chg&&L.chg.p)vs.push(...L.chg.p.eq);
+  const nz=vs.filter(v=>v>1e-12);
+  if(!nz.length)return 3;
+  const mn=Math.min(...nz);
+  return clamp(3-Math.floor(Math.log10(mn)),3,6);
+}
+function lf(v){const dp=L.dp;if(Math.abs(v)<0.5*Math.pow(10,-dp))return '0';return v.toFixed(dp);}
+function lsg(v){const s=lf(Math.abs(v));if(s==='0')return '0';return (v>0?'+':'−')+s;}
+// 入力の量の表示(1 → 1.0、0.25 → 0.25)
+function lam(v){return Number.isInteger(v)?v.toFixed(1):String(v);}
+function lNice(v){
+  if(!(v>0))return 10;
+  const p=Math.pow(10,Math.floor(Math.log10(v)));
+  for(const m of [1,1.5,2,2.5,3,4,5,6,8,10])if(m*p>=v-1e-12)return m*p;
+  return 10*p;
+}
+// s=[H2,I2,HI] から平衡へ。x は右向きの反応の進み(負なら左へ進む)
+function lPhase(s){
+  const k1=K1_430,k2=K2_430;
+  const x=hEq(s[0],s[1],s[2],k1,k2);
+  if(x==null)return null;
+  const eq=[Math.max(0,s[0]-x),Math.max(0,s[1]-x),Math.max(0,s[2]+2*x)];
+  // 平衡まで(残りが 0.1% になるまで)の時間をはかり、グラフの区間の長さにする
+  let t=0;
+  if(Math.abs(x)>1e-12){
+    const a=s[0],b=s[1],c=s[2],f=y=>k1*(a-y)*(b-y)-k2*Math.pow(c+2*y,2);
+    const rate=k1*(a+b+c)+4*k2*(c+2*Math.min(a,b))+1e-9, h=0.05/rate;
+    let y=0,n=0;
+    while(Math.abs(y-x)>1e-3*Math.abs(x)&&n<400000){
+      const q1=f(y),q2=f(y+h/2*q1),q3=f(y+h/2*q2),q4=f(y+h*q3);
+      y+=h/6*(q1+2*q2+2*q3+q4);t+=h;n++;
+    }
+  }
+  return {s:s.slice(),x:x,eq:eq,D:lNice(Math.max(t*1.1,1))};
+}
+// s から D 秒ぶんを PTS 区間で積分(hRun と同じやり方)。最後の点は解析解の平衡にそろえる
+function lSim(p,PTS){
+  const k1=K1_430,k2=K2_430,a=p.s[0],b=p.s[1],c=p.s[2],xe=p.x;
+  const f=y=>k1*(a-y)*(b-y)-k2*Math.pow(c+2*y,2);
+  const lo=-c/2,hi0=Math.min(a,b);
+  const rate=k1*(a+b+c)+4*k2*(c+2*hi0)+1e-9, dtMax=0.2/rate;
+  const frame=p.D/PTS, out={t:[0],x:[0]};
+  let x=0;
+  for(let i=1;i<=PTS;i++){
+    let rem=frame,guard=0;
+    while(rem>1e-15&&guard<4000){
+      const h=Math.min(rem,dtMax);
+      const q1=f(x),q2=f(x+h/2*q1),q3=f(x+h/2*q2),q4=f(x+h*q3);
+      x+=h/6*(q1+2*q2+2*q3+q4);
+      if(!isFinite(x)){x=xe;rem=0;break;}
+      x=clamp(x,lo,hi0);rem-=h;guard++;
+    }
+    if(rem>1e-12)x=xe;
+    if(i===PTS)x=xe;
+    out.t.push(i*frame);out.x.push(x);
+  }
+  return out;
+}
+function lRun(norm){
+  const a=r3(fnum('lH',0,10,1)),b=r3(fnum('lI',0,10,1)),c=r3(fnum('lHI',0,10,0));
+  if(norm!==false){$('lH').value=a;$('lI').value=b;$('lHI').value=c;}
+  lStopAnim();
+  L.chg=null;L.p1=null;
+  let w='';
+  if(a+b+c<=0)w='はじめの濃度がすべて0です。';
+  else if(c===0&&(a===0||b===0))w='H₂ と I₂ の両方がないと、反応が進まない。';
+  $('lwarn').textContent=w;
+  if(!w)L.p1=lPhase([a,b,c]);
+  lBuild();lRender();lDraw();
+}
+function lApply(){
+  const p1=L.p1;
+  if(!p1)return;
+  // 量は表の桁(小数 dp けた)までにそろえる(表の上で足し算・引き算が合うように)
+  const pw=Math.pow(10,L.dp);
+  let amt=Math.round(fnum('lAmt',0,10,1)*pw)/pw;
+  $('lAmt').value=amt;
+  const sp=L.sp,pm=L.pm,cur=p1.eq[sp];
+  let all=false,w='';
+  if(!(amt>0)){$('lwarn').textContent='変化させる量を入れてください。';return;}
+  if(pm<0){
+    if(cur<=1e-12){$('lwarn').textContent='いまの平衡には、この物質がないので減らせない。';return;}
+    // 表に出ている量(またはそれ以上)を入れたら、全部とりのぞく
+    if(amt>=Number(lf(cur))-1e-12){
+      if(amt>Number(lf(cur))+1e-12)w='いまある量より多くは減らせないので、全部とりのぞいた。';
+      amt=cur;all=true;
+    }
+  }
+  $('lwarn').textContent=w;
+  const s2=p1.eq.slice();
+  s2[sp]=all?0:Math.max(0,s2[sp]+pm*amt);
+  const p2=lPhase(s2);
+  if(!p2)return;
+  L.chg={sp:sp,pm:pm,amt:amt,all:all,p:p2};
+  lBuild();lRender();
+  sfx.fix();
+  // 新しい平衡へ向かうところを少しずつ見せる
+  lStopAnim();
+  const t0=performance.now(),DUR=1600;
+  L.rev=0;
+  const step=now=>{
+    L.rev=Math.min(1,(now-t0)/DUR);
+    lDraw();
+    if(L.rev<1)L.raf=requestAnimationFrame(step);else L.raf=0;
+  };
+  L.raf=requestAnimationFrame(step);
+}
+function lStopAnim(){if(L.raf)cancelAnimationFrame(L.raf);L.raf=0;L.rev=1;}
+function lUndo(){
+  lStopAnim();
+  L.chg=null;$('lwarn').textContent='';
+  lBuild();lRender();lDraw();
+}
+// グラフ用のデータ(1本の時間軸。変化を加えた時刻 D1 には点を2つ置いて、とびはねを縦の線にする)
+function lBuild(){
+  L.data=null;
+  const p1=L.p1;if(!p1)return;
+  const k1=K1_430,k2=K2_430,p2=L.chg?L.chg.p:null;
+  const D1=p1.D,D2=p2?p2.D:p1.D;
+  const d={xs:[],H2:[],I2:[],HI:[],V1:[],V2:[],D1:D1,D2:D2,j:-1};
+  const push=(t,h,i,hi)=>{d.xs.push(t);d.H2.push(h);d.I2.push(i);d.HI.push(hi);d.V1.push(k1*h*i);d.V2.push(k2*hi*hi);};
+  const r1=lSim(p1,300);
+  r1.t.forEach((t,n)=>{const x=r1.x[n];push(t,Math.max(0,p1.s[0]-x),Math.max(0,p1.s[1]-x),Math.max(0,p1.s[2]+2*x));});
+  if(p2){
+    const r2=lSim(p2,300);
+    d.j=d.xs.length;
+    r2.t.forEach((t,n)=>{const x=r2.x[n];push(D1+t,Math.max(0,p2.s[0]-x),Math.max(0,p2.s[1]-x),Math.max(0,p2.s[2]+2*x));});
+  }else{
+    d.xs.push(D1+D2);['H2','I2','HI','V1','V2'].forEach(k=>d[k].push(null));
+  }
+  L.data=d;
+}
+function lSheet(rows){
+  return '<div class="qt">'
+    +'<div class="qr qh"><div>mol/L</div><div>H<sub>2</sub></div><div>I<sub>2</sub></div><div>HI</div></div>'
+    +rows.map(r=>'<div class="qr '+(r.c||'')+'"><div class="rh">'+r.h+'</div>'
+      +r.v.map((v,i)=>'<div'+(r.hit===i?' class="hit"':'')+'>'+(r.tg?'<span class="tg">'+(r.tg[i]||'&nbsp;')+'</span>':'')+v+'</div>').join('')
+      +'</div>').join('')
+    +'</div>';
+}
+function lRender(){
+  const p1=L.p1,c=L.chg;
+  $('lKwork').classList.add('hidden');
+  $('lGo').disabled=!p1;
+  L.dp=lDpCalc();
+  if(!p1){
+    $('lT1').innerHTML='';$('lX1').innerHTML='';$('lT2').innerHTML='';$('lX2').innerHTML='';
+    $('lDir').className='ldir';$('lDir').textContent='はじめの濃度を入れてください。';
+    lMaxNote();return;
+  }
+  const x=p1.x;
+  $('lT1').innerHTML=lSheet([
+    {h:'反応前',v:p1.s.map(lf)},
+    {h:'変化量',c:'ch',v:[lsg(-x),lsg(-x),lsg(2*x)],tg:x>=0?['−x','−x','+2x']:['+x','+x','−2x']},
+    {h:'平衡時',c:'eq',v:p1.eq.map(lf)}]);
+  $('lX1').innerHTML=Math.abs(x)<1e-12?'反応は進まない。':
+    (x>0?'x＝<b>'+lf(x)+'</b> mol/L（H<sub>2</sub> と I<sub>2</sub> が x ずつ減り、HI が 2x ふえた）'
+        :'x＝<b>'+lf(-x)+'</b> mol/L（HI が 2x 減り、H<sub>2</sub> と I<sub>2</sub> が x ずつふえた）');
+  if(!c){
+    const q=['?','?','?'];
+    $('lT2').innerHTML=lSheet([{h:'操作直後',c:'qq',v:q},{h:'変化量',c:'qq',v:q},{h:'新しい平衡',c:'qq',v:q}]);
+    $('lDir').className='ldir';
+    $('lDir').innerHTML='? 平衡はどちらへ移動する？<span class="why">予想してから「変化を加える」を押そう。</span>';
+    $('lX2').innerHTML='';
+  }else{
+    const p2=c.p,y=p2.x,nm=LSPH[c.sp];
+    const tg=['','',''];tg[c.sp]=(c.pm>0?'+':'−')+(c.all?lf(c.amt):lam(c.amt));
+    $('lT2').innerHTML=lSheet([
+      {h:'操作直後',c:'af',v:p2.s.map(lf),tg:tg,hit:c.sp},
+      {h:'変化量',c:'ch',v:[lsg(-y),lsg(-y),lsg(2*y)],tg:y>=0?['−x','−x','+2x']:['+x','+x','−2x']},
+      {h:'新しい平衡',c:'eq',v:p2.eq.map(lf)}]);
+    const what=nm+' を'+(c.all?'全部とりのぞいた':(c.pm>0?'ふやした':'減らした'));
+    // 移動の向きと、何をやわらげる向きか
+    const ease=(c.pm>0?nm+' を減らす':nm+' をふやす')+'向き';
+    if(Math.abs(y)<1e-12){
+      $('lDir').className='ldir';$('lDir').innerHTML='移動しない<span class="why">'+what+'。</span>';
+      $('lX2').innerHTML='';
+    }else if(y>0){
+      $('lDir').className='ldir r';
+      $('lDir').innerHTML='→ 右へ移動（HI がふえる向き）<span class="why">'+what+' → '+ease+'へ移動した。</span>';
+      $('lX2').innerHTML='x＝<b>'+lf(y)+'</b> mol/L（H<sub>2</sub> と I<sub>2</sub> が x ずつ減り、HI が 2x ふえた）';
+    }else{
+      $('lDir').className='ldir l';
+      $('lDir').innerHTML='← 左へ移動（H<sub>2</sub> と I<sub>2</sub> がふえる向き）<span class="why">'+what+' → '+ease+'へ移動した。</span>';
+      $('lX2').innerHTML='x＝<b>'+lf(-y)+'</b> mol/L（HI が 2x 減り、H<sub>2</sub> と I<sub>2</sub> が x ずつふえた）';
+    }
+  }
+  lMaxNote();
+}
+// 「減らす」ときは、いまある量までしか減らせないことを示す
+function lMaxNote(){
+  const p1=L.p1;
+  $('lMax').classList.toggle('ex',!p1||L.pm>0);
+  if(!p1||L.pm>0){$('lMax').innerHTML=p1?'例: H<sub>2</sub> を 1.0 mol/L ふやす':'';$('lAmt').max=10;return;}
+  const cur=lf(p1.eq[L.sp]);
+  $('lAmt').max=cur;
+  $('lMax').innerHTML='いまの平衡の ['+LSPH[L.sp]+'] は <b>'+cur+'</b> mol/L。これ以下の量を入れる（同じ値なら全部とりのぞく）。';
+}
+function lDraw(){
+  const d=L.data,cv=$('lCv'),k=clsK();
+  if(!d){drawChart(cv,null);legend($('lLeg'),[]);return;}
+  const c=L.chg;
+  // アニメーション中は新しい平衡へ向かうところを途中まで
+  const cut=(arr)=>{
+    if(!c||L.rev>=1)return arr;
+    const n=arr.length-d.j, last=d.j+Math.floor(n*L.rev);
+    return arr.map((v,i)=>i<=last?v:null);
+  };
+  const extra=(g,X,Y,o)=>{
+    const xc=X(d.D1);
+    g.save();
+    if(!c){
+      // 変化を加える前: 後半はまだ見せない
+      g.fillStyle='rgba(111,93,255,.08)';g.fillRect(xc,o.T,o.L+o.pw-xc,o.ph);
+      g.fillStyle='#b9b5d3';g.textAlign='center';g.textBaseline='middle';
+      g.font='900 '+(44*k)+'px sans-serif';g.fillText('?',(xc+o.L+o.pw)/2,o.T+o.ph*0.45);
+      g.font='800 '+(11*k)+'px sans-serif';g.fillText('変化を加えると…',(xc+o.L+o.pw)/2,o.T+o.ph*0.45+34*k);
+    }
+    // 変化を加えた時刻の縦の点線
+    g.strokeStyle='#1c1740';g.lineWidth=1.6*k;g.setLineDash([4*k,4*k]);
+    g.beginPath();g.moveTo(xc,o.T);g.lineTo(xc,o.T+o.ph);g.stroke();g.setLineDash([]);
+    // 区間の名前と、加えた変化の印(グラフの上の余白(1.28倍)に置き、線と重ならないようにする)
+    g.font='800 '+(10.5*k)+'px sans-serif';g.textBaseline='top';
+    g.fillStyle='#8a86a8';g.textAlign='center';
+    g.fillText('第一の平衡へ',(o.L+xc)/2,o.T+3*k);
+    if(c){
+      g.fillText('新しい平衡へ',(xc+o.L+o.pw)/2,o.T+3*k);
+      const lab=LSPC[c.sp]+' '+(c.pm>0?'+':'−')+(c.all?lf(c.amt):lam(c.amt));
+      g.font='900 '+(12*k)+'px sans-serif';
+      const tw=g.measureText(lab).width,px=6*k,bh=19*k,bx=xc+5*k,by=o.T+16*k;
+      g.fillStyle='#fff1a8';g.strokeStyle='#1c1740';g.lineWidth=1.5*k;
+      g.fillRect(bx,by,tw+px*2,bh);g.strokeRect(bx,by,tw+px*2,bh);
+      g.fillStyle='#1c1740';g.textAlign='left';g.textBaseline='middle';
+      g.fillText(lab,bx+px,by+bh/2+0.5);
+    }
+    g.restore();
+  };
+  if(L.view===0){
+    $('lGt').textContent='濃度の変化';
+    const mx=Math.max(...d.H2.filter(v=>v!=null),...d.I2.filter(v=>v!=null),...d.HI.filter(v=>v!=null))*1.28||1;
+    drawChart(cv,{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/L',k:k,extra:extra,
+      series:[{c:'#3e77b6',data:cut(d.H2),w:4.4},{c:'#8a6bbf',data:cut(d.I2),w:2.2},{c:'#d4566a',data:cut(d.HI),w:2.6}]});
+    legend($('lLeg'),[{c:'#3e77b6',t:'H<sub>2</sub>'},{c:'#8a6bbf',t:'I<sub>2</sub>'},{c:'#d4566a',t:'HI'}]);
+  }else{
+    $('lGt').textContent='反応速度の変化';
+    let mx=Math.max(...d.V1.filter(v=>v!=null),...d.V2.filter(v=>v!=null))*1.28||1;
+    // はじめの速度が大きすぎて、変化を加えたときのとびはねが小さく見えるときは、
+    // 後半に合わせて縦軸をとり、はじめの部分は上にはみ出させる(はみ出したことを書いておく)
+    let clip=null;
+    if(c&&d.j>0){
+      const m2=Math.max(...d.V1.slice(d.j-1),...d.V2.slice(d.j-1))*1.6;
+      if(m2<mx*0.5){
+        mx=m2;
+        clip=(d.V1[0]>=d.V2[0]?'v₁':'v₂')+' のはじめは枠の外';
+      }
+    }
+    const ex2=clip?(g,X,Y,o)=>{extra(g,X,Y,o);g.save();g.font='800 '+(10*k)+'px sans-serif';
+      const t='↑ '+clip,tw=g.measureText(t).width,x=o.L+12*k,y=o.T+17*k;
+      g.fillStyle='rgba(255,255,255,.9)';g.fillRect(x-3*k,y-1*k,tw+6*k,15*k);
+      g.fillStyle='#6b6690';g.textAlign='left';g.textBaseline='top';g.fillText(t,x,y+1*k);g.restore();}:extra;
+    drawChart(cv,{xs:d.xs,ymin:0,ymax:mx,xlab:'時間 (s)',ylab:'mol/(L·s)',k:k,extra:ex2,clip:!!clip,
+      series:[{c:'#2e9e6b',data:cut(d.V1),w:2.4},{c:'#e8a13d',data:cut(d.V2),w:2.4}]});
+    legend($('lLeg'),[{c:'#2e9e6b',t:'正反応 v<sub>1</sub>＝k<sub>1</sub>[H<sub>2</sub>][I<sub>2</sub>]'},
+      {c:'#e8a13d',t:'逆反応 v<sub>2</sub>＝k<sub>2</sub>[HI]<sup>2</sup>'}]);
+  }
+}
+// 平衡定数: 2つの表の平衡の濃度(表示どおりの値)を代入する
+function lKcol(ttl,eq){
+  const fr=(a,b)=>'<span class="frac"><span>'+a+'</span><span>'+b+'</span></span>';
+  const row=(...p)=>'<div class="lkl">'+p.map(x=>x.startsWith('<span')?x:'<span>'+x+'</span>').join('')+'</div>';
+  // 教室表示では1行目(文字の式)をはぶき、見出しに添える
+  let h='<div class="lkb"><div class="lt">'+ttl+'<span class="lg">　K＝[HI]<sup>2</sup>／[H<sub>2</sub>][I<sub>2</sub>]</span></div>'
+    +row('K','＝',fr('[HI]<sup>2</sup>','[H<sub>2</sub>][I<sub>2</sub>]')).replace('lkl','lkl gen');
+  if(!eq)return h+row('＝','<span class="qm">?</span>')+'</div>';
+  const s=eq.map(lf),v=s.map(Number);
+  if(!(v[0]>0)||!(v[1]>0))
+    return h+'<div class="kcap">平衡のときに H<sub>2</sub> か I<sub>2</sub> が（表の桁では）残っていないので、計算できない。</div></div>';
+  const nu=Number((v[2]*v[2]).toPrecision(4)),de=Number((v[0]*v[1]).toPrecision(4));
+  const K=Number((nu/de).toPrecision(2));
+  return h+row('＝',fr('('+s[2]+')<sup>2</sup>',s[0]+' × '+s[1]))
+    +row('＝',fr(sig4(nu),sig4(de)),'≒','<span class="ans">'+K+'</span>')+'</div>';
+}
+function lCalcK(){
+  const el=$('lKwork');
+  if(!L.p1){el.classList.add('hidden');return;}
+  const c=L.chg;
+  el.classList.remove('hidden');
+  el.innerHTML='<div class="lk2">'+lKcol('① 第一の平衡',L.p1.eq)+lKcol('③ 新しい平衡',c?c.p.eq:null)+'</div>'
+    +'<div class="kcap">'+(c?'どちらも <b>K≒54</b>。濃度を変えても、<b>温度が同じなら K は変わらない</b>。'
+      :'③は、変化を加えてから計算できる。')
+    +'<span class="kx">（K＝k<sub>1</sub>／k<sub>2</sub>＝8.7×10<sup>−2</sup>／1.6×10<sup>−3</sup>≒54。速度定数が2けたなので K も2けたで示した。表の平衡時の濃度を代入）</span></div>';
+}
+['lH','lI','lHI'].forEach(id=>{$(id).oninput=()=>lRun(false);$(id).onchange=()=>lRun(true);});
+$('lSp').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('lSp').children].forEach(x=>x.classList.toggle('on',x===b));
+  L.sp=+b.dataset.v;lMaxNote();
+};
+$('lPm').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('lPm').children].forEach(x=>x.classList.toggle('on',x===b));
+  L.pm=+b.dataset.v;lMaxNote();
+};
+$('lgraph').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...$('lgraph').children].forEach(x=>x.classList.toggle('on',x===b));
+  L.view=+b.dataset.v;lDraw();
+};
+
 // ===== 初期化 =====
 function redraw(){
   if(tab===0)gDraw();
   else if(tab===1)sDraw();
-  else hDraw();
+  else if(tab===2)hDraw();
+  else lDraw();
 }
 let rz=null;
 window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{gClsApply();redraw();},120);});
 gSetup(true);
 sRun();
 hRun();
+lRun();
 setTab(0);
 </script>
 </body>
