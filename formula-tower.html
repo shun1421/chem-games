@@ -19,7 +19,6 @@
 .hearts .off{opacity:.22;filter:grayscale(1)}
 .hearts .crack{animation:crack .5s}
 @keyframes crack{0%{transform:scale(1.5)}60%{transform:scale(.8) rotate(14deg)}100%{transform:scale(1)}}
-.mute{background:none;border:0;font-size:15px;cursor:pointer;padding:0 2px;line-height:1}
 .dots{display:flex;gap:3px;justify-content:center;margin:7px 0 4px}
 .dot{width:7px;height:7px;border-radius:50%;background:#dde6e5}
 .dot.done{background:var(--ok)}.dot.now{background:var(--amber)}.dot.lost{background:var(--bad)}
@@ -165,7 +164,6 @@
     <div>第<b id="qno">1</b>問/10</div>
     <div class="hearts" id="hearts"></div>
     <div>スコア<b id="score">0</b></div>
-    <button class="mute" id="mute" onclick="toggleMute()" title="音">🔊</button>
   </div>
   <div class="dots" id="dots"></div>
   <div class="stage" id="stage">
@@ -313,9 +311,13 @@ function monsterSVG(lv,boss){
 }
 
 // ==== 音 ====
-let actx=null,muted=false;
+let actx=null,muted=false,sfxOut=null,sfxVol=1; // sfxVol: 音量パネルの効果音の倍率(1 = 元の音量)
 function ac(){
-  if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(C)actx=new C();}
+  if(!actx){
+    const C=window.AudioContext||window.webkitAudioContext;
+    if(C){actx=new C();sfxOut=actx.createGain();sfxOut.gain.value=sfxVol;sfxOut.connect(actx.destination);}
+  }
+  if(actx&&actx.state==='suspended'&&actx.resume)actx.resume();
   return actx;
 }
 function tone(freq,dur,type,vol,slide){
@@ -325,14 +327,14 @@ function tone(freq,dur,type,vol,slide){
   if(slide)o.frequency.exponentialRampToValueAtTime(slide,c.currentTime+dur);
   g.gain.setValueAtTime(vol||0.07,c.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);
-  o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+dur);
+  o.connect(g);g.connect(sfxOut);o.start();o.stop(c.currentTime+dur);
 }
 function noise(dur,vol){
   if(muted)return;const c=ac();if(!c)return;
   const n=Math.floor(c.sampleRate*dur),buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
   for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
   const s=c.createBufferSource(),g=c.createGain();
-  s.buffer=buf;g.gain.value=vol||0.14;s.connect(g);g.connect(c.destination);s.start();
+  s.buffer=buf;g.gain.value=vol||0.14;s.connect(g);g.connect(sfxOut);s.start();
 }
 const sfx={
   tap :()=>tone(880,0.04,'square',0.04),
@@ -343,7 +345,25 @@ const sfx={
   drop:()=>tone(320,0.16,'triangle',0.07,120),
   over:()=>{[440,330,220,165].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'sawtooth',0.08),i*150));},
 };
-function toggleMute(){muted=!muted;$('mute').textContent=muted?'🔇':'🔊';}
+// ==== BGM(スタート・プレイ中・結果画面ずっと、小さめに流す。しくみは common.js の CG.bgm) ====
+// 効果音より明らかに小さく(gain .22)。読めなくても BGM なしで遊べる。
+const bgm=CG.bgm({ctx:ac,name:'sound/formula-tower-bgm',len:27.429,vol:.22});
+// 音量パネル(上の帯の ♪ から。BGM と効果音を別々に。保存は chemgames:formula-tower:vol)
+// 既定(60%)が元の音量。100% で BGM・効果音とも約1.6倍(BGM は最大でも効果音より小さい)
+const volPanel=CG.volumePanel({game:'formula-tower',bgm:{max:1.6},sfx:{max:1.6},
+  onChange:v=>{
+    bgm.setVol(v.bgm);bgm.setOn(v.bgm>0);
+    sfxVol=v.sfx;muted=v.sfx<=0;
+    if(sfxOut)sfxOut.gain.setTargetAtTime(sfxVol,actx.currentTime,.04);
+  },
+  sample:()=>sfx.drop(),
+  onOpen:()=>{try{ac();bgm.load();}catch(e){}}});
+document.querySelector('.top').appendChild(volPanel.button);
+// 自動再生の制限があるので、最初のタッチ・クリックで読みこみを始める
+document.addEventListener('pointerdown',function pre(){
+  document.removeEventListener('pointerdown',pre,true);
+  try{ac();bgm.load();}catch(e){}
+},true);
 
 // ==== 状態 ====
 let deck=[],qi=0,cur=null,lives=0,score=0,slain=0,tokens=[];
@@ -359,6 +379,7 @@ function makeDeck(){
 }
 function startGame(){
   ac();                                  // 最初のタップで音を使えるようにする
+  bgm.load();bgm.screen(true);
   deck=makeDeck();qi=0;lives=LIVES;score=0;slain=0;missedAt=[];wrongCnt=0;wrongAt=[];
   $('start').classList.add('hidden');$('end').classList.add('hidden');
   $('play').classList.remove('hidden');
@@ -500,6 +521,7 @@ function win(){
   const pts=100*cur.lv+Math.floor(tLeft)*10;
   score+=pts;slain++;
   $('score').textContent=score;
+  if(qi>=9)bgm.duck(1.8,.3);              // 最後の1体は討伐の音が聞こえるよう BGM を少し下げる
   sfx.win();
   // 式が飛んでいってモンスターに当たる
   const st=$('stage');
@@ -540,6 +562,7 @@ function attacked(){
   if(lives<=0){
     locked=true;clearInterval(timer);
     missedAt[qi]=true;
+    bgm.duck(1.6,.2);                      // 負けのジングルが聞こえるよう BGM を少し下げる
     sfx.over();
     setTimeout(()=>finish(false),900);
   }

@@ -57,6 +57,34 @@ button{font-family:inherit}
  font-size:17px;font-weight:900;color:var(--navy);cursor:pointer;position:relative;padding:0}
 .top .snd.off{color:#b9b5d3}
 .top .snd.off::after{content:'';position:absolute;left:8px;right:8px;top:50%;height:3px;background:var(--bad);transform:rotate(-40deg);border-radius:2px}
+/* 音量パネル(CG.volumePanel。上の帯の音ボタンから開く) */
+.cgvol{position:fixed;z-index:60;right:10px;top:62px;width:290px;max-width:calc(100vw - 20px);box-sizing:border-box;
+ background:#fff;border:var(--bd);border-radius:18px;box-shadow:0 6px 0 var(--navy);padding:12px 14px 10px;color:var(--navy)}
+.cgvol[hidden]{display:none}
+.cgvol-hd{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:900;margin-bottom:4px}
+.cgvol-x{width:32px;height:32px;border:var(--bd);border-radius:50%;background:#fff;box-shadow:0 3px 0 var(--navy);
+ font-size:15px;font-weight:900;color:var(--navy);cursor:pointer;padding:0;line-height:1}
+.cgvol-x:active{transform:translateY(2px);box-shadow:0 1px 0 var(--navy)}
+.cgvol-row{display:flex;align-items:center;gap:8px;padding:8px 0}
+.cgvol-row+.cgvol-row{border-top:2px dashed #dcd8f2}
+.cgvol-lb{flex:0 0 48px;font-size:12.5px;font-weight:900}
+.cgvol-tg{flex:0 0 38px;height:38px;border:var(--bd);border-radius:50%;background:var(--yellow);box-shadow:0 3px 0 var(--navy);
+ font-size:15px;font-weight:900;color:var(--navy);cursor:pointer;padding:0;position:relative}
+.cgvol-tg:active{transform:translateY(2px);box-shadow:0 1px 0 var(--navy)}
+.cgvol-tg.off{background:#fff;color:#b9b5d3}
+.cgvol-tg.off::after{content:'';position:absolute;left:7px;right:7px;top:50%;height:3px;background:var(--bad);transform:rotate(-40deg);border-radius:2px}
+.cgvol-tg:disabled{cursor:default;opacity:1}
+.cgvol-rg{flex:1;min-width:0;height:36px;margin:0;background:none;-webkit-appearance:none;appearance:none;touch-action:none;cursor:pointer}
+.cgvol-rg::-webkit-slider-runnable-track{height:12px;border:2px solid var(--navy);border-radius:99px;
+ background:linear-gradient(90deg,var(--u,#6f5dff) var(--p,60%),#ece9fb var(--p,60%))}
+.cgvol-rg::-moz-range-track{height:8px;border:2px solid var(--navy);border-radius:99px;background:#ece9fb}
+.cgvol-rg::-moz-range-progress{height:8px;border-radius:99px;background:var(--u,#6f5dff)}
+.cgvol-rg::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border:3px solid var(--navy);
+ border-radius:50%;background:var(--yellow);box-shadow:0 3px 0 var(--navy)}
+.cgvol-rg::-moz-range-thumb{width:20px;height:20px;border:3px solid var(--navy);border-radius:50%;background:var(--yellow)}
+.cgvol-rg:disabled{opacity:.45}
+.cgvol-v{flex:0 0 40px;text-align:right;font-family:var(--numf);font-size:15px;font-weight:700}
+.cgvol-note{font-size:11px;font-weight:700;color:var(--mut);line-height:1.5;margin:2px 0 0}
 main.game{max-width:560px;margin:0 auto;padding:0 12px 44px}
 main.game>.panel+.panel{margin-top:16px}
 

@@ -45,7 +45,7 @@ oxidation-number.html    … No.36 酸化数(12択グリッド)
 lewis-builder.html       … No.4  電子式→分子合成(canvas物理)
 crystal-classify.html    … No.6  結晶分類+質問推理
 ion-formula.html         … No.10 イオン式・組成式(ion_learning-game由来)
-formula-tower.html       … No.11 物質名→化学式(ミニ周期表を押して組立、SVGモンスター)
+formula-tower.html       … No.11 物質名→化学式(ミニ周期表を押して組立、SVGモンスター。BGM(sound/formula-tower-bgm)をスタート・プレイ中・結果画面ずっと小さめ(gain .22)に流す。上の帯の ♪ で音量パネル(CG.volumePanel。BGM・効果音を別々に、OFF も可。chemgames:formula-tower:vol に保存)。ゲームオーバーと最後の討伐の瞬間は BGM を下げてジングルを聞かせる)
 polarity-3d.html         … No.8  3D極性判定(自作3D投影)
 lattice-viewer.html      … No.14 結晶格子3D教材(金属4種・CsCl/NaCl/ZnS型・ダイヤモンド、限界半径比スライダー、断面。自作3D投影)
 gas-sim.html             … No.50 気体分子運動シミュレータ(理想/実在気体)
@@ -56,7 +56,7 @@ stoichiometry.html       … No.18 量的関係を5ステップで解く
 excess-reagent.html      … No.19 過不足ある反応(反応前/変化/反応後の表+テンキー)
 sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確に丸め)
 mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、1〜2段階)
-sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio。スタート・結果画面だけ BGM(sound/sugar-rhythm-bgm)。プレイ中とお手本の再生中は止める。音の ON/OFF は BGM だけ(専用キー chemgames:sugar-rhythm:bgm。共通ミュートは見ない))
+sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio。スタート・結果画面だけ BGM(sound/sugar-rhythm-bgm。CG.bgm を使う)。プレイ中とお手本の再生中は止める。上の帯の ♪ で音量パネル(CG.volumePanel。chemgames:sugar-rhythm:vol。前の chemgames:sugar-rhythm:bgm=0 は BGM OFF として引きつぐ)。リズム音・声・判定音は学習の中心なので効果音は 20% より下げられず OFF もない。共通ミュート chemgames:mute は見ない)
 electrolysis.html        … No.40 電気分解の手順ゲーム
 equilibrium-travel.html  … No.64 太平洋トラベラー(日本⇌アメリカの人の移動で平衡を体感。実戦/シミュレーション/H2+I2/ルシャトリエの4モード。ルシャトリエは H2+I2⇌2HI の平衡に濃度の変化を加え、2つのバランスシート(反応前/変化量/平衡時)・濃度と反応速度のグラフ・2つの平衡の K の比較を出す。全タブに教室表示(body.cls、実戦以外は body.clsx も付く)。canvasグラフ自作)
 ph-target.html           … No.30 pH ねらい撃ち(うすめる・中和・液えらびのカードで目標 pH に合わせるパズル。強酸・強塩基は水の電離をふくめて計算)
@@ -93,6 +93,15 @@ titration.html           … No.33 ギリギリ滴定(中和点の直前で止�
 - `CG.countUp(el, 数)` … 数え上がる表示。`CG.fmt(数)` … 3桁区切り。
 - `CG.mascot(html)` … キャラクターと吹き出しのHTML。
 - `CG.$ / CG.shuffle / CG.pick`。
+- `CG.bgm({ctx, name, len, vol, fade})` … BGM のループ再生(`sound/<名前>-bgm.ogg`、読めなければ `.m4a`。m4a 先頭の無音はとばす)。呼んだページだけで動き、読みこみ時には何もしない。
+  - `ctx` はゲーム側の AudioContext を返す関数(既存の `ac()` を渡す。2つ目を作らない)。`name` は拡張子なしのパス、`len` はループの長さ(秒)、`vol` は音量(効果音より明らかに小さく。目安 .2〜.4)。
+  - 返ってきた `bgm` に: `load()`(最初のユーザー操作の中で呼ぶ) / `screen(on, fromTop)`(画面ごとに流すか) / `setOn(on)`(ON/OFF。保存はゲーム側) / `hold(秒)`(一時停止して続きから) / `duck(秒, 倍率)`(ジングルのあいだ音量を下げる) / `playing()` / `state`。
+  - `setVol(倍率)` で音量パネルの値をなめらかに反映。
+  - タブが裏に回ると止まり、戻ると続きから。読めない・オフラインでも BGM なしで普通に動く。
+- `CG.volumePanel({game, bgm:{max}, sfx:{max, min, note}, init, onChange, sample, onOpen})` … BGM と効果音の音量パネル(上の帯の ♪ ボタンから開くポップオーバー)。`.button` を `.top` に足して使う。
+  - スライダー 0〜100%。**既定 60% が元の音量(倍率1)**、100% で `max` 倍(BGM は最大でも効果音を潰さない値に)。0 または ♪ ボタンで OFF。`sfx.min` を付けるとそれより下げられず OFF ボタンも効かない(学習の中心の音用)。
+  - `onChange({bgm, sfx})` に倍率が来る(作った直後にも1回)。ゲーム側で `bgm.setVol` / `setOn` と効果音のゲインノードに反映する。`sample` は効果音スライダーを離したときの見本音、`onOpen` は開いたとき(ここで `ac()` と `bgm.load()`)。
+  - 保存は `chemgames:<game>:vol` に `{bgm,sfx,bgmOn,sfxOn}`。`init` で古い設定を引きつげる。BGM のある2本(formula-tower・sugar-rhythm)が使う。共通の `chemgames:mute` / `CG.soundButton()` は他のゲーム用にそのまま。
 
 ### キャラクター
 
