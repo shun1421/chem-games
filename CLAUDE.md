@@ -6,7 +6,8 @@
 ## 絶対に守るルール
 
 - **公開済みのURLを変えない**。各ゲームのリンクはすでに生徒に配ってある。HTMLのファイル名を変えたり消したりしない。作りを変えるときも同じファイル名のまま中身を入れかえる。
-- **外部CDN・ビルドツール・フレームワーク禁止**。読みこんでよいのはこのリポジトリ内のファイルだけ(`common.css` `common.js` `quiz.js` `data/*.json` `img/*`)。
+- **外部CDN・ビルドツール・フレームワーク禁止**。読みこんでよいのはこのリポジトリ内のファイルだけ(`common.css` `common.js` `quiz.js` `data/*.json` `img/*` `sound/*`)。
+  - `sound/*` は BGM・効果音の音ファイル。OGG と予備の M4A(古い iPhone の Safari は OGG を再生できない)を置く。1つ数百KB以内。
 - **見た目と共通部品は共通ファイルに置く**(下の「共通ファイル」)。同じCSSやJSを各HTMLに書き写さない。
   - 手書き型(アクション・3D・手順型)は、共通ファイルを読んだうえで、ゲーム固有の見た目と動きだけを各HTMLの `<style>` `<script>` に書く。
 - **localStorage は使ってよい**。ただし用途は自己ベスト・クリア済みの印・まちがえた問題の記録など、**消えても困らないもの**に限る。成績評価の根拠になるものや個人情報は保存しない。
@@ -28,6 +29,7 @@ common.js                … 共通の部品 CG(自己ベスト、効果音、�
 quiz.js                  … クイズ型ゲームの本体(data/<名前>.json を読んで動く)
 data/<名前>.json         … クイズ型の題名・説明・ルール・問題
 img/gorilla.png          … 説明役のキャラクター(背景透明、320px)
+sound/<名前>-bgm.ogg     … BGM(シームレスループ。予備に同じ内容の .m4a)
 
 クイズ型(HTMLは十数行の入れ物。中身は quiz.js と data/ がつくる)
 salt-judge.html          … No.32 塩の液性
@@ -54,7 +56,7 @@ stoichiometry.html       … No.18 量的関係を5ステップで解く
 excess-reagent.html      … No.19 過不足ある反応(反応前/変化/反応後の表+テンキー)
 sig-figs.html            … No.15 有効数字ドリル(10進文字列で正確に丸め)
 mol-sprint.html          … No.16 モル換算(次元解析で単位を約分、1〜2段階)
-sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio)
+sugar-rhythm.html        … No.93 単糖リズム(Haworth投影式+Web Audio。スタート・結果画面だけ BGM(sound/sugar-rhythm-bgm)。プレイ中とお手本の再生中は止める。音の ON/OFF は BGM だけ(専用キー chemgames:sugar-rhythm:bgm。共通ミュートは見ない))
 electrolysis.html        … No.40 電気分解の手順ゲーム
 equilibrium-travel.html  … No.64 太平洋トラベラー(日本⇌アメリカの人の移動で平衡を体感。実戦/シミュレーション/H2+I2/ルシャトリエの4モード。ルシャトリエは H2+I2⇌2HI の平衡に濃度の変化を加え、2つのバランスシート(反応前/変化量/平衡時)・濃度と反応速度のグラフ・2つの平衡の K の比較を出す。全タブに教室表示(body.cls、実戦以外は body.clsx も付く)。canvasグラフ自作)
 ph-target.html           … No.30 pH ねらい撃ち(うすめる・中和・液えらびのカードで目標 pH に合わせるパズル。強酸・強塩基は水の電離をふくめて計算)

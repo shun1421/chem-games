@@ -72,6 +72,15 @@ footer{color:rgba(255,255,255,.8)}
 .kits .kb.on{border-color:var(--navy)}
 .tk{border:2px solid var(--navy)}
 .pad{border:3px solid var(--navy);border-bottom-width:6px}
+/* BGM の ON/OFF ボタン(上の帯。common.css の .snd と同じ見た目で、BGM と分かる表示) */
+.top .bgmbtn{flex:0 0 44px;height:44px;background:#fff;border:var(--bd);border-radius:50%;box-shadow:0 4px 0 var(--navy);
+ color:var(--navy);cursor:pointer;position:relative;padding:0;font-family:inherit;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;line-height:1}
+.top .bgmbtn span{font-size:15px;font-weight:900}
+.top .bgmbtn small{font-size:9px;font-weight:900;letter-spacing:.02em}
+.top .bgmbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--navy)}
+.top .bgmbtn.off{color:#b9b5d3}
+.top .bgmbtn.off::after{content:'';position:absolute;left:8px;right:8px;top:50%;height:3px;background:var(--bad);transform:rotate(-40deg);border-radius:2px}
 </style>
 </head>
 <body data-u="green">
@@ -187,7 +196,7 @@ const SUGARS=[
 const SND={OH:'ドン',H:'カッ',C:'ドーン'};
 const CLS={OH:'c-oh',H:'c-h',C:'c-c'};
 
-// ==== 音(Web Audio API。外部ファイルなし) ====
+// ==== 音(Web Audio API。効果音は外部ファイルなし。BGM だけ sound/ から読む) ====
 let AC=null,MASTER=null,NOISE=null;
 function ac(){
   if(!AC){
@@ -266,8 +275,103 @@ function loadVoices(){
 // 最初のタッチで声のデコードを始める(操作前に AudioContext を作ると警告が出るため)
 document.addEventListener('pointerdown',function pre(){
   document.removeEventListener('pointerdown',pre,true);
-  try{ac();}catch(e){}
+  try{ac();loadBgm();}catch(e){}
 },true);
+
+// ==== BGM(スタート画面と結果画面だけ。プレイ中とお手本の再生中は止める) ====
+// sound/sugar-rhythm-bgm.ogg を AudioBufferSourceNode でループ再生(<audio loop> は継ぎ目が空きやすい)。
+// Ogg を再生できない古い Safari 用に M4A(AAC)を予備にする。読みこめなくてもゲームは BGM なしで動く。
+const BGM={len:22.154,vol:.4,fade:.4,
+  buf:null,fmt:'',state:'idle',  // state: idle / loading / ready / failed
+  want:true,                     // いまの画面で流したいか(start・end 画面で true)
+  on:true,                       // BGM ボタンの ON/OFF
+  hold:false,holdT:0,            // お手本・音のタイプ試聴のあいだは一時停止
+  src:null,gain:null,t0:0,pos:0};
+function decodeBuf(ab){ // 古い Safari は Promise を返さないのでコールバックで包む
+  return new Promise((ok,ng)=>{
+    try{const p=ac().decodeAudioData(ab,ok,ng);if(p&&p.then)p.then(ok,ng);}catch(e){ng(e);}
+  });
+}
+function fetchBgm(ext){
+  return fetch('sound/sugar-rhythm-bgm.'+ext)
+    .then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
+    .then(decodeBuf);
+}
+function loadBgm(){
+  if(BGM.state!=='idle'||!window.fetch)return;
+  BGM.state='loading';
+  fetchBgm('ogg').then(b=>{BGM.fmt='ogg';return b;},
+    ()=>fetchBgm('m4a').then(b=>{BGM.fmt='m4a';return b;}))
+  .then(b=>{
+    BGM.buf=b;BGM.state='ready';
+    // AAC は先頭にエンコーダの無音(priming)が入ることがある。最初に音が出る位置からループさせる
+    BGM.loopStart=0;BGM.loopEnd=Math.min(b.duration,BGM.len);
+    if(BGM.fmt==='m4a'&&b.duration>BGM.len+.002){
+      const extra=b.duration-BGM.len,n=Math.floor(extra*b.sampleRate);
+      let i=0;
+      search:for(;i<n;i++)for(let ch=0;ch<b.numberOfChannels;ch++)
+        if(Math.abs(b.getChannelData(ch)[i])>.003)break search;
+      BGM.loopStart=i/b.sampleRate;BGM.loopEnd=Math.min(b.duration,BGM.loopStart+BGM.len);
+    }
+    bgmUpdate();
+  }).catch(()=>{BGM.state='failed';});
+}
+function bgmCanPlay(){
+  return BGM.state==='ready'&&BGM.want&&!BGM.hold&&BGM.on&&!document.hidden;
+}
+// いまの状態に合わせて鳴らす・止める
+function bgmUpdate(){
+  if(!AC)return;
+  if(bgmCanPlay()){if(!BGM.src)bgmStart();}
+  else if(BGM.src)bgmStop();
+}
+function bgmStart(){
+  const c=ac(),t=c.currentTime,s=c.createBufferSource(),g=c.createGain();
+  s.buffer=BGM.buf;s.loop=true;s.loopStart=BGM.loopStart;s.loopEnd=BGM.loopEnd;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(BGM.vol,t+BGM.fade);
+  s.connect(g);g.connect(c.destination);
+  s.start(t,BGM.loopStart+BGM.pos);
+  BGM.src=s;BGM.gain=g;BGM.t0=t-BGM.pos;
+}
+function bgmStop(){
+  const c=ac(),t=c.currentTime,s=BGM.src,g=BGM.gain;
+  BGM.pos=((t-BGM.t0)%BGM.len+BGM.len)%BGM.len; // 続きから再開できるように位置を覚える
+  g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);
+  g.gain.linearRampToValueAtTime(0,t+BGM.fade);
+  try{s.stop(t+BGM.fade+.05);}catch(e){}
+  setTimeout(()=>{try{s.disconnect();g.disconnect();}catch(e){}},(BGM.fade+.2)*1000);
+  BGM.src=null;BGM.gain=null;
+}
+function bgmScreen(on,fromTop){ // 画面の切りかえで呼ぶ
+  BGM.want=on;if(fromTop)BGM.pos=0;
+  clearTimeout(BGM.holdT);BGM.hold=false;
+  bgmUpdate();
+}
+function bgmHold(sec){ // お手本などを流すあいだ止めて、終わったら続きから
+  if(!BGM.want)return;
+  BGM.hold=true;bgmUpdate();
+  clearTimeout(BGM.holdT);
+  BGM.holdT=setTimeout(()=>{BGM.hold=false;bgmUpdate();},sec*1000);
+}
+document.addEventListener('visibilitychange',bgmUpdate);
+// BGM の ON/OFF(このゲーム専用。キー chemgames:sugar-rhythm:bgm)。
+// リズムの音・声・判定音は学習の中心なので、全ゲーム共通のミュート(chemgames:mute)とは関係なく必ず鳴らす
+(function(){
+  const KEY='chemgames:sugar-rhythm:bgm';
+  try{BGM.on=localStorage.getItem(KEY)!=='0';}catch(e){BGM.on=true;}
+  const b=document.createElement('button');
+  b.className='bgmbtn'+(BGM.on?'':' off');
+  b.innerHTML='<span>♪</span><small>BGM</small>';
+  b.setAttribute('aria-label','BGM のオン・オフ');b.setAttribute('aria-pressed',String(BGM.on));
+  b.title='BGM のオン・オフ(リズムの音は消えません)';
+  b.onclick=()=>{
+    BGM.on=!BGM.on;
+    try{localStorage.setItem(KEY,BGM.on?'1':'0');}catch(e){}
+    b.classList.toggle('off',!BGM.on);b.setAttribute('aria-pressed',String(BGM.on));
+    bgmUpdate();
+  };
+  document.querySelector('.top').appendChild(b);
+})();
 function playVoice(spk,k,t0){
   const V=VBUF[spk],b=V&&V[k];
   // 3つの声がそろうまでは、同じ役割の和太鼓の音で代わりに鳴らす(1つのリズムの中で声と太鼓が混ざらないように)
@@ -309,7 +413,7 @@ const KIT_ORDER=['zunda','sora','taiko','chip'];
 let kit='zunda';
 function setKit(k,preview){
   kit=k;renderKits();
-  if(preview!==false)playSnd('OH');
+  if(preview!==false){bgmHold(1.2);playSnd('OH');} // 試聴のあいだ BGM を止める
 }
 function renderKits(){
   ['kits','kits2'].forEach(id=>{
@@ -348,7 +452,10 @@ function playPattern(pat,cb){
 }
 function demo(){
   const p=SUGARS[0].pat;
-  playPattern(p);
+  // BGM が鳴っていればフェードアウトしきってからお手本を流す。終わったら BGM を続きから
+  const wait=BGM.src?BGM.fade:0;
+  bgmHold(wait+.12+p.length*.46+1.2);
+  setTimeout(()=>playPattern(p),wait*1000);
 }
 
 // ==== 構造式(ハースの投影式)の描画 ====
@@ -417,6 +524,7 @@ let deck=[],qi=0,cur=null,input=[],score=0,combo=0,ok=0,locked=false;
 
 function startGame(){
   ac(); // 最初のタップで音を有効化
+  bgmScreen(false); // プレイ中は BGM なし(リズムを聞き分けるため)
   $('start').classList.add('hidden');$('end').classList.add('hidden');$('play').classList.remove('hidden');
   deck=shuffle([...SUGARS]);qi=0;score=0;combo=0;ok=0;
   showQ();
@@ -510,6 +618,7 @@ function nextQ(){
   if(qi>=deck.length){
     clearRhythm();
     $('play').classList.add('hidden');$('end').classList.remove('hidden');
+    bgmScreen(true,true); // 結果画面では BGM を最初から
     // 正解数で見出しを変える(全問 / 半分より多い / それ以下)
     $('endTitle').textContent=ok>=deck.length?'リズムマスター！'
       :ok*2>deck.length?'いいリズム！':'もう1回たたいてみよう';
